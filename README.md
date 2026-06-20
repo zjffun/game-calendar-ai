@@ -48,12 +48,21 @@ src/
 
 ## 🚀 运行
 
+本项目使用 [pnpm](https://pnpm.io/)（可通过 `corepack enable` 一键启用）：
+
 ```bash
-npm install
-npm run dev        # 本地开发：http://localhost:5173
-npm run build      # 生产构建（tsc + vite）输出到 dist/
-npm run preview    # 预览生产构建
+pnpm install
+pnpm dev           # 本地开发：http://localhost:5173
+pnpm build         # 生产构建（tsc + vite）输出到 dist/
+pnpm preview       # 预览生产构建
 ```
+
+> 也可用 npm（`npm install && npm run dev`），但 CI 与锁文件以 pnpm 为准。
+
+## 🌐 部署
+
+推送到 `main` 会触发 [GitHub Actions](.github/workflows/deploy.yml) 自动构建并部署到
+**GitHub Pages**：<https://zjffun.github.io/game-calendar-ai/>
 
 ## 📝 说明
 

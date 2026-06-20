@@ -28,11 +28,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 24 自带 npm 11，规避 Node 20 旧版 npm 的
+          # "Exit handler never called!" 安装崩溃（该 bug 会以退出码 0 静默失败）
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
 
       - name: Build
         run: npm run build

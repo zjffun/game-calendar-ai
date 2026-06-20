@@ -1,0 +1,156 @@
+/* ==========================================================================
+   副本刷新与完成追踪 —— 模块专属样式
+   类名统一加 dgn- 前缀，避免与全局共享类冲突。
+   ========================================================================== */
+
+/* 副本卡片网格：自适应多列 */
+.dgn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+/* 单张副本卡片 */
+.dgn-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* 已完成卡片置灰 */
+.dgn-card.dgn-done {
+  opacity: 0.6;
+}
+
+.dgn-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.dgn-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-ink);
+  line-height: 1.3;
+  word-break: break-word;
+}
+/* 已完成的副本名带删除线 */
+.dgn-card.dgn-done .dgn-name {
+  text-decoration: line-through;
+  text-decoration-color: var(--c-line-strong);
+}
+
+/* 倒计时行 */
+.dgn-timer-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dgn-timer-label {
+  font-size: 12px;
+  color: var(--c-ink-faint);
+}
+.dgn-timer-row .countdown {
+  font-size: 18px;
+}
+
+/* 完成标记区 */
+.dgn-done-mark {
+  color: var(--c-ok);
+  font-weight: 700;
+}
+
+/* 卡片底部操作行 */
+.dgn-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 「本期需完成」开关（用 label 包裹原生 checkbox） */
+.dgn-required {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--c-ink-soft);
+  cursor: pointer;
+  user-select: none;
+}
+.dgn-required input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--c-red);
+  cursor: pointer;
+}
+
+/* 顶部汇总条 */
+.dgn-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.dgn-summary-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-ink-soft);
+}
+.dgn-summary-num {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--c-red);
+}
+.dgn-summary-num.dgn-clear {
+  color: var(--c-ok);
+}
+
+/* 预设 chip 容器 */
+.dgn-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 分组标题 */
+.dgn-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-ink-soft);
+  margin: 4px 0;
+}
+
+/* 编辑态内联表单 */
+.dgn-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dgn-edit-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.dgn-edit-row > * {
+  flex: 1 1 120px;
+}
+
+/* 自定义添加表单 */
+.dgn-add-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.dgn-add-form .field {
+  flex: 1 1 140px;
+  min-width: 120px;
+}

@@ -1,0 +1,405 @@
+/* ==========================================================================
+   梦幻西游 · 游戏日历 —— 全局主题与共享组件样式
+   配色：宣纸米黄 / 朱红 / 鎏金 / 黛青，传统国风。
+   各功能模块可直接复用下方的 .card / .btn / .badge / .field 等类。
+   ========================================================================== */
+
+:root {
+  /* 主色 */
+  --c-ink: #2a211a;          /* 墨字 */
+  --c-ink-soft: #5b4d3f;     /* 次要文字 */
+  --c-ink-faint: #8a7a68;    /* 弱文字 */
+  --c-paper: #f6ecd6;        /* 宣纸底 */
+  --c-paper-2: #fcf6e8;      /* 浅纸面（卡片） */
+  --c-paper-3: #fffdf6;      /* 更浅 */
+  --c-line: #e0cfa8;         /* 描边 */
+  --c-line-strong: #c9ad77;
+
+  --c-red: #9c2b22;          /* 朱红 */
+  --c-red-2: #b8392c;
+  --c-red-soft: #f4d9cf;
+  --c-gold: #b8860b;         /* 鎏金 */
+  --c-gold-2: #d9a93a;
+  --c-jade: #2f7d5b;         /* 黛青/碧 */
+  --c-jade-soft: #d6ead9;
+  --c-blue: #355b8c;
+  --c-purple: #6b4a8a;
+
+  --c-ok: #2f7d5b;
+  --c-warn: #c9772a;
+  --c-danger: #b8392c;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 6px 20px rgba(80, 50, 20, 0.12);
+  --shadow-sm: 0 2px 8px rgba(80, 50, 20, 0.1);
+
+  --maxw: 980px;
+  --font: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei',
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--c-ink);
+  background-color: #efe3c6;
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(216, 169, 58, 0.12), transparent 45%),
+    radial-gradient(circle at 100% 30%, rgba(156, 43, 34, 0.08), transparent 40%),
+    linear-gradient(180deg, #f3e8cb 0%, #ecdfc0 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 700;
+  color: var(--c-ink);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--c-ink);
+}
+
+/* ---------- 布局 ---------- */
+
+.app-shell {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 16px 96px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  margin: 4px 0 14px;
+  color: var(--c-red);
+}
+.section-title .glyph {
+  font-size: 20px;
+}
+
+.muted {
+  color: var(--c-ink-faint);
+}
+.small {
+  font-size: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.row-wrap {
+  flex-wrap: wrap;
+}
+.spacer {
+  flex: 1;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.grid {
+  display: grid;
+  gap: 12px;
+}
+
+/* ---------- 卡片 ---------- */
+
+.card {
+  background: var(--c-paper-2);
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+.card.pad-lg {
+  padding: 20px;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.card-head h3 {
+  font-size: 16px;
+}
+
+/* ---------- 按钮 ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--c-line-strong);
+  background: var(--c-paper-3);
+  color: var(--c-ink);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.05s ease, background 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+.btn:hover {
+  box-shadow: var(--shadow-sm);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: linear-gradient(180deg, var(--c-red-2), var(--c-red));
+  border-color: var(--c-red);
+  color: #fff5ec;
+}
+.btn-gold {
+  background: linear-gradient(180deg, var(--c-gold-2), var(--c-gold));
+  border-color: var(--c-gold);
+  color: #fffaf0;
+}
+.btn-jade {
+  background: linear-gradient(180deg, #3f9d72, var(--c-jade));
+  border-color: var(--c-jade);
+  color: #f3fff8;
+}
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--c-ink-soft);
+  padding: 6px 8px;
+}
+.btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.05);
+  box-shadow: none;
+}
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+.btn-icon {
+  padding: 6px 9px;
+  font-size: 14px;
+}
+
+/* ---------- 徽标 / 标签 ---------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.badge-daily {
+  background: var(--c-jade-soft);
+  color: var(--c-jade);
+}
+.badge-weekly {
+  background: #dce6f3;
+  color: var(--c-blue);
+}
+.badge-monthly {
+  background: #ead9f0;
+  color: var(--c-purple);
+}
+.badge-red {
+  background: var(--c-red-soft);
+  color: var(--c-red);
+}
+.badge-gold {
+  background: #f6e6bf;
+  color: var(--c-gold);
+}
+.badge-ok {
+  background: var(--c-jade-soft);
+  color: var(--c-ok);
+}
+.badge-warn {
+  background: #f7e3c8;
+  color: var(--c-warn);
+}
+.badge-danger {
+  background: var(--c-red-soft);
+  color: var(--c-danger);
+}
+.badge-outline {
+  background: transparent;
+  border-color: var(--c-line-strong);
+  color: var(--c-ink-soft);
+}
+
+/* ---------- 表单控件 ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field > label {
+  font-size: 12px;
+  color: var(--c-ink-soft);
+  font-weight: 600;
+}
+.input,
+.select,
+.textarea {
+  background: var(--c-paper-3);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--c-gold);
+  box-shadow: 0 0 0 3px rgba(216, 169, 58, 0.18);
+}
+
+/* ---------- 倒计时数字 ---------- */
+
+.countdown {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.countdown.ready {
+  color: var(--c-ok);
+}
+.countdown.urgent {
+  color: var(--c-danger);
+}
+
+/* ---------- 进度条 ---------- */
+
+.meter {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(120, 90, 50, 0.18);
+  overflow: hidden;
+}
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.meter-ok > span {
+  background: linear-gradient(90deg, #3f9d72, var(--c-jade));
+}
+.meter-warn > span {
+  background: linear-gradient(90deg, #e0a64d, var(--c-warn));
+}
+.meter-danger > span {
+  background: linear-gradient(90deg, #d4534a, var(--c-danger));
+}
+
+/* ---------- 空状态 ---------- */
+
+.empty {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--c-ink-faint);
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 246, 0.5);
+}
+
+/* ---------- 复选 chip（常用预设） ---------- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line-strong);
+  background: var(--c-paper-3);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-ink-soft);
+  transition: all 0.12s ease;
+  user-select: none;
+}
+.chip:hover {
+  border-color: var(--c-gold);
+}
+.chip.active {
+  background: var(--c-red);
+  border-color: var(--c-red);
+  color: #fff5ec;
+}
+
+/* ---------- 分隔 ---------- */
+
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-line-strong), transparent);
+  margin: 14px 0;
+}
+
+/* ---------- 动效 ---------- */
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.pop-in {
+  animation: pop-in 0.18s ease both;
+}
+
+@media (max-width: 560px) {
+  .app-shell {
+    padding: 0 10px 96px;
+  }
+  .card {
+    padding: 13px;
+  }
+}

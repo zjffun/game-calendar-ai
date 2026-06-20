@@ -1,0 +1,108 @@
+/* ==========================================================================
+   房屋清洁 / 耐久 模块样式
+   类名统一加 hc- 前缀，避免与全局共享样式冲突。
+   ========================================================================== */
+
+/* 顶部信息条 */
+.hc-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* 单条指标（洁净度 / 耐久）卡块 */
+.hc-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius-sm);
+  background: var(--c-paper-3);
+}
+
+.hc-metric-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hc-metric-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--c-ink);
+}
+
+/* 百分比大数字 */
+.hc-percent {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+}
+.hc-percent.hc-ok {
+  color: var(--c-ok);
+}
+.hc-percent.hc-warn {
+  color: var(--c-warn);
+}
+.hc-percent.hc-danger {
+  color: var(--c-danger);
+}
+
+/* 指标底部：提示文案 + 操作按钮 */
+.hc-metric-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hc-hint {
+  font-size: 12.5px;
+  color: var(--c-ink-faint);
+}
+
+/* 两列指标网格，窄屏自动单列 */
+.hc-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* 折叠设置区头部按钮 */
+.hc-settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--c-red);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 6px 0;
+}
+.hc-settings-toggle .hc-caret {
+  transition: transform 0.18s ease;
+  font-size: 12px;
+}
+.hc-settings-toggle.hc-open .hc-caret {
+  transform: rotate(90deg);
+}
+
+/* 设置参数网格 */
+.hc-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 6px;
+}
+
+@media (max-width: 560px) {
+  .hc-metrics,
+  .hc-settings-grid {
+    grid-template-columns: 1fr;
+  }
+}

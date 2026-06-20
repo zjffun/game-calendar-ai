@@ -1,0 +1,125 @@
+/* ==========================================================================
+   待办 TODO 模块 —— 组件局部样式
+   类名统一加 todo- 前缀，避免与全局样式冲突。
+   ========================================================================== */
+
+/* 周期分组的头部：标题 + 进度 + 倒计时 */
+.todo-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.todo-group-head h3 {
+  font-size: 15px;
+}
+.todo-group-progress {
+  font-size: 12.5px;
+  color: var(--c-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 一条 TODO 行 */
+.todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius-sm);
+  background: var(--c-paper-3);
+  transition: border-color 0.15s ease, opacity 0.2s ease;
+}
+.todo-item.todo-done {
+  opacity: 0.6;
+  background: rgba(120, 90, 50, 0.05);
+}
+
+/* 大复选框（方形国风按钮） */
+.todo-check {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  margin-top: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--c-line-strong);
+  background: var(--c-paper-2);
+  color: transparent;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  transition: all 0.12s ease;
+}
+.todo-check:hover {
+  border-color: var(--c-gold);
+}
+.todo-check.checked {
+  background: linear-gradient(180deg, #3f9d72, var(--c-jade));
+  border-color: var(--c-jade);
+  color: #f3fff8;
+}
+
+/* TODO 主体（名称 + 备注） */
+.todo-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.todo-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--c-ink);
+  word-break: break-word;
+}
+.todo-done .todo-name {
+  text-decoration: line-through;
+  color: var(--c-ink-faint);
+}
+.todo-note {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--c-ink-faint);
+  word-break: break-word;
+}
+
+/* 行尾操作区 */
+.todo-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* 编辑态表单 */
+.todo-edit {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 预设 chip 容器 */
+.todo-preset-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.todo-preset-cat {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-ink-soft);
+}
+.todo-preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.todo-chip {
+  cursor: pointer;
+}
+.todo-chip .todo-chip-mark {
+  font-size: 12px;
+}

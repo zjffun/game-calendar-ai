@@ -1,0 +1,113 @@
+/* ==========================================================================
+   App 外壳样式：页头、标签栏、页脚
+   ========================================================================== */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-top: 16px;
+  margin-bottom: 18px;
+  background: linear-gradient(180deg, #f3e8cb 70%, rgba(243, 232, 203, 0));
+}
+
+.app-header-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.app-title h1 {
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: var(--c-red);
+}
+.app-subtitle {
+  margin: 2px 0 0;
+}
+
+.app-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--c-red-2), var(--c-red));
+  color: #fbe9c9;
+  font-size: 24px;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm), inset 0 0 0 2px rgba(255, 233, 201, 0.35);
+  flex: none;
+}
+
+/* ---------- 标签栏 ---------- */
+
+.tabbar {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  background: var(--c-paper-2);
+  border: 1px solid var(--c-line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabbar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--c-ink-soft);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: 10px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.tab:hover {
+  background: rgba(156, 43, 34, 0.08);
+}
+.tab.active {
+  background: linear-gradient(180deg, var(--c-red-2), var(--c-red));
+  color: #fff3e3;
+  box-shadow: var(--shadow-sm);
+}
+.tab-glyph {
+  font-size: 16px;
+}
+
+.app-main {
+  min-height: 50vh;
+}
+
+.app-footer {
+  margin-top: 28px;
+  text-align: center;
+  padding: 12px;
+}
+
+@media (max-width: 560px) {
+  .app-title h1 {
+    font-size: 17px;
+  }
+  .tab-label {
+    font-size: 13px;
+  }
+  .tab {
+    padding: 8px 12px;
+  }
+}

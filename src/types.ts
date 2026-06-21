@@ -67,7 +67,7 @@ export interface SeedPreset {
 // 副本刷新与完成追踪
 // ----------------------------------------------------------------------------
 
-export type DungeonCycle = 'daily' | 'weekly'
+export type DungeonCycle = 'daily' | 'weekly' | 'every4days'
 
 /**
  * 一个副本。
@@ -132,6 +132,12 @@ export interface AppSettings {
   dailyResetHour: number
   /** 每周重置的星期（1=周一 ... 7=周日） */
   weeklyResetWeekday: number
+  /**
+   * 天命副本「每 4 天刷新」的起算时刻（epoch 毫秒）。
+   * 天命副本进度每 4 天刷新一次，没有固定星期，需要一个已知的刷新时刻作为基准；
+   * 用户可在设置里把它对齐到自己服务器的实际刷新时间。
+   */
+  every4DaysAnchor: number
 }
 
 // ----------------------------------------------------------------------------

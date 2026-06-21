@@ -24,9 +24,14 @@ interface DungeonCardProps {
 
 /** 周期对应的中文标签与徽标类 */
 function cycleMeta(cycle: DungeonCycle): { label: string; badge: string } {
-  return cycle === 'daily'
-    ? { label: '每日', badge: 'badge-daily' }
-    : { label: '每周', badge: 'badge-weekly' }
+  switch (cycle) {
+    case 'daily':
+      return { label: '每日', badge: 'badge-daily' }
+    case 'weekly':
+      return { label: '每周', badge: 'badge-weekly' }
+    case 'every4days':
+      return { label: '天命·每4天', badge: 'badge-red' }
+  }
 }
 
 export default function DungeonCard({ dungeon }: DungeonCardProps) {
@@ -84,6 +89,7 @@ export default function DungeonCard({ dungeon }: DungeonCardProps) {
                 value={editCycle}
                 onChange={(e) => setEditCycle(e.target.value as DungeonCycle)}
               >
+                <option value="every4days">天命·每4天</option>
                 <option value="daily">每日</option>
                 <option value="weekly">每周</option>
               </select>

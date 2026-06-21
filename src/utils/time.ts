@@ -105,9 +105,24 @@ export function getPeriodKey(
       return getWeeklyPeriodKey(now, settings.weeklyResetWeekday, settings.dailyResetHour)
     case 'monthly':
       return getMonthlyPeriodKey(now, settings.dailyResetHour)
+    case 'every4days':
+      return getEvery4DaysPeriodKey(now, settings.every4DaysAnchor)
     default:
       return getDailyPeriodKey(now, settings.dailyResetHour)
   }
+}
+
+/** 每 4 天周期 Key，'4d' + 距起算点的周期序号 */
+export function getEvery4DaysPeriodKey(now: number, anchor: number): string {
+  const span = 4 * MS_PER_DAY
+  return '4d' + Math.floor((now - anchor) / span)
+}
+
+/** 下次「每 4 天」刷新时刻（epoch 毫秒） */
+export function getNextEvery4DaysReset(now: number, anchor: number): number {
+  const span = 4 * MS_PER_DAY
+  const k = Math.floor((now - anchor) / span)
+  return anchor + (k + 1) * span
 }
 
 // ----------------------------------------------------------------------------
@@ -158,6 +173,8 @@ export function getNextReset(
       return getNextWeeklyReset(now, settings.weeklyResetWeekday, settings.dailyResetHour)
     case 'monthly':
       return getNextMonthlyReset(now, settings.dailyResetHour)
+    case 'every4days':
+      return getNextEvery4DaysReset(now, settings.every4DaysAnchor)
     default:
       return getNextDailyReset(now, settings.dailyResetHour)
   }

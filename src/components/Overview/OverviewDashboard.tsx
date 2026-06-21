@@ -104,20 +104,18 @@ export default function OverviewDashboard({ onNavigate }: Props) {
     .sort((a, b) => a - b)
   const nextSeedLeft = growing.length > 0 ? growing[0] : null
 
-  // —— 副本统计：本期 required 且未完成的数量（按 daily/weekly 周期判断）+ 最近刷新 ——
+  // —— 副本统计：本期 required 且未完成的数量（按各自周期判断）+ 最近刷新 ——
   const requiredUndone = dungeons.filter((d) => {
     if (!d.required) return false
     const key = getPeriodKey(d.resetCycle, now, settings)
     return d.lastCompletedPeriodKey !== key
   })
-  const dailyDungeonLeft = getNextReset('daily', now, settings) - now
-  const weeklyDungeonLeft = getNextReset('weekly', now, settings) - now
-  // 未完成副本里，取最近一次刷新作为提醒
-  const undoneNextResets = requiredUndone.map((d) =>
-    d.resetCycle === 'daily' ? dailyDungeonLeft : weeklyDungeonLeft,
-  )
+  // 未完成副本里，按各自周期取最近一次刷新作为提醒
+  const undoneNextResets = requiredUndone.map((d) => getNextReset(d.resetCycle, now, settings) - now)
   const dungeonNextLeft =
-    undoneNextResets.length > 0 ? Math.min(...undoneNextResets) : dailyDungeonLeft
+    undoneNextResets.length > 0
+      ? Math.min(...undoneNextResets)
+      : getNextReset('daily', now, settings) - now
 
   // —— 房屋：当前洁净度 / 耐久 ——
   const cleanliness = currentCleanliness(house, now)

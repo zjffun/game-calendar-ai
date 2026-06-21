@@ -19,15 +19,19 @@ import DungeonCard from './DungeonCard'
 import './Dungeon.css'
 
 /** 筛选模式 */
-type FilterMode = 'all' | 'daily' | 'weekly' | 'required' | 'undone'
+type FilterMode = 'all' | 'tianming' | 'daily' | 'weekly' | 'required' | 'undone'
 
 const FILTERS: { value: FilterMode; label: string }[] = [
   { value: 'all', label: '全部' },
+  { value: 'tianming', label: '天命' },
   { value: 'daily', label: '每日' },
   { value: 'weekly', label: '每周' },
   { value: 'required', label: '仅需完成' },
   { value: 'undone', label: '未完成' },
 ]
+
+/** 单一周期筛选（此时分组无意义，退回平铺展示） */
+const SINGLE_CYCLE_FILTERS: FilterMode[] = ['tianming', 'daily', 'weekly']
 
 export default function DungeonTracker() {
   const { dungeons, add } = useDungeons()
@@ -40,7 +44,7 @@ export default function DungeonTracker() {
 
   // 自定义添加表单
   const [name, setName] = useState('')
-  const [cycle, setCycle] = useState<DungeonCycle>('weekly')
+  const [cycle, setCycle] = useState<DungeonCycle>('every4days')
   const [required, setRequired] = useState(true)
 
   // 已存在的副本名集合（用于预设 chip 的 active 判断）
@@ -56,15 +60,17 @@ export default function DungeonTracker() {
 
   // 顶部汇总：required 且未完成的数量，按周期分别统计
   const summary = useMemo(() => {
+    let tianming = 0
     let daily = 0
     let weekly = 0
     for (const d of dungeons) {
       if (!d.required) continue
       if (isDone(d)) continue
-      if (d.resetCycle === 'daily') daily += 1
+      if (d.resetCycle === 'every4days') tianming += 1
+      else if (d.resetCycle === 'daily') daily += 1
       else weekly += 1
     }
-    return { daily, weekly }
+    return { tianming, daily, weekly }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dungeons, now, settings])
 
@@ -78,6 +84,8 @@ export default function DungeonTracker() {
   const visible = useMemo(() => {
     return sorted.filter((d) => {
       switch (filter) {
+        case 'tianming':
+          return d.resetCycle === 'every4days'
         case 'daily':
           return d.resetCycle === 'daily'
         case 'weekly':
@@ -122,7 +130,8 @@ export default function DungeonTracker() {
     )
   }
 
-  // 分组视图：每日 / 每周
+  // 分组视图：天命（每4天）/ 每日 / 每周
+  const tianmingList = visible.filter((d) => d.resetCycle === 'every4days')
   const dailyList = visible.filter((d) => d.resetCycle === 'daily')
   const weeklyList = visible.filter((d) => d.resetCycle === 'weekly')
 
@@ -138,6 +147,15 @@ export default function DungeonTracker() {
         <div className="dgn-summary">
           <span className="dgn-summary-item">
             本周期还需完成
+          </span>
+          <span className="dgn-summary-item">
+            天命
+            <span
+              className={`dgn-summary-num${summary.tianming === 0 ? ' dgn-clear' : ''}`}
+            >
+              {summary.tianming}
+            </span>
+            个
           </span>
           <span className="dgn-summary-item">
             每日
@@ -157,9 +175,12 @@ export default function DungeonTracker() {
             </span>
             个
           </span>
-          {summary.daily === 0 && summary.weekly === 0 && dungeons.length > 0 && (
-            <span className="badge badge-ok">✅ 本周期目标已全部完成</span>
-          )}
+          {summary.tianming === 0 &&
+            summary.daily === 0 &&
+            summary.weekly === 0 &&
+            dungeons.length > 0 && (
+              <span className="badge badge-ok">✅ 本周期目标已全部完成</span>
+            )}
         </div>
       </div>
 
@@ -184,7 +205,7 @@ export default function DungeonTracker() {
               >
                 {p.name}
                 <span className="small">
-                  {p.resetCycle === 'daily' ? '日' : '周'}
+                  {p.resetCycle === 'daily' ? '日' : p.resetCycle === 'weekly' ? '周' : '4天'}
                 </span>
               </button>
             )
@@ -217,6 +238,7 @@ export default function DungeonTracker() {
               value={cycle}
               onChange={(e) => setCycle(e.target.value as DungeonCycle)}
             >
+              <option value="every4days">天命·每4天</option>
               <option value="daily">每日</option>
               <option value="weekly">每周</option>
             </select>
@@ -269,23 +291,37 @@ export default function DungeonTracker() {
         <div className="empty">
           还没有副本，先从上方「常用副本」或「自定义添加」开始吧～
         </div>
-      ) : grouped && filter !== 'daily' && filter !== 'weekly' ? (
+      ) : grouped && !SINGLE_CYCLE_FILTERS.includes(filter) ? (
         // 分组视图（当筛选已限定单一周期时，分组无意义，退回平铺）
         <div className="stack">
-          <div>
-            <div className="dgn-group-title">
-              <span className="badge badge-daily">每日</span>
-              <span className="muted small">{dailyList.length} 个</span>
+          {tianmingList.length > 0 && (
+            <div>
+              <div className="dgn-group-title">
+                <span className="badge badge-red">天命 · 每4天</span>
+                <span className="muted small">{tianmingList.length} 个</span>
+              </div>
+              {renderCards(tianmingList)}
             </div>
-            {renderCards(dailyList)}
-          </div>
-          <div>
-            <div className="dgn-group-title">
-              <span className="badge badge-weekly">每周</span>
-              <span className="muted small">{weeklyList.length} 个</span>
+          )}
+          {dailyList.length > 0 && (
+            <div>
+              <div className="dgn-group-title">
+                <span className="badge badge-daily">每日</span>
+                <span className="muted small">{dailyList.length} 个</span>
+              </div>
+              {renderCards(dailyList)}
             </div>
-            {renderCards(weeklyList)}
-          </div>
+          )}
+          {weeklyList.length > 0 && (
+            <div>
+              <div className="dgn-group-title">
+                <span className="badge badge-weekly">每周</span>
+                <span className="muted small">{weeklyList.length} 个</span>
+              </div>
+              {renderCards(weeklyList)}
+            </div>
+          )}
+          {visible.length === 0 && <div className="empty">暂无符合条件的副本</div>}
         </div>
       ) : (
         renderCards(visible)

@@ -6,7 +6,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSettings, dataActions } from '../../store/useAppStore'
 import { useNow } from '../../hooks/useNow'
-import { WEEKDAY_LABELS } from '../../utils/time'
+import {
+  WEEKDAY_LABELS,
+  toDatetimeLocalValue,
+  fromDatetimeLocalValue,
+  getNextEvery4DaysReset,
+  formatClock,
+} from '../../utils/time'
 import './Settings.css'
 
 /** 临时提示文案的状态：内容 + 类型（成功/失败） */
@@ -53,6 +59,13 @@ export default function SettingsPanel() {
   // —— 周期重置点：每周重置星期 ——
   function handleWeeklyWeekdayChange(e: React.ChangeEvent<HTMLSelectElement>) {
     update({ weeklyResetWeekday: Number(e.target.value) })
+  }
+
+  // —— 天命副本「每 4 天」刷新基准时刻 ——
+  function handleAnchorChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const ms = fromDatetimeLocalValue(e.target.value)
+    if (Number.isNaN(ms)) return
+    update({ every4DaysAnchor: ms })
   }
 
   // —— 生成导出 JSON 并填入预览框 ——
@@ -183,6 +196,20 @@ export default function SettingsPanel() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="field">
+            <label htmlFor="settings-tianming-anchor">天命副本刷新基准（每 4 天）</label>
+            <input
+              id="settings-tianming-anchor"
+              className="input"
+              type="datetime-local"
+              value={toDatetimeLocalValue(settings.every4DaysAnchor)}
+              onChange={handleAnchorChange}
+            />
+            <span className="muted small">
+              下次刷新：{formatClock(getNextEvery4DaysReset(now, settings.every4DaysAnchor))}
+            </span>
           </div>
         </div>
         <p className="muted small" style={{ margin: '12px 0 0' }}>

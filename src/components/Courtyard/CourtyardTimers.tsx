@@ -1,46 +1,64 @@
 // ============================================================================
 // 庭院种子倒计时 —— 模块入口
-// 重点支持二级 / 三级种子（也允许一级与自定义）。
-// 成熟时间 = plantedAt + durationMs；剩余 = plantedAt + durationMs - now。
-// 列表按「剩余时间升序」排序，已成熟的排最前并高亮。
-// 全部数据走 useSeeds() store action，倒计时由 useNow() 驱动刷新。
+// 支持二/三/四级种子的真实「生长周期」(cycle) 与自定义「单次计时」(timer)。
+// 列表按「下一个关注时刻」升序排序：cycle 取下一次结果/清除，timer 取成熟时刻；
+// 已可处理的（今日可收获 / 已成熟 / 待清除）自然排在最前。
+// 倒计时由 useNow() 驱动刷新。
 // ============================================================================
 
 import { useMemo } from 'react'
-import { useSeeds } from '../../store/useAppStore'
+import { useSeeds, useSettings } from '../../store/useAppStore'
 import { useNow } from '../../hooks/useNow'
+import { getGrowthCycle } from '../../data/gameData'
+import {
+  computeSeedSchedule,
+  isCaredToday,
+  seedMode,
+  seedNextAt,
+} from '../../utils/courtyard'
 import AddSeedForm from './AddSeedForm'
 import SeedTimerCard from './SeedTimerCard'
 import './Courtyard.css'
 
 export default function CourtyardTimers() {
   const { seeds } = useSeeds()
+  const { settings } = useSettings()
   const now = useNow()
+  const resetHour = settings.dailyResetHour
 
-  // 按剩余时间升序排序：已成熟（剩余<=0）自然排在最前（剩余越小越靠前）。
-  // 用 useMemo 避免每秒重算时产生不必要的新数组引用波动。
+  // 按「下一个关注时刻」升序排序：越紧迫越靠前（已可处理的为负，排最前）。
   const sorted = useMemo(() => {
-    return [...seeds].sort((a, b) => {
-      const ra = a.plantedAt + a.durationMs - now
-      const rb = b.plantedAt + b.durationMs - now
-      return ra - rb
-    })
-  }, [seeds, now])
+    return [...seeds].sort(
+      (a, b) =>
+        seedNextAt(a, getGrowthCycle(a.level), resetHour, now) -
+        seedNextAt(b, getGrowthCycle(b.level), resetHour, now),
+    )
+  }, [seeds, now, resetHour])
 
-  // 统计已成熟数量，用于标题徽标
-  const ripeCount = useMemo(
-    () => seeds.filter((s) => s.plantedAt + s.durationMs - now <= 0).length,
-    [seeds, now],
-  )
+  // 统计：今日可收获 / 今日待养护
+  const { ripeCount, careCount } = useMemo(() => {
+    let ripe = 0
+    let care = 0
+    for (const s of seeds) {
+      const cycle = getGrowthCycle(s.level)
+      if (seedMode(s) === 'cycle' && cycle) {
+        const sc = computeSeedSchedule(s, cycle, resetHour, now)
+        if (sc.todayIsHarvest) ripe++
+        if (!sc.ended && !isCaredToday(s, resetHour, now)) care++
+      } else if (s.plantedAt + s.durationMs <= now) {
+        ripe++
+      }
+    }
+    return { ripeCount: ripe, careCount: care }
+  }, [seeds, now, resetHour])
 
   return (
     <section className="stack">
       <h2 className="section-title">
         <span className="glyph">🌿</span>
-        庭院种子倒计时
-        {ripeCount > 0 && (
-          <span className="badge badge-ok">{ripeCount} 株可收获</span>
-        )}
+        庭院种子
+        {ripeCount > 0 && <span className="badge badge-gold">{ripeCount} 株可收获</span>}
+        {careCount > 0 && <span className="badge badge-warn">{careCount} 株待养护</span>}
       </h2>
 
       {/* 添加种子 */}
@@ -56,7 +74,7 @@ export default function CourtyardTimers() {
       {/* 种子列表 */}
       {sorted.length === 0 ? (
         <div className="empty">
-          庭院空空如也，先在上方种下二级 / 三级种子吧～
+          庭院空空如也，先在上方种下二级 / 三级 / 四级种子吧～
         </div>
       ) : (
         <div className="grid courtyard-grid">

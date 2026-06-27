@@ -1,8 +1,9 @@
 // ============================================================================
 // 添加种子表单
-// - 可从 SEED_PRESETS 选预设（自动填名称/等级/默认生长时长），也可自定义。
-// - 生长时长用「小时 + 分钟」两个输入框，默认取预设的 defaultDurationMs。
-// - 种植时间默认「现在」，但提供可编辑的 datetime-local 以补登已种下的种子。
+// - 预设(二/三/四/一级)走真实「生长周期」(cycle)：日程由等级自动推导，无需填时长，
+//   选中后实时预览结果天与清除天。
+// - 「自定义」走单次倒计时(timer)：手填名称/等级/生长时长，沿用旧逻辑。
+// - 种植时间默认「现在」，可编辑 datetime-local 以补登已种下的种子。
 // ============================================================================
 
 import { useMemo, useState } from 'react'
@@ -14,20 +15,17 @@ import {
   toDatetimeLocalValue,
   fromDatetimeLocalValue,
 } from '../../utils/time'
-import { SEED_PRESETS } from '../../data/gameData'
+import {
+  SEED_PRESETS,
+  getGrowthCycle,
+  CUSTOM_SEED_DEFAULT_DURATION_MS,
+} from '../../data/gameData'
+import { levelBadgeClass, levelLabel } from './seedLevel'
 
 /** 把毫秒拆成 {小时, 分钟}，用于初始化输入框 */
 function msToHourMinute(ms: number): { hours: number; minutes: number } {
   const totalMinutes = Math.max(0, Math.round(ms / MS_PER_MINUTE))
   return { hours: Math.floor(totalMinutes / 60), minutes: totalMinutes % 60 }
-}
-
-/** 等级 -> 徽标类名（1=碧/jade，2=金/gold，3=红/red） */
-function levelBadgeClass(level: number): string {
-  if (level >= 3) return 'badge-red'
-  if (level === 2) return 'badge-gold'
-  if (level === 1) return 'badge-ok'
-  return 'badge-outline'
 }
 
 /** 自定义项的哨兵索引 */
@@ -37,13 +35,13 @@ export default function AddSeedForm() {
   const { add } = useSeeds()
   const now = useNow()
 
-  // 选中的预设下标；CUSTOM 表示自定义
-  const [presetIndex, setPresetIndex] = useState<number>(1) // 默认二级种子
+  // 选中的预设下标；CUSTOM 表示自定义。默认二级种子（下标 0）
+  const [presetIndex, setPresetIndex] = useState<number>(0)
   // 自定义名称 / 等级（仅自定义模式生效）
   const [customName, setCustomName] = useState('')
-  const [customLevel, setCustomLevel] = useState(2)
-  // 生长时长（小时 + 分钟）
-  const initial = msToHourMinute(SEED_PRESETS[1].defaultDurationMs)
+  const [customLevel, setCustomLevel] = useState(0)
+  // 自定义(timer)生长时长（小时 + 分钟）
+  const initial = msToHourMinute(CUSTOM_SEED_DEFAULT_DURATION_MS)
   const [hours, setHours] = useState(initial.hours)
   const [minutes, setMinutes] = useState(initial.minutes)
   // 种植时间（datetime-local 字符串）。空串表示「使用现在」
@@ -53,17 +51,6 @@ export default function AddSeedForm() {
   const isCustom = presetIndex === CUSTOM
   const activePreset = isCustom ? null : SEED_PRESETS[presetIndex]
 
-  // 切换预设：同步名称/等级/默认时长
-  function selectPreset(index: number) {
-    setPresetIndex(index)
-    if (index !== CUSTOM) {
-      const p = SEED_PRESETS[index]
-      const hm = msToHourMinute(p.defaultDurationMs)
-      setHours(hm.hours)
-      setMinutes(hm.minutes)
-    }
-  }
-
   const durationMs = useMemo(
     () => hours * MS_PER_HOUR + minutes * MS_PER_MINUTE,
     [hours, minutes],
@@ -71,9 +58,14 @@ export default function AddSeedForm() {
 
   const seedName = isCustom ? customName.trim() : activePreset!.seedName
   const level = isCustom ? customLevel : activePreset!.level
+  const mode = isCustom ? 'timer' : activePreset!.mode
+  const cycle = mode === 'cycle' ? getGrowthCycle(level) : undefined
 
-  // 表单是否可提交：名称非空 且 时长大于 0
-  const canSubmit = seedName.length > 0 && durationMs > 0
+  // 表单是否可提交：
+  // - cycle：名称非空（预设恒满足）
+  // - timer：名称非空 且 时长大于 0
+  const canSubmit =
+    seedName.length > 0 && (mode === 'cycle' || durationMs > 0)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -90,7 +82,8 @@ export default function AddSeedForm() {
       seedName,
       level,
       plantedAt,
-      durationMs,
+      mode,
+      durationMs: mode === 'timer' ? durationMs : undefined,
       note: note.trim() || undefined,
     })
 
@@ -110,7 +103,7 @@ export default function AddSeedForm() {
               type="button"
               key={p.seedName}
               className={'chip' + (!isCustom && presetIndex === i ? ' active' : '')}
-              onClick={() => selectPreset(i)}
+              onClick={() => setPresetIndex(i)}
             >
               {p.seedName}
             </button>
@@ -118,7 +111,7 @@ export default function AddSeedForm() {
           <button
             type="button"
             className={'chip' + (isCustom ? ' active' : '')}
-            onClick={() => selectPreset(CUSTOM)}
+            onClick={() => setPresetIndex(CUSTOM)}
           >
             自定义
           </button>
@@ -145,9 +138,9 @@ export default function AddSeedForm() {
               onChange={(e) => setCustomLevel(Number(e.target.value))}
             >
               <option value={0}>未分级</option>
-              <option value={1}>一级</option>
               <option value={2}>二级</option>
               <option value={3}>三级</option>
+              <option value={4}>四级</option>
             </select>
           </div>
         </div>
@@ -155,45 +148,76 @@ export default function AddSeedForm() {
 
       {/* 当前选择的等级徽标提示 */}
       {seedName && (
-        <div className="row small muted">
+        <div className="row row-wrap small muted">
           <span>本次种植：</span>
-          <span className={'badge ' + levelBadgeClass(level)}>
-            {level > 0 ? `${level} 级` : '未分级'}
-          </span>
+          <span className={'badge ' + levelBadgeClass(level)}>{levelLabel(level)}</span>
           <span>{seedName}</span>
+          <span className="badge badge-outline">
+            {mode === 'cycle' ? '生长周期' : '单次计时'}
+          </span>
         </div>
       )}
 
-      {/* 生长时长：小时 + 分钟 */}
-      <div className="field">
-        <label>生长时长</label>
-        <div className="courtyard-duration-row">
-          <div className="field">
-            <input
-              className="input"
-              type="number"
-              min={0}
-              max={240}
-              value={hours}
-              onChange={(e) => setHours(Math.max(0, Number(e.target.value) || 0))}
-            />
+      {/* cycle 模式：生长周期预览 */}
+      {mode === 'cycle' && cycle && (
+        <div className="courtyard-cycle-preview">
+          {cycle.harvestDays.length > 0 ? (
+            <div className="row row-wrap small">
+              <span className="muted">结果(可收获)：</span>
+              <span className="courtyard-cycle-days">
+                第 {cycle.harvestDays.join('、')} 天
+              </span>
+            </div>
+          ) : (
+            <div className="small muted">仅装饰，不结果</div>
+          )}
+          <div className="row row-wrap small">
+            <span className="muted">清除重种：</span>
+            <span className="courtyard-cycle-days">第 {cycle.clearDay} 天</span>
+            {cycle.earlyRipenDay != null && cycle.harvestDays.length > 0 && (
+              <span className="muted">· 第 {cycle.earlyRipenDay} 天起可能早熟</span>
+            )}
           </div>
-          <span className="small muted">小时</span>
-          <div className="field">
-            <input
-              className="input"
-              type="number"
-              min={0}
-              max={59}
-              value={minutes}
-              onChange={(e) =>
-                setMinutes(Math.min(59, Math.max(0, Number(e.target.value) || 0)))
-              }
-            />
-          </div>
-          <span className="small muted">分钟</span>
+          {level >= 4 && (
+            <div className="small courtyard-cycle-caveat">
+              ⚠ 四级逐日结果天为推断值（官方未公布实测），清除日(第 22 天)较可信
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* timer 模式：生长时长（小时 + 分钟） */}
+      {mode === 'timer' && (
+        <div className="field">
+          <label>生长时长</label>
+          <div className="courtyard-duration-row">
+            <div className="field">
+              <input
+                className="input"
+                type="number"
+                min={0}
+                max={240}
+                value={hours}
+                onChange={(e) => setHours(Math.max(0, Number(e.target.value) || 0))}
+              />
+            </div>
+            <span className="small muted">小时</span>
+            <div className="field">
+              <input
+                className="input"
+                type="number"
+                min={0}
+                max={59}
+                value={minutes}
+                onChange={(e) =>
+                  setMinutes(Math.min(59, Math.max(0, Number(e.target.value) || 0)))
+                }
+              />
+            </div>
+            <span className="small muted">分钟</span>
+          </div>
+        </div>
+      )}
 
       {/* 种植时间（可补登） */}
       <div className="field">
@@ -212,7 +236,7 @@ export default function AddSeedForm() {
         <label>备注（可选）</label>
         <input
           className="input"
-          placeholder="例如：种在东侧花盆"
+          placeholder="例如：种在东侧花圃"
           value={note}
           onChange={(e) => setNote(e.target.value)}
         />
@@ -223,7 +247,9 @@ export default function AddSeedForm() {
           🌱 种下
         </button>
         {!canSubmit && (
-          <span className="small muted">请填写名称并设置大于 0 的生长时长</span>
+          <span className="small muted">
+            {isCustom ? '请填写名称并设置大于 0 的生长时长' : '请先选择种子'}
+          </span>
         )}
       </div>
     </form>

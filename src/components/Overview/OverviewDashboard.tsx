@@ -1,6 +1,15 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import type { TabId } from '../../tabs'
-import { useTodos, useSeeds, useDungeons, useHouse, useSettings } from '../../store/useAppStore'
+import {
+  useTodos,
+  useSeeds,
+  useDungeons,
+  useHouse,
+  useSettings,
+  useCharacters,
+  useGuides,
+} from '../../store/useAppStore'
+import { GUIDE_PRESETS } from '../../data/guides'
 import { useNow } from '../../hooks/useNow'
 import {
   getPeriodKey,
@@ -9,6 +18,9 @@ import {
   formatRemainingHuman,
   WEEKDAY_LABELS,
 } from '../../utils/time'
+import { effectiveCharacterIds, isTaskAllDone } from '../../utils/todo'
+import { getGrowthCycle } from '../../data/gameData'
+import { computeSeedSchedule, isCaredToday, seedMode } from '../../utils/courtyard'
 import {
   currentCleanliness,
   currentDurability,
@@ -74,6 +86,9 @@ export default function OverviewDashboard({ onNavigate }: Props) {
   const { dungeons } = useDungeons()
   const { house } = useHouse()
   const { settings } = useSettings()
+  const { characters } = useCharacters()
+  const { guides: customGuides } = useGuides()
+  const charIds = effectiveCharacterIds(characters)
 
   // —— 顶部概要：今日日期 / 星期 / 距每日刷新 ——
   const today = new Date(now)
@@ -88,21 +103,34 @@ export default function OverviewDashboard({ onNavigate }: Props) {
   const weeklyKey = getPeriodKey('weekly', now, settings)
   const monthlyKey = getPeriodKey('monthly', now, settings)
   const dailyTodos = todos.filter((t) => t.cycle === 'daily')
-  const dailyDone = dailyTodos.filter((t) => t.lastCompletedPeriodKey === dailyKey).length
+  // 一条任务「全部角色完成」才算完成
+  const dailyDone = dailyTodos.filter((t) => isTaskAllDone(t, charIds, dailyKey)).length
   const weeklyUndone = todos.filter(
-    (t) => t.cycle === 'weekly' && t.lastCompletedPeriodKey !== weeklyKey,
+    (t) => t.cycle === 'weekly' && !isTaskAllDone(t, charIds, weeklyKey),
   ).length
   const monthlyUndone = todos.filter(
-    (t) => t.cycle === 'monthly' && t.lastCompletedPeriodKey !== monthlyKey,
+    (t) => t.cycle === 'monthly' && !isTaskAllDone(t, charIds, monthlyKey),
   ).length
 
-  // —— 庭院统计：成熟数 + 最近一株未成熟的倒计时 ——
-  const matureCount = seeds.filter((s) => s.plantedAt + s.durationMs <= now).length
-  const growing = seeds
-    .map((s) => s.plantedAt + s.durationMs - now)
-    .filter((left) => left > 0)
-    .sort((a, b) => a - b)
-  const nextSeedLeft = growing.length > 0 ? growing[0] : null
+  // —— 庭院统计：可处理(可收获/待清)数 + 待养护数 + 下一事件倒计时（cycle 与 timer 通用） ——
+  let seedActionable = 0
+  let seedCareNeeded = 0
+  const seedUpcoming: number[] = []
+  for (const s of seeds) {
+    const cycle = getGrowthCycle(s.level)
+    if (seedMode(s) === 'cycle' && cycle) {
+      const sc = computeSeedSchedule(s, cycle, settings.dailyResetHour, now)
+      if (sc.todayIsHarvest || sc.ended) seedActionable++
+      if (!sc.ended && !isCaredToday(s, settings.dailyResetHour, now)) seedCareNeeded++
+      const left = sc.nextEventAt - now
+      if (left > 0) seedUpcoming.push(left)
+    } else {
+      const left = s.plantedAt + s.durationMs - now
+      if (left <= 0) seedActionable++
+      else seedUpcoming.push(left)
+    }
+  }
+  const nextSeedLeft = seedUpcoming.length > 0 ? Math.min(...seedUpcoming) : null
 
   // —— 副本统计：本期 required 且未完成的数量（按各自周期判断）+ 最近刷新 ——
   const requiredUndone = dungeons.filter((d) => {
@@ -196,26 +224,29 @@ export default function OverviewDashboard({ onNavigate }: Props) {
           ) : (
             <>
               <div className="ov-stat">
-                <span className={`ov-stat-num ${matureCount > 0 ? 'is-gold' : ''}`}>
-                  {matureCount}
+                <span className={`ov-stat-num ${seedActionable > 0 ? 'is-gold' : ''}`}>
+                  {seedActionable}
                 </span>
-                <span className="ov-stat-unit">株可收获</span>
-                {matureCount > 0 && <span className="badge badge-gold">待收获</span>}
+                <span className="ov-stat-unit">株可处理</span>
+                {seedActionable > 0 && <span className="badge badge-gold">待收获</span>}
+                {seedCareNeeded > 0 && (
+                  <span className="badge badge-warn">{seedCareNeeded} 待养护</span>
+                )}
               </div>
               <div className="ov-next">
                 {nextSeedLeft != null ? (
                   <>
-                    <span className="muted small">最近成熟</span>
+                    <span className="muted small">下一事件</span>
                     <span
                       className={`countdown ${
                         nextSeedLeft <= 30 * 60 * 1000 ? 'urgent' : ''
                       }`}
                     >
-                      {formatCountdown(nextSeedLeft, '已成熟')}
+                      {formatCountdown(nextSeedLeft, '即将')}
                     </span>
                   </>
                 ) : (
-                  <span className="badge badge-ok">全部已成熟</span>
+                  <span className="badge badge-ok">暂无进行中</span>
                 )}
               </div>
             </>
@@ -301,6 +332,23 @@ export default function OverviewDashboard({ onNavigate }: Props) {
                 约 {formatRemainingHuman(nextHouseWarnLeft)} 后需打理
               </span>
             )}
+          </div>
+        </OverviewCard>
+
+        {/* 攻略卡片 */}
+        <OverviewCard glyph="📖" title="攻略大全" onNavigate={() => onNavigate('guide')}>
+          <div className="ov-stat">
+            <span className="ov-stat-num is-gold">{GUIDE_PRESETS.length}</span>
+            <span className="ov-stat-unit">条内置攻略</span>
+            {customGuides.length > 0 && (
+              <span className="badge badge-gold">自定义 {customGuides.length}</span>
+            )}
+          </div>
+          <div className="ov-line row-wrap">
+            <span className="badge badge-outline">副本</span>
+            <span className="badge badge-outline">神器</span>
+            <span className="badge badge-outline">奇遇</span>
+            <span className="badge badge-outline">看戏</span>
           </div>
         </OverviewCard>
       </div>

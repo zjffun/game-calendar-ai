@@ -8,12 +8,15 @@
 
 import { useMemo } from 'react'
 import type { TodoCycle, TodoTask } from '../../types'
-import { useTodos, useSettings } from '../../store/useAppStore'
+import type { TabId } from '../../tabs'
+import { useTodos, useSettings, useCharacters } from '../../store/useAppStore'
 import { useNow } from '../../hooks/useNow'
 import { getPeriodKey, getNextReset, formatCountdown } from '../../utils/time'
+import { effectiveCharacterIds, isTaskAllDone } from '../../utils/todo'
 import TodoItem from './TodoItem'
 import PresetPicker from './PresetPicker'
 import AddTodoForm from './AddTodoForm'
+import CharacterBar from './CharacterBar'
 import './Todo.css'
 
 interface CycleMeta {
@@ -35,9 +38,16 @@ function byOrder(a: TodoTask, b: TodoTask): number {
   return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
 }
 
-export default function TodoSection() {
+interface Props {
+  /** 跳转到其它标签页（用于「攻略大全」入口） */
+  onNavigate?: (tab: TabId) => void
+}
+
+export default function TodoSection({ onNavigate }: Props) {
   const { todos } = useTodos()
   const { settings } = useSettings()
+  const { characters } = useCharacters()
+  const charIds = effectiveCharacterIds(characters)
   const now = useNow(1000)
 
   // 按周期分组并排序，仅在依赖变化时重算
@@ -59,11 +69,31 @@ export default function TodoSection() {
         日常待办
       </h2>
 
+      {/* 攻略大全入口：跳转到攻略模块（副本/神器/奇遇/看戏 + 自定义） */}
+      {onNavigate && (
+        <button type="button" className="todo-guide-entry" onClick={() => onNavigate('guide')}>
+          <span className="todo-guide-entry-glyph" aria-hidden>
+            📖
+          </span>
+          <span className="todo-guide-entry-text">
+            <strong>攻略大全</strong>
+            <span className="muted small">副本 · 神器 · 奇遇 · 看戏，支持自定义</span>
+          </span>
+          <span className="todo-guide-entry-arrow" aria-hidden>
+            ›
+          </span>
+        </button>
+      )}
+
+      {/* 角色管理：增加角色后按角色分别勾选 */}
+      <CharacterBar />
+
       {/* 三类周期分组 */}
       {CYCLES.map((meta) => {
         const list = grouped[meta.cycle]
         const periodKey = getPeriodKey(meta.cycle, now, settings)
-        const doneCount = list.filter((t) => t.lastCompletedPeriodKey === periodKey).length
+        // 一条任务「全部角色完成」才算完成
+        const doneCount = list.filter((t) => isTaskAllDone(t, charIds, periodKey)).length
         const total = list.length
         // 距下次刷新倒计时
         const remaining = getNextReset(meta.cycle, now, settings) - now

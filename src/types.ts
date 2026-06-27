@@ -7,9 +7,26 @@
 export type TodoCycle = 'daily' | 'weekly' | 'monthly'
 
 /**
+ * 一个角色（账号）。五开/多号玩家可为每个角色单独记录待办完成情况。
+ */
+export interface Character {
+  id: string
+  name: string
+  /** 排序权重，越小越靠前 */
+  order?: number
+}
+
+/**
+ * 没有添加任何角色时使用的「保留角色 ID」，代表单人/全部，
+ * 让单角色与多角色走同一套按角色完成的逻辑。
+ */
+export const SOLO_CHARACTER_ID = '_solo'
+
+/**
  * 一条 TODO 任务。
- * 完成状态用「最近完成的周期 Key」表示：渲染时把它和「当前周期 Key」比较，
- * 相等即视为本周期已完成；跨天/跨周/跨月后会自动重置为未完成（无需定时任务）。
+ * 完成状态【按角色】记录：completions[角色ID] === 当前周期 Key 即该角色本周期已完成；
+ * 跨天/跨周/跨月后周期 Key 变化，自动重置为未完成（无需定时任务）。
+ * 主勾选框表示「全部角色都完成」。
  */
 export interface TodoTask {
   id: string
@@ -19,7 +36,12 @@ export interface TodoTask {
   preset?: boolean
   /** 备注（可选） */
   note?: string
-  /** 最近一次完成时所属的周期 Key，例如每日 '2026-06-20'、每周 '2026-W25'、每月 '2026-06' */
+  /**
+   * 按角色记录的完成情况：角色ID -> 该角色最近一次完成所属的周期 Key。
+   * 无角色时使用保留键 SOLO_CHARACTER_ID。
+   */
+  completions?: Record<string, string>
+  /** @deprecated 旧版单人完成字段，仅用于数据迁移到 completions */
   lastCompletedPeriodKey?: string
   /** 排序权重，越小越靠前 */
   order?: number
@@ -34,33 +56,69 @@ export interface PresetTodo {
 }
 
 // ----------------------------------------------------------------------------
-// 庭院种子倒计时
+// 庭院种子倒计时 / 生长周期
 // ----------------------------------------------------------------------------
 
 /**
+ * 种子计时方式：
+ * - 'cycle'：按梦幻西游电脑版真实「生长周期」推进 —— 以种下当天为第 1 天，
+ *   在固定的「结果(可收获)天」产出，到「清除天」永久休眠后清除重种；期间每日需养护。
+ *   日程由等级对应的 SeedGrowthCycle 推导，无需手填时长。
+ * - 'timer'：单次倒计时（自定义种子 / 一级 / 旧数据），成熟时刻 = plantedAt + durationMs。
+ */
+export type SeedMode = 'cycle' | 'timer'
+
+/**
  * 一株正在生长的庭院种子。
- * 成熟时间 = plantedAt + durationMs。
+ * - timer 模式：成熟时刻 = plantedAt + durationMs。
+ * - cycle 模式：日程由 plantedAt + 等级生长周期(SeedGrowthCycle) + 每日重置点推导。
  */
 export interface SeedTimer {
   id: string
   /** 种子名称/等级，例如 '二级种子' '三级种子' 或自定义 */
   seedName: string
-  /** 种子等级（用于配色/分组），1/2/3，自定义可为 0 */
+  /** 种子等级（用于配色/分组与查找生长周期）：1/2/3/4，自定义可为 0 */
   level: number
   /** 种植时间（epoch 毫秒） */
   plantedAt: number
-  /** 生长所需时长（毫秒） */
+  /** 单次计时（timer 模式）所需时长（毫秒）。cycle 模式不使用，可为 0 */
   durationMs: number
+  /** 计时方式；缺省视为 'timer'（兼容旧数据） */
+  mode?: SeedMode
+  /**
+   * cycle 模式：最近一次完成「今日养护」所属的每日周期 Key（与待办同机制，跨日自动重置）。
+   * 等于当前每日周期 Key 即视为今日已养护。
+   */
+  lastCareDayKey?: string
   /** 备注，例如种在哪个花盆 */
   note?: string
 }
 
-/** 种子预设（用于快速添加，时长可在 UI 中调整） */
+/** 种子预设（用于快速添加） */
 export interface SeedPreset {
   seedName: string
   level: number
-  /** 默认生长时长（毫秒）—— 可由用户在界面上调整 */
-  defaultDurationMs: number
+  /** 计时方式：cycle=真实生长周期，timer=单次倒计时 */
+  mode: SeedMode
+  /** timer 模式的默认生长时长（毫秒，可在界面调整）；cycle 模式忽略 */
+  defaultDurationMs?: number
+}
+
+/**
+ * 一种庭院种子等级的真实生长周期（参考梦幻西游电脑版资料）。
+ * 计时以「种下当天 = 第 1 天」为准；结果与清除均在当日 0 点(每日重置点)生效。
+ */
+export interface SeedGrowthCycle {
+  /** 种子等级：2/3/4（一级与自定义走 timer 模式，不在此表） */
+  level: number
+  /** 结果(可收获)的天数，升序，例如二级 [7, 8, 12, 13] */
+  harvestDays: number[]
+  /** 永久休眠 / 可用「如意符」清除并开启下一批种植的天数 */
+  clearDay: number
+  /** 循环间的休整(休眠)天，仅用于时间轴展示（可选） */
+  restDays?: number[]
+  /** 最早可能「早熟」的天数（可选，提示用） */
+  earlyRipenDay?: number
 }
 
 // ----------------------------------------------------------------------------
@@ -96,31 +154,77 @@ export interface DungeonPreset {
 }
 
 // ----------------------------------------------------------------------------
-// 房屋清洁 / 耐久
+// 攻略（副本 / 神器 / 奇遇 / 看戏）+ 用户自定义
 // ----------------------------------------------------------------------------
 
 /**
- * 房屋状态。洁净度与耐久随时间衰减：
+ * 攻略分类。内置四大类对应梦幻西游电脑版的副本、神器、奇遇、看戏；
+ * '自定义' 用于用户自行添加、展示在侧边的内容。
+ */
+export type GuideCategory = '副本' | '神器' | '奇遇' | '看戏' | '自定义'
+
+/** 攻略正文的一个小节：可选小标题 + 若干要点行 */
+export interface GuideSection {
+  heading?: string
+  /** 要点行（逐条展示，渲染为列表） */
+  items: string[]
+}
+
+/**
+ * 一条攻略。
+ * - 内置攻略（preset=true）来自资料整理，只读，不可编辑/删除；
+ * - 自定义攻略（preset 省略/false）由用户添加，可编辑/删除，与内置一并展示在侧边。
+ */
+export interface GuideEntry {
+  id: string
+  category: GuideCategory
+  title: string
+  /** 一句话定位：等级/周期/难度/核心收益 */
+  summary?: string
+  /** 关键词标签（用于搜索与展示） */
+  tags?: string[]
+  /** 正文小节 */
+  sections: GuideSection[]
+  /** 资料出处 / 置信度备注（内置攻略用） */
+  source?: string
+  /** 是否内置（只读）。自定义为 false/省略 */
+  preset?: boolean
+  /** 排序权重，越小越靠前 */
+  order?: number
+  /** 自定义攻略的最近更新时间（epoch 毫秒） */
+  updatedAt?: number
+}
+
+// ----------------------------------------------------------------------------
+// 房屋清洁度 / 耐久度（参考梦幻西游电脑版「房屋属性」）
+// ----------------------------------------------------------------------------
+
+/**
+ * 房屋状态。清洁度与耐久度随时间衰减：
  *   当前值 = baseValue - decayPerDay * (距 updatedAt 的天数)，并截断到 [0, 100]。
- * 用户「清洁/修理」时把 baseValue 重置为 100 并刷新 updatedAt。
+ * 玩家指使佣人「打扫」提升清洁度、「修理」提升耐久度（两者各自独立、按佣人房等级增量）。
+ *   - 耐久度官方分档：≥80 满效果(100%)，60-79=80%，30-59=60%，<30=40%，0 有几率倒塌。
+ *   - 清洁度=100 时环境指数最高，卧室每日休息次数最多。
  */
 export interface HouseState {
   /** 房屋名称（可选，用于多套房产场景） */
   name: string
-  /** 上次记录的洁净度基准值（0-100） */
+  /** 上次记录的清洁度基准值（0-100） */
   cleanlinessBase: number
-  /** 上次记录的耐久基准值（0-100） */
+  /** 上次记录的耐久度基准值（0-100） */
   durabilityBase: number
   /** 上次更新时间（epoch 毫秒） */
   updatedAt: number
-  /** 洁净度每日衰减量 */
+  /** 清洁度每日衰减量（官方约 4/天，家具越多越慢） */
   cleanlinessDecayPerDay: number
-  /** 耐久每日衰减量 */
+  /** 耐久度每日衰减量（官方约 4/天） */
   durabilityDecayPerDay: number
-  /** 低于该阈值时提示清洁 */
+  /** 清洁度建议下限：高于此值为「良好」（默认 90，满收益应贴近 100） */
   cleanlinessWarnThreshold: number
-  /** 低于该阈值时提示修理 */
+  /** 耐久度建议下限：高于此值为满效果（默认 80，官方满效果线） */
   durabilityWarnThreshold: number
+  /** 佣人房等级（0=无,1=普通,2=中级,3=高级），决定单次打扫/修理的恢复量 */
+  servantRoomLevel: number
 }
 
 // ----------------------------------------------------------------------------
@@ -150,4 +254,7 @@ export const STORAGE_KEYS = {
   dungeons: 'mhxy.dungeons.v1',
   house: 'mhxy.house.v1',
   settings: 'mhxy.settings.v1',
+  characters: 'mhxy.characters.v1',
+  /** 用户自定义攻略（内置攻略来自代码，不入库） */
+  guides: 'mhxy.guides.v1',
 } as const

@@ -1,0 +1,264 @@
+/* ==========================================================================
+   攻略大全 —— 侧边导航 + 正文阅读 + 自定义编辑
+   复用全局 .card / .btn / .badge / .chip / .input 等主题样式。
+   ========================================================================== */
+
+.guide-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+/* ---------- 侧边栏 ---------- */
+
+.guide-sidebar {
+  flex: 0 0 248px;
+  width: 248px;
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--c-paper-2);
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 12px;
+}
+
+.guide-side-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.guide-search {
+  width: 100%;
+}
+.guide-add-btn {
+  width: 100%;
+}
+
+.guide-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guide-group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px 4px;
+  border-bottom: 1px dashed var(--c-line);
+  margin-bottom: 4px;
+}
+.guide-group-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--c-red);
+}
+.guide-group-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-ink-faint);
+  background: rgba(120, 90, 50, 0.1);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.guide-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.guide-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 7px 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-ink-soft);
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.guide-nav-item:hover {
+  background: rgba(184, 134, 11, 0.1);
+  color: var(--c-ink);
+}
+.guide-nav-item.active {
+  background: linear-gradient(180deg, var(--c-red-2), var(--c-red));
+  border-color: var(--c-red);
+  color: #fff5ec;
+  box-shadow: var(--shadow-sm);
+}
+.guide-nav-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.guide-nav-tag {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #f6e6bf;
+  color: var(--c-gold);
+}
+.guide-nav-item.active .guide-nav-tag {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--c-red);
+}
+
+/* ---------- 主区 ---------- */
+
+.guide-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 320px;
+}
+
+.guide-detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.guide-detail-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.guide-detail-title {
+  font-size: 20px;
+  color: var(--c-ink);
+}
+.guide-detail-summary {
+  margin: 0;
+  font-size: 13.5px;
+}
+.guide-detail-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.guide-detail-tags {
+  gap: 6px;
+  margin-top: 10px;
+}
+.guide-tag {
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: default;
+}
+.guide-tag:hover {
+  border-color: var(--c-line-strong);
+}
+.guide-detail-source {
+  margin: 16px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--c-line);
+}
+
+/* ---------- 正文小节 ---------- */
+
+.guide-content-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.guide-sec-head {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--c-jade);
+  margin-bottom: 6px;
+  padding-left: 10px;
+  border-left: 3px solid var(--c-gold-2);
+}
+.guide-sec-list {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.guide-sec-list li {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--c-ink);
+}
+.guide-sec-list li::marker {
+  color: var(--c-gold);
+}
+
+/* ---------- 编辑器 ---------- */
+
+.guide-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.guide-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.guide-editor-head h3 {
+  font-size: 16px;
+}
+.guide-editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 12px;
+}
+.guide-editor-textarea {
+  resize: vertical;
+  min-height: 180px;
+  line-height: 1.6;
+}
+.guide-editor-textarea code,
+.field code {
+  background: rgba(120, 90, 50, 0.12);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 12px;
+}
+.guide-editor-preview {
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  background: rgba(255, 253, 246, 0.6);
+}
+.guide-editor-preview-label {
+  margin-bottom: 8px;
+}
+
+/* ---------- 响应式：窄屏改为上下布局 ---------- */
+
+@media (max-width: 720px) {
+  .guide-layout {
+    flex-direction: column;
+  }
+  .guide-sidebar {
+    flex: none;
+    width: 100%;
+    position: static;
+    max-height: 320px;
+  }
+  .guide-editor-grid {
+    grid-template-columns: 1fr;
+  }
+}

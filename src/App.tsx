@@ -7,6 +7,7 @@ import TodoSection from './components/Todo/TodoSection'
 import CourtyardTimers from './components/Courtyard/CourtyardTimers'
 import DungeonTracker from './components/Dungeon/DungeonTracker'
 import HouseCleaning from './components/House/HouseCleaning'
+import GuideBook from './components/Guide/GuideBook'
 import SettingsPanel from './components/Settings/SettingsPanel'
 import type { TabId } from './tabs'
 import './App.css'
@@ -23,6 +24,7 @@ const TABS: TabDef[] = [
   { id: 'courtyard', label: '庭院', glyph: '🌱' },
   { id: 'dungeon', label: '副本', glyph: '⚔️' },
   { id: 'house', label: '房屋', glyph: '🏠' },
+  { id: 'guide', label: '攻略', glyph: '📖' },
   { id: 'settings', label: '设置', glyph: '⚙️' },
 ]
 
@@ -67,10 +69,11 @@ export default function App() {
 
       <main className="app-main">
         {tab === 'overview' && <OverviewDashboard onNavigate={setTab} />}
-        {tab === 'todo' && <TodoSection />}
+        {tab === 'todo' && <TodoSection onNavigate={setTab} />}
         {tab === 'courtyard' && <CourtyardTimers />}
         {tab === 'dungeon' && <DungeonTracker />}
         {tab === 'house' && <HouseCleaning />}
+        {tab === 'guide' && <GuideBook />}
         {tab === 'settings' && <SettingsPanel />}
       </main>
 

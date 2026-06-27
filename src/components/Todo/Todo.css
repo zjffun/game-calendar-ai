@@ -61,6 +61,12 @@
   border-color: var(--c-jade);
   color: #f3fff8;
 }
+/* 部分角色完成：半选态（金色 –） */
+.todo-check.partial {
+  background: #f6e6bf;
+  border-color: var(--c-gold);
+  color: var(--c-gold);
+}
 
 /* TODO 主体（名称 + 备注） */
 .todo-body {
@@ -122,4 +128,167 @@
 }
 .todo-chip .todo-chip-mark {
   font-size: 12px;
+}
+
+/* —— 任务名后的「已完成角色/总数」 —— */
+.todo-charcount {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c-gold);
+  font-variant-numeric: tabular-nums;
+}
+.todo-charcount.all {
+  color: var(--c-jade);
+}
+
+/* —— 每条 TODO 下的角色小勾选 —— */
+.todo-chars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.todo-charchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line-strong);
+  background: var(--c-paper-2);
+  color: var(--c-ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.12s ease;
+}
+.todo-charchip:hover {
+  border-color: var(--c-gold);
+}
+.todo-charchip.done {
+  background: var(--c-jade-soft);
+  border-color: var(--c-jade);
+  color: var(--c-jade);
+}
+.todo-charchip-mark {
+  font-size: 11px;
+  display: inline-block;
+  width: 1em;
+  text-align: center;
+}
+
+/* —— 角色管理条 —— */
+.char-bar .card-head h3 {
+  font-size: 15px;
+}
+.char-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.char-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 2px 2px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--c-line-strong);
+  background: var(--c-paper-3);
+}
+.char-chip.editing {
+  padding: 0;
+}
+.char-chip-name {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-ink);
+  padding: 4px 6px;
+  border-radius: 999px;
+}
+.char-chip-name:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.char-chip-del {
+  border: none;
+  background: transparent;
+  color: var(--c-ink-faint);
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 999px;
+}
+.char-chip-del:hover {
+  background: var(--c-red-soft);
+  color: var(--c-red);
+}
+.char-edit-input {
+  width: 96px;
+  border: 1px solid var(--c-gold);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 13px;
+  outline: none;
+}
+.char-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.char-add-input {
+  width: 180px;
+}
+.char-err {
+  margin: 8px 0 0;
+  color: var(--c-red);
+  font-weight: 600;
+}
+
+/* —— 攻略大全入口（待办页顶部）—— */
+.todo-guide-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--c-gold);
+  background: linear-gradient(180deg, #fbf1d4, #f6e6bf);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.05s ease, box-shadow 0.15s ease;
+}
+.todo-guide-entry:hover {
+  box-shadow: var(--shadow);
+}
+.todo-guide-entry:active {
+  transform: translateY(1px);
+}
+.todo-guide-entry-glyph {
+  font-size: 24px;
+  line-height: 1;
+}
+.todo-guide-entry-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.todo-guide-entry-text strong {
+  font-size: 15px;
+  color: var(--c-red);
+}
+.todo-guide-entry-arrow {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--c-gold);
+}
+
+@media (max-width: 560px) {
+  .char-add-input {
+    width: 140px;
+  }
 }

@@ -248,6 +248,10 @@ textarea {
   background: #f6e6bf;
   color: var(--c-gold);
 }
+.badge-purple {
+  background: #ead9f0;
+  color: var(--c-purple);
+}
 .badge-ok {
   background: var(--c-jade-soft);
   color: var(--c-ok);

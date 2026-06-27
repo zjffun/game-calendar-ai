@@ -47,9 +47,26 @@ export function msUntilDurabilityWarn(house: HouseState, now: number): number {
 
 export type HouseStatusLevel = 'ok' | 'warn' | 'danger'
 
-/** 根据当前值与阈值给出状态等级 */
+/**
+ * 根据当前值与「建议下限」阈值给出状态等级：
+ *   - value >= threshold：良好(ok)
+ *   - threshold-20 <= value < threshold：偏低(warn)
+ *   - 否则：告警(danger)
+ * 例：耐久阈值 80 → ≥80 良好 / 60-79 偏低 / <60 告警，与官方耐久分档吻合。
+ */
 export function houseLevel(value: number, threshold: number): HouseStatusLevel {
-  if (value <= threshold) return 'danger'
-  if (value <= threshold + 20) return 'warn'
-  return 'ok'
+  if (value >= threshold) return 'ok'
+  if (value >= threshold - 20) return 'warn'
+  return 'danger'
+}
+
+/**
+ * 官方耐久四档对应的房屋功能效果百分比：
+ *   ≥80 → 100%，60-79 → 80%，30-59 → 60%，<30 → 40%（0 有几率倒塌）。
+ */
+export function durabilityEffectPercent(value: number): number {
+  if (value >= 80) return 100
+  if (value >= 60) return 80
+  if (value >= 30) return 60
+  return 40
 }

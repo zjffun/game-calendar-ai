@@ -2,7 +2,7 @@
 # 前端与网页版完全同一套代码（../dist）；本工程只负责窗口与打包。
 [package]
 name = "game-calendar-ai"
-version = "0.1.0"
+version = "0.0.1"
 description = "梦幻西游 · 游戏日历"
 edition = "2021"
 

@@ -172,7 +172,8 @@ export interface GuideSection {
 
 /**
  * 一条攻略。
- * - 内置攻略（preset=true）来自资料整理，只读，不可编辑/删除；
+ * - 内置攻略（preset=true）来自资料整理，正文只读，不可编辑/删除；
+ *   但可通过 GuideNote 补充用户自己的 Markdown 内容（另行存储，见 guideNotes）；
  * - 自定义攻略（preset 省略/false）由用户添加，可编辑/删除，与内置一并展示在侧边。
  */
 export interface GuideEntry {
@@ -193,6 +194,18 @@ export interface GuideEntry {
   order?: number
   /** 自定义攻略的最近更新时间（epoch 毫秒） */
   updatedAt?: number
+}
+
+/**
+ * 用户给某条内置攻略补充的自定义 Markdown 内容。
+ * 以攻略 id 为键存储（Record<攻略id, GuideNote>），内置正文保持只读，
+ * 补充内容展示在该攻略详情的「我的补充」区域。
+ */
+export interface GuideNote {
+  /** Markdown 原文（渲染时按安全子集解析，不注入原始 HTML） */
+  markdown: string
+  /** 最近更新时间（epoch 毫秒） */
+  updatedAt: number
 }
 
 // ----------------------------------------------------------------------------
@@ -257,4 +270,6 @@ export const STORAGE_KEYS = {
   characters: 'mhxy.characters.v1',
   /** 用户自定义攻略（内置攻略来自代码，不入库） */
   guides: 'mhxy.guides.v1',
+  /** 内置攻略的用户补充内容（攻略id -> Markdown） */
+  guideNotes: 'mhxy.guideNotes.v1',
 } as const

@@ -117,6 +117,13 @@
   background: #f6e6bf;
   color: var(--c-gold);
 }
+/* 内置攻略已补充自定义内容的小标记 */
+.guide-nav-note {
+  flex: 0 0 auto;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.85;
+}
 .guide-nav-item.active .guide-nav-tag {
   background: rgba(255, 255, 255, 0.85);
   color: var(--c-red);
@@ -244,6 +251,200 @@
 }
 .guide-editor-preview-label {
   margin-bottom: 8px;
+}
+
+/* ---------- 我的补充（内置攻略的自定义 Markdown 内容） ---------- */
+
+.guide-notes {
+  margin-top: 18px;
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--radius-sm);
+  background: rgba(246, 230, 191, 0.28);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.guide-notes-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.guide-notes-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--c-gold);
+}
+.guide-notes-textarea {
+  resize: vertical;
+  min-height: 140px;
+  line-height: 1.6;
+}
+.guide-notes-busy {
+  font-size: 12.5px;
+  color: var(--c-warn);
+}
+.guide-notes-error {
+  font-size: 12.5px;
+  color: var(--c-danger);
+}
+.guide-notes-preview {
+  border: 1px dashed var(--c-line);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: rgba(255, 253, 246, 0.7);
+}
+.guide-notes-preview-label {
+  margin-bottom: 8px;
+}
+/* 无补充时的「添加」入口 */
+.guide-notes-add {
+  margin-top: 18px;
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-ink-faint);
+  background: transparent;
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--radius-sm);
+  transition: color 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+.guide-notes-add:hover {
+  color: var(--c-gold);
+  border-color: var(--c-gold-2);
+  background: rgba(246, 230, 191, 0.28);
+}
+
+/* ---------- Markdown 渲染（react-markdown 输出，.md-view 内自成一套排版） ---------- */
+
+.md-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--c-ink);
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+.md-view h1,
+.md-view h2,
+.md-view h3,
+.md-view h4,
+.md-view h5,
+.md-view h6 {
+  font-weight: 700;
+  color: var(--c-jade);
+  padding-left: 10px;
+  border-left: 3px solid var(--c-gold-2);
+  line-height: 1.4;
+  margin: 0;
+}
+.md-view h1 { font-size: 17px; }
+.md-view h2 { font-size: 15.5px; }
+.md-view h3 { font-size: 14.5px; }
+.md-view h4,
+.md-view h5,
+.md-view h6 { font-size: 14px; }
+.md-view p {
+  margin: 0;
+}
+.md-view ul,
+.md-view ol {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.md-view li::marker {
+  color: var(--c-gold);
+}
+.md-view li > ul,
+.md-view li > ol {
+  margin-top: 4px;
+}
+/* GFM 任务列表：去掉多余缩进符号 */
+.md-view li:has(> input[type='checkbox']) {
+  list-style: none;
+  margin-left: -18px;
+}
+.md-view :not(pre) > code {
+  background: rgba(120, 90, 50, 0.12);
+  border-radius: 4px;
+  padding: 0 5px;
+  font-size: 12.5px;
+}
+.md-view pre {
+  margin: 0;
+  padding: 10px 12px;
+  background: rgba(120, 90, 50, 0.1);
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.md-view blockquote {
+  margin: 0;
+  padding: 6px 12px;
+  border-left: 3px solid var(--c-line-strong);
+  background: rgba(120, 90, 50, 0.06);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--c-ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.md-view hr {
+  border: none;
+  border-top: 1px dashed var(--c-line-strong);
+  margin: 4px 0;
+}
+/* GFM 表格 */
+.md-view table {
+  border-collapse: collapse;
+  font-size: 13px;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.md-view th,
+.md-view td {
+  border: 1px solid var(--c-line-strong);
+  padding: 5px 10px;
+  text-align: left;
+}
+.md-view th {
+  background: rgba(246, 230, 191, 0.5);
+  color: var(--c-ink-soft);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.md-link {
+  color: var(--c-jade);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.md-link:hover {
+  color: var(--c-gold);
+}
+.md-img {
+  max-width: 100%;
+  max-height: 480px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--c-line);
+}
+.md-img-missing {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--c-ink-faint);
+  font-size: 12px;
 }
 
 /* ---------- 响应式：窄屏改为上下布局 ---------- */

@@ -1,0 +1,30 @@
+# 梦幻西游 · 游戏日历 —— Tauri 桌面壳
+# 前端与网页版完全同一套代码（../dist）；本工程只负责窗口与打包。
+[package]
+name = "game-calendar-ai"
+version = "0.1.0"
+description = "梦幻西游 · 游戏日历"
+edition = "2021"
+
+[lib]
+name = "game_calendar_ai_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# 网页热更新：从 GitHub Pages 拉取 version.json 与构建产物
+# rustls 避免 Windows/CI 上的 OpenSSL 依赖
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+mime_guess = "2"
+percent-encoding = "2"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+strip = true

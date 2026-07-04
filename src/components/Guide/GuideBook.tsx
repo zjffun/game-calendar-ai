@@ -2,18 +2,21 @@
 // 攻略大全 模块（入口）
 // - 左侧边栏：按分类（副本 / 神器 / 奇遇 / 看戏 / 自定义）分组列出所有攻略；
 //   内置攻略只读，用户自定义攻略可编辑/删除，二者一并展示在侧边；
-// - 顶部搜索：按标题 / 摘要 / 标签 / 正文匹配；
+// - 顶部搜索：按标题 / 摘要 / 标签 / 正文（含「我的补充」）匹配；
 // - 右侧主区：展示选中攻略的正文，或新增/编辑表单；
-// - 「＋ 新增攻略」让用户把自己的内容加入侧边。
+// - 「＋ 新增攻略」让用户把自己的内容加入侧边；
+// - 内置攻略正文只读，但可在详情下方「我的补充」追加自定义 Markdown 内容。
 // ============================================================================
 
 import { useMemo, useState } from 'react'
 import type { GuideEntry } from '../../types'
-import { useGuides } from '../../store/useAppStore'
+import { useGuides, useGuideNotes } from '../../store/useAppStore'
 import { GUIDE_PRESETS, GUIDE_CATEGORY_META } from '../../data/guides'
 import { guideMatches } from '../../utils/guide'
 import GuideContentView from './GuideContentView'
 import GuideEditor, { type GuideDraft } from './GuideEditor'
+import GuideNotes from './GuideNotes'
+import { appConfirm } from '../common/ConfirmDialog'
 import './Guide.css'
 
 type Mode = 'view' | 'add' | 'edit'
@@ -25,6 +28,7 @@ function byOrder(a: GuideEntry, b: GuideEntry): number {
 
 export default function GuideBook() {
   const { guides: customGuides, add, update, remove } = useGuides()
+  const { guideNotes } = useGuideNotes()
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [mode, setMode] = useState<Mode>('view')
@@ -35,15 +39,17 @@ export default function GuideBook() {
     [customGuides],
   )
 
-  // 按分类分组并按搜索过滤；保留分类展示顺序
+  // 按分类分组并按搜索过滤（「我的补充」内容也参与匹配）；保留分类展示顺序
   const groups = useMemo(() => {
     return GUIDE_CATEGORY_META.map((meta) => {
       const list = allEntries.filter(
-        (e) => e.category === meta.category && guideMatches(e, query),
+        (e) =>
+          e.category === meta.category &&
+          guideMatches(e, query, guideNotes[e.id]?.markdown),
       )
       return { meta, list }
     }).filter((g) => g.list.length > 0)
-  }, [allEntries, query])
+  }, [allEntries, query, guideNotes])
 
   // 过滤后的扁平列表（用于默认选中第一条）
   const visibleFlat = useMemo(() => groups.flatMap((g) => g.list), [groups])
@@ -72,8 +78,8 @@ export default function GuideBook() {
     setMode('view')
   }
 
-  function handleDelete(entry: GuideEntry) {
-    if (!window.confirm(`确定删除「${entry.title}」吗？`)) return
+  async function handleDelete(entry: GuideEntry) {
+    if (!(await appConfirm(`确定删除「${entry.title}」吗？`))) return
     remove(entry.id)
     setSelectedId(null)
     setMode('view')
@@ -132,6 +138,11 @@ export default function GuideBook() {
                             onClick={() => select(entry.id)}
                           >
                             <span className="guide-nav-title">{entry.title}</span>
+                            {entry.preset && guideNotes[entry.id] && (
+                              <span className="guide-nav-note" title="已补充自定义内容" aria-hidden>
+                                📝
+                              </span>
+                            )}
                             {!entry.preset && (
                               <span className="guide-nav-tag">自定义</span>
                             )}
@@ -205,6 +216,11 @@ export default function GuideBook() {
 
               {activeEntry.source && (
                 <p className="muted small guide-detail-source">资料出处：{activeEntry.source}</p>
+              )}
+
+              {/* 内置攻略：正文只读，但可补充自定义 Markdown 内容 */}
+              {activeEntry.preset && (
+                <GuideNotes key={activeEntry.id} guideId={activeEntry.id} />
               )}
             </article>
           ) : (

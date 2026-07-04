@@ -59,13 +59,17 @@ export function parseTags(text: string): string[] {
     .slice(0, 8)
 }
 
-/** 搜索匹配：标题 / 摘要 / 标签 / 正文要点，任一命中即可（不区分大小写） */
-export function guideMatches(entry: GuideEntry, query: string): boolean {
+/**
+ * 搜索匹配：标题 / 摘要 / 标签 / 正文要点，任一命中即可（不区分大小写）。
+ * extraText 用于附加可搜索文本（如内置攻略的用户补充 Markdown）。
+ */
+export function guideMatches(entry: GuideEntry, query: string, extraText?: string): boolean {
   const q = query.trim().toLowerCase()
   if (!q) return true
   if (entry.title.toLowerCase().includes(q)) return true
   if (entry.summary?.toLowerCase().includes(q)) return true
   if (entry.tags?.some((t) => t.toLowerCase().includes(q))) return true
+  if (extraText?.toLowerCase().includes(q)) return true
   return entry.sections.some(
     (s) =>
       s.heading?.toLowerCase().includes(q) ||

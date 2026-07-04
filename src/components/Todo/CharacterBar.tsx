@@ -5,6 +5,7 @@
 
 import { useState } from 'react'
 import { useCharacters } from '../../store/useAppStore'
+import { appConfirm } from '../common/ConfirmDialog'
 
 export default function CharacterBar() {
   const { characters, add, rename, remove } = useCharacters()
@@ -25,8 +26,8 @@ export default function CharacterBar() {
     setErr('')
   }
 
-  function confirmRemove(id: string, name: string) {
-    if (window.confirm(`删除角色「${name}」？该角色在所有待办里的完成记录会一并清除。`)) {
+  async function confirmRemove(id: string, name: string) {
+    if (await appConfirm(`删除角色「${name}」？该角色在所有待办里的完成记录会一并清除。`)) {
       remove(id)
     }
   }

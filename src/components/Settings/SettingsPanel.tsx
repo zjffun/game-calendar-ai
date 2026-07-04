@@ -13,7 +13,29 @@ import {
   getNextEvery4DaysReset,
   formatClock,
 } from '../../utils/time'
+import { STORAGE_KEYS } from '../../types'
+import { imagesUsage } from '../../store/imageStore'
+import { formatBytes } from '../../utils/image'
+import {
+  isTauri,
+  activeWebVersion,
+  checkAndDownloadWebUpdate,
+  type ActiveWebVersion,
+} from '../../utils/webUpdate'
 import './Settings.css'
+
+/** 存储用量快照：文本（localStorage）+ 图片库（IndexedDB）+ 浏览器配额 */
+interface UsageInfo {
+  /** 本应用各 key 在 localStorage 中的近似占用（UTF-16，字节） */
+  localBytes: number
+  imageCount: number
+  imageBytes: number
+  /** navigator.storage.estimate 的整源用量/配额（可能不可用） */
+  estimate?: { usage: number; quota: number }
+}
+
+/** localStorage 单源配额的常见下限（5MB），用于给出占比参考 */
+const LOCAL_STORAGE_NOMINAL = 5 * 1024 * 1024
 
 /** 临时提示文案的状态：内容 + 类型（成功/失败） */
 interface Toast {
@@ -36,6 +58,61 @@ export default function SettingsPanel() {
   // —— 清空二次确认 ——
   const [confirmingReset, setConfirmingReset] = useState(false)
   const [resetToast, setResetToast] = useState<Toast | null>(null)
+
+  // —— 网页版本 / 更新（Tauri 桌面端） ——
+  const [webVersion, setWebVersion] = useState<ActiveWebVersion | null>(null)
+  const [updateToast, setUpdateToast] = useState<Toast | null>(null)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+
+  useEffect(() => {
+    void activeWebVersion().then(setWebVersion)
+  }, [])
+
+  async function handleCheckWebUpdate() {
+    setCheckingUpdate(true)
+    try {
+      const res = await checkAndDownloadWebUpdate()
+      if (res.status === 'updated') {
+        setUpdateToast({ text: `已更新到 ${res.remote ?? '新版本'}，正在重载…`, kind: 'ok' })
+        window.setTimeout(() => window.location.reload(), 800)
+        return
+      }
+      if (res.status === 'upToDate') {
+        setUpdateToast({ text: '已是最新版本。', kind: 'ok' })
+      } else {
+        setUpdateToast({ text: `检查失败：${res.message ?? '未知错误'}`, kind: 'err' })
+      }
+    } catch {
+      setUpdateToast({ text: '检查失败：无法与桌面端通信。', kind: 'err' })
+    } finally {
+      setCheckingUpdate(false)
+      autoClear(() => setUpdateToast(null), 4000)
+    }
+  }
+
+  // —— 存储用量 ——
+  const [usage, setUsage] = useState<UsageInfo | null>(null)
+
+  async function refreshUsage() {
+    let localBytes = 0
+    for (const key of Object.values(STORAGE_KEYS)) {
+      const v = localStorage.getItem(key)
+      if (v != null) localBytes += (key.length + v.length) * 2
+    }
+    const img = await imagesUsage().catch(() => ({ count: 0, bytes: 0 }))
+    let estimate: UsageInfo['estimate']
+    try {
+      const est = await navigator.storage?.estimate?.()
+      if (est?.quota) estimate = { usage: est.usage ?? 0, quota: est.quota }
+    } catch {
+      /* 环境不支持则不展示 */
+    }
+    setUsage({ localBytes, imageCount: img.count, imageBytes: img.bytes, estimate })
+  }
+
+  useEffect(() => {
+    void refreshUsage()
+  }, [])
 
   // 提示自动消失计时器（卸载时清理，避免泄漏）
   const timerRef = useRef<number | null>(null)
@@ -68,17 +145,17 @@ export default function SettingsPanel() {
     update({ every4DaysAnchor: ms })
   }
 
-  // —— 生成导出 JSON 并填入预览框 ——
-  function handleExport() {
-    const json = dataActions.exportJSON()
+  // —— 生成导出 JSON 并填入预览框（含 IndexedDB 图片，故为异步）——
+  async function handleExport() {
+    const json = await dataActions.exportJSON()
     setExportText(json)
-    setExportToast({ text: '已生成备份内容，可复制或下载。', kind: 'ok' })
+    setExportToast({ text: '已生成备份内容（含图片），可复制或下载。', kind: 'ok' })
     autoClear(() => setExportToast(null))
   }
 
   // —— 复制到剪贴板 ——
   async function handleCopy() {
-    const json = exportText || dataActions.exportJSON()
+    const json = exportText || (await dataActions.exportJSON())
     if (!exportText) setExportText(json)
     try {
       await navigator.clipboard.writeText(json)
@@ -90,8 +167,8 @@ export default function SettingsPanel() {
   }
 
   // —— 下载为 .json 文件 ——
-  function handleDownload() {
-    const json = exportText || dataActions.exportJSON()
+  async function handleDownload() {
+    const json = exportText || (await dataActions.exportJSON())
     if (!exportText) setExportText(json)
     try {
       const blob = new Blob([json], { type: 'application/json' })
@@ -116,17 +193,18 @@ export default function SettingsPanel() {
   }
 
   // —— 导入 ——
-  function handleImport() {
+  async function handleImport() {
     const text = importText.trim()
     if (!text) {
       setImportToast({ text: '请先粘贴备份 JSON。', kind: 'err' })
       autoClear(() => setImportToast(null))
       return
     }
-    const ok = dataActions.importJSON(text)
+    const ok = await dataActions.importJSON(text)
     if (ok) {
       setImportToast({ text: '导入成功，数据已更新。', kind: 'ok' })
       setImportText('')
+      void refreshUsage()
     } else {
       setImportToast({ text: '导入失败：JSON 格式有误。', kind: 'err' })
     }
@@ -134,19 +212,20 @@ export default function SettingsPanel() {
   }
 
   // —— 清空所有数据（二次确认）——
-  function handleResetClick() {
+  async function handleResetClick() {
     if (!confirmingReset) {
       setConfirmingReset(true)
       // 一段时间未确认则自动取消，避免误触常驻
       autoClear(() => setConfirmingReset(false), 4000)
       return
     }
-    dataActions.resetAll(now)
+    await dataActions.resetAll(now)
     setConfirmingReset(false)
     setExportText('')
     setImportText('')
-    setResetToast({ text: '已清空所有数据，并恢复默认设置。', kind: 'ok' })
+    setResetToast({ text: '已清空所有数据（含图片库），并恢复默认设置。', kind: 'ok' })
     autoClear(() => setResetToast(null))
+    void refreshUsage()
   }
 
   return (
@@ -219,13 +298,51 @@ export default function SettingsPanel() {
         </p>
       </div>
 
+      {/* —— 存储用量 —— */}
+      <div className="card pad-lg">
+        <div className="card-head">
+          <h3>存储用量</h3>
+        </div>
+        <p className="muted small" style={{ margin: '0 0 12px' }}>
+          文本数据存于 localStorage（单源约 5MB，足够存放全部待办/攻略文本）；
+          图片体积大，单独存于 IndexedDB（配额通常数百 MB 起），互不挤占。
+        </p>
+        {usage ? (
+          <ul className="settings-usage">
+            <li>
+              文本数据（localStorage）：约 {formatBytes(usage.localBytes)}（
+              {((usage.localBytes / LOCAL_STORAGE_NOMINAL) * 100).toFixed(1)}% / 5MB）
+            </li>
+            <li>
+              图片库（IndexedDB）：{usage.imageCount} 张，约 {formatBytes(usage.imageBytes)}
+            </li>
+            {usage.estimate && (
+              <li>
+                浏览器整源用量：{formatBytes(usage.estimate.usage)} /{' '}
+                {formatBytes(usage.estimate.quota)}
+              </li>
+            )}
+          </ul>
+        ) : (
+          <p className="muted small" style={{ margin: 0 }}>
+            正在统计…
+          </p>
+        )}
+        <div className="row" style={{ marginTop: 10 }}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void refreshUsage()}>
+            ↻ 重新统计
+          </button>
+        </div>
+      </div>
+
       {/* —— 数据管理：导出 —— */}
       <div className="card pad-lg">
         <div className="card-head">
           <h3>导出备份</h3>
         </div>
         <p className="muted small" style={{ margin: '0 0 12px' }}>
-          导出当前全部数据（待办、种子、副本、房屋、设置）为 JSON，可复制留存或下载为文件。
+          导出当前全部数据（待办、种子、副本、房屋、设置、自定义攻略、攻略补充与其中的图片）为
+          JSON，可复制留存或下载为文件。含图片时文件可能较大，建议用「下载」。
         </p>
         <div className="row row-wrap" style={{ marginBottom: exportText ? 12 : 0 }}>
           <button type="button" className="btn btn-gold" onClick={handleExport}>
@@ -292,8 +409,8 @@ export default function SettingsPanel() {
           <h3 style={{ color: 'var(--c-danger)' }}>清空所有数据</h3>
         </div>
         <p className="muted small" style={{ margin: '0 0 12px' }}>
-          删除全部待办、种子、副本与房屋记录，并把所有设置恢复为默认值。此操作不可撤销，
-          建议先「导出备份」。
+          删除全部待办、种子、副本、房屋记录、攻略补充与图片库，并把所有设置恢复为默认值。
+          此操作不可撤销，建议先「导出备份」。
         </p>
         <div className="row row-wrap">
           <button type="button" className="btn btn-primary" onClick={handleResetClick}>
@@ -314,15 +431,47 @@ export default function SettingsPanel() {
         </div>
       </div>
 
-      {/* —— 关于 —— */}
+      {/* —— 关于 / 网页版本 —— */}
       <div className="card pad-lg">
         <div className="card-head">
           <h3>关于</h3>
         </div>
         <p className="muted small" style={{ margin: 0 }}>
-          梦幻西游 · 游戏日历。所有数据仅保存在本机浏览器的 localStorage 中，不会上传到任何服务器；
-          清除浏览器数据或更换设备 / 浏览器后将无法恢复，请及时「导出备份」。
+          梦幻西游 · 游戏日历，支持网页与 Tauri 桌面端。所有数据仅保存在本机（文本存
+          localStorage、图片存 IndexedDB），不会上传到任何服务器；清除浏览器数据或更换设备 /
+          浏览器后将无法恢复，请及时「导出备份」。
         </p>
+        <p className="muted small" style={{ margin: '10px 0 0' }}>
+          网页版本：
+          {webVersion
+            ? `${webVersion.version}${
+                webVersion.builtAt ? `（构建于 ${new Date(webVersion.builtAt).toLocaleString()}）` : ''
+              }`
+            : '开发模式 / 未知'}
+        </p>
+        {isTauri() && (
+          <div className="row row-wrap" style={{ marginTop: 10 }}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => void handleCheckWebUpdate()}
+              disabled={checkingUpdate}
+            >
+              {checkingUpdate ? '正在检查…' : '⇩ 从 GitHub Pages 检查网页更新'}
+            </button>
+            {updateToast && (
+              <span className={`settings-toast pop-in is-${updateToast.kind}`}>
+                {updateToast.text}
+              </span>
+            )}
+          </div>
+        )}
+        {isTauri() && (
+          <p className="muted small" style={{ margin: '8px 0 0' }}>
+            桌面端内置了构建时的网页，可完全离线使用；联网时会自动（或点上方按钮）从
+            GitHub Pages 获取最新网页内容，更新后本机数据不受影响。
+          </p>
+        )}
       </div>
     </section>
   )

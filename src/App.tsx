@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNow } from './hooks/useNow'
 import { formatClock, WEEKDAY_LABELS } from './utils/time'
+import { isTauri, checkAndDownloadWebUpdate } from './utils/webUpdate'
+import { appConfirm } from './components/common/ConfirmDialog'
 import { useSettings } from './store/useAppStore'
 import OverviewDashboard from './components/Overview/OverviewDashboard'
 import TodoSection from './components/Todo/TodoSection'
@@ -9,6 +11,7 @@ import DungeonTracker from './components/Dungeon/DungeonTracker'
 import HouseCleaning from './components/House/HouseCleaning'
 import GuideBook from './components/Guide/GuideBook'
 import SettingsPanel from './components/Settings/SettingsPanel'
+import ConfirmHost from './components/common/ConfirmDialog'
 import type { TabId } from './tabs'
 import './App.css'
 
@@ -34,6 +37,24 @@ export default function App() {
   const { settings } = useSettings()
   const d = new Date(now)
   const weekday = WEEKDAY_LABELS[d.getDay() === 0 ? 7 : d.getDay()]
+
+  // Tauri 桌面端：启动后静默检查 GitHub Pages 上是否有新的网页构建，
+  // 有则下载到本地缓存并询问是否立即重载（离线/失败都静默忽略）
+  useEffect(() => {
+    if (!import.meta.env.PROD || !isTauri()) return
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await checkAndDownloadWebUpdate()
+        if (res.status !== 'updated') return
+        if (await appConfirm(`网页内容有新版本（${res.remote ?? '未知'}），已下载完成。\n立即重载使用新版本吗？`)) {
+          window.location.reload()
+        }
+      } catch {
+        /* 网页端 / 通信失败：忽略 */
+      }
+    }, 3000)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   return (
     <div className="app-shell">
@@ -78,8 +99,10 @@ export default function App() {
       </main>
 
       <footer className="app-footer muted small">
-        数据保存在本地浏览器（localStorage），不会上传。可在「设置」中导出 / 导入备份。
+        数据保存在本机（localStorage + IndexedDB），不会上传。可在「设置」中导出 / 导入备份。
       </footer>
+
+      <ConfirmHost />
     </div>
   )
 }

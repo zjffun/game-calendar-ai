@@ -111,3 +111,40 @@
     padding: 8px 12px;
   }
 }
+
+/* ---------- 应用内确认弹窗（appConfirm / ConfirmHost） ---------- */
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(42, 33, 26, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.confirm-dialog {
+  width: min(420px, 100%);
+  background: var(--c-paper-2);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.confirm-message {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--c-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

@@ -20,11 +20,13 @@ import {
   type GuideEntry,
   type GuideCategory,
   type GuideSection,
+  type GuideNote,
   SOLO_CHARACTER_ID,
 } from '../types'
 import { DEFAULT_SETTINGS, createDefaultHouse, SERVANT_ROOM_TIERS } from '../data/gameData'
 import { currentCleanliness, currentDurability, clamp } from '../utils/house'
 import { uid } from '../utils/id'
+import { getAllImages, putImages, clearImages } from './imageStore'
 
 // ---------------------------------------------------------------------------
 // 内部状态
@@ -39,6 +41,8 @@ interface AppState {
   characters: Character[]
   /** 用户自定义攻略（内置攻略来自 data，不在此） */
   guides: GuideEntry[]
+  /** 内置攻略的用户补充内容：攻略id -> Markdown 笔记 */
+  guideNotes: Record<string, GuideNote>
 }
 
 function load<T>(key: string, fallback: T): T {
@@ -92,6 +96,7 @@ let state: AppState = {
   settings: { ...DEFAULT_SETTINGS, ...load<Partial<AppSettings>>(STORAGE_KEYS.settings, {}) },
   characters: load<Character[]>(STORAGE_KEYS.characters, []),
   guides: load<GuideEntry[]>(STORAGE_KEYS.guides, []),
+  guideNotes: load<Record<string, GuideNote>>(STORAGE_KEYS.guideNotes, {}),
 }
 
 // 若初始加载触发了迁移（migrateTodos 对未变项保持同一引用），立即落盘，
@@ -148,6 +153,9 @@ if (typeof window !== 'undefined') {
           break
         case STORAGE_KEYS.guides:
           state = { ...state, guides: parsed }
+          break
+        case STORAGE_KEYS.guideNotes:
+          state = { ...state, guideNotes: parsed }
           break
         default:
           return
@@ -477,14 +485,37 @@ export const guideActions = {
   },
 }
 
-// ---- 数据管理（导入 / 导出 / 重置） ----
-export const dataActions = {
-  exportJSON(): string {
-    return JSON.stringify(state, null, 2)
+// ---- 攻略补充（内置攻略的用户自定义 Markdown 内容） ----
+export const guideNoteActions = {
+  /** 写入/更新某条攻略的补充内容；内容为空则等同删除 */
+  set(guideId: string, markdown: string) {
+    const text = markdown.trim()
+    const next = { ...state.guideNotes }
+    if (text) next[guideId] = { markdown: text, updatedAt: Date.now() }
+    else delete next[guideId]
+    setSlice('guideNotes', next, STORAGE_KEYS.guideNotes)
   },
-  importJSON(json: string): boolean {
+  remove(guideId: string) {
+    if (!(guideId in state.guideNotes)) return
+    const next = { ...state.guideNotes }
+    delete next[guideId]
+    setSlice('guideNotes', next, STORAGE_KEYS.guideNotes)
+  },
+}
+
+// ---- 数据管理（导入 / 导出 / 重置） ----
+// 备份格式 = 全量 state + images（IndexedDB 图片库，id -> base64 data URL）。
+// 图片在 IndexedDB（异步），因此导出/导入/重置均为 async。
+export const dataActions = {
+  async exportJSON(): Promise<string> {
+    const images = await getAllImages().catch(() => ({}) as Record<string, string>)
+    return JSON.stringify({ ...state, images }, null, 2)
+  },
+  async importJSON(json: string): Promise<boolean> {
     try {
-      const parsed = JSON.parse(json) as Partial<AppState>
+      const parsed = JSON.parse(json) as Partial<AppState> & {
+        images?: Record<string, string>
+      }
       if (parsed.todos) setSlice('todos', migrateTodos(parsed.todos), STORAGE_KEYS.todos)
       if (parsed.seeds) setSlice('seeds', parsed.seeds, STORAGE_KEYS.seeds)
       if (parsed.dungeons) setSlice('dungeons', parsed.dungeons, STORAGE_KEYS.dungeons)
@@ -493,12 +524,14 @@ export const dataActions = {
         setSlice('settings', { ...DEFAULT_SETTINGS, ...parsed.settings }, STORAGE_KEYS.settings)
       if (parsed.characters) setSlice('characters', parsed.characters, STORAGE_KEYS.characters)
       if (parsed.guides) setSlice('guides', parsed.guides, STORAGE_KEYS.guides)
+      if (parsed.guideNotes) setSlice('guideNotes', parsed.guideNotes, STORAGE_KEYS.guideNotes)
+      if (parsed.images) await putImages(parsed.images)
       return true
     } catch {
       return false
     }
   },
-  resetAll(now: number) {
+  async resetAll(now: number): Promise<void> {
     setSlice('todos', [], STORAGE_KEYS.todos)
     setSlice('seeds', [], STORAGE_KEYS.seeds)
     setSlice('dungeons', [], STORAGE_KEYS.dungeons)
@@ -506,6 +539,8 @@ export const dataActions = {
     setSlice('settings', { ...DEFAULT_SETTINGS }, STORAGE_KEYS.settings)
     setSlice('characters', [], STORAGE_KEYS.characters)
     setSlice('guides', [], STORAGE_KEYS.guides)
+    setSlice('guideNotes', {}, STORAGE_KEYS.guideNotes)
+    await clearImages().catch(() => {})
   },
 }
 
@@ -561,6 +596,12 @@ export function useCharacters() {
 export function useGuides() {
   const guides = useSelector((s) => s.guides)
   return { guides, ...guideActions }
+}
+
+/** 攻略补充分片：内置攻略的用户自定义 Markdown 内容（攻略id -> 笔记） */
+export function useGuideNotes() {
+  const guideNotes = useSelector((s) => s.guideNotes)
+  return { guideNotes, ...guideNoteActions }
 }
 
 /** 只读全量状态（用于概览 / 导出） */

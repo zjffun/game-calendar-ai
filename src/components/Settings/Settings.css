@@ -53,3 +53,18 @@
   border-color: var(--c-red);
   background: rgba(184, 57, 44, 0.05);
 }
+
+/* ---------- 存储用量 ---------- */
+
+.settings-usage {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13.5px;
+  color: var(--c-ink-soft);
+}
+.settings-usage li::marker {
+  color: var(--c-gold);
+}

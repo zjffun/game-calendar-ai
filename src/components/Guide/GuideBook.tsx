@@ -17,6 +17,7 @@ import GuideContentView from './GuideContentView'
 import GuideEditor, { type GuideDraft } from './GuideEditor'
 import GuideNotes from './GuideNotes'
 import { appConfirm } from '../common/ConfirmDialog'
+import Icon from '../common/Icon'
 import './Guide.css'
 
 type Mode = 'view' | 'add' | 'edit'
@@ -86,11 +87,8 @@ export default function GuideBook() {
   }
 
   return (
-    <section className="stack pop-in">
+    <section className="stack">
       <h2 className="section-title">
-        <span className="glyph" aria-hidden>
-          📖
-        </span>
         攻略大全
         <span className="spacer" />
         <span className="muted small">
@@ -102,18 +100,22 @@ export default function GuideBook() {
         {/* 侧边栏：分类 + 攻略导航 */}
         <aside className="guide-sidebar">
           <div className="guide-side-tools">
-            <input
-              className="input guide-search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="🔍 搜索攻略…"
-            />
+            <div className="guide-search-wrap">
+              <Icon name="search" size={14} className="guide-search-icon" />
+              <input
+                className="input guide-search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="搜索攻略…"
+              />
+            </div>
             <button
-              className="btn btn-gold btn-sm guide-add-btn"
+              className="btn btn-tonal btn-sm guide-add-btn"
               onClick={() => setMode('add')}
               title="把你自己的攻略加入侧边"
             >
-              ＋ 新增攻略
+              <Icon name="plus" size={13} />
+              新增攻略
             </button>
           </div>
 
@@ -124,7 +126,6 @@ export default function GuideBook() {
               {groups.map(({ meta, list }) => (
                 <div className="guide-group" key={meta.category}>
                   <div className="guide-group-head">
-                    <span aria-hidden>{meta.glyph}</span>
                     <span className="guide-group-name">{meta.category}</span>
                     <span className="guide-group-count">{list.length}</span>
                   </div>
@@ -139,9 +140,7 @@ export default function GuideBook() {
                           >
                             <span className="guide-nav-title">{entry.title}</span>
                             {entry.preset && guideNotes[entry.id] && (
-                              <span className="guide-nav-note" title="已补充自定义内容" aria-hidden>
-                                📝
-                              </span>
+                              <span className="guide-nav-note" title="已补充自定义内容" aria-hidden />
                             )}
                             {!entry.preset && (
                               <span className="guide-nav-tag">自定义</span>
@@ -188,13 +187,15 @@ export default function GuideBook() {
                       className="btn btn-ghost btn-sm"
                       onClick={() => setMode('edit')}
                     >
-                      ✏️ 编辑
+                      <Icon name="pencil" size={13} />
+                      编辑
                     </button>
                     <button
                       className="btn btn-ghost btn-sm"
                       onClick={() => handleDelete(activeEntry)}
                     >
-                      🗑 删除
+                      <Icon name="trash" size={13} />
+                      删除
                     </button>
                   </div>
                 )}
@@ -214,6 +215,22 @@ export default function GuideBook() {
 
               <GuideContentView sections={activeEntry.sections} />
 
+              {/* 配图：压缩后随应用打包的本地图片 */}
+              {activeEntry.images && activeEntry.images.length > 0 && (
+                <div className="guide-images">
+                  {activeEntry.images.map((img) => (
+                    <figure className="guide-figure" key={img.src}>
+                      <img
+                        src={import.meta.env.BASE_URL + img.src}
+                        alt={img.caption ?? activeEntry.title}
+                        loading="lazy"
+                      />
+                      {img.caption && <figcaption>{img.caption}</figcaption>}
+                    </figure>
+                  ))}
+                </div>
+              )}
+
               {activeEntry.source && (
                 <p className="muted small guide-detail-source">资料出处：{activeEntry.source}</p>
               )}
@@ -225,7 +242,7 @@ export default function GuideBook() {
             </article>
           ) : (
             <div className="empty">
-              还没有攻略，点击「＋ 新增攻略」把你的内容加进来吧～
+              还没有攻略，点击「新增攻略」把你的内容加进来吧～
             </div>
           )}
         </div>

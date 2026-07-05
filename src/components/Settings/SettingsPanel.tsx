@@ -22,6 +22,7 @@ import {
   checkAndDownloadWebUpdate,
   type ActiveWebVersion,
 } from '../../utils/webUpdate'
+import Icon from '../common/Icon'
 import './Settings.css'
 
 /** 存储用量快照：文本（localStorage）+ 图片库（IndexedDB）+ 浏览器配额 */
@@ -230,10 +231,7 @@ export default function SettingsPanel() {
 
   return (
     <section className="stack">
-      <h2 className="section-title">
-        <span className="glyph">⚙️</span>
-        设置
-      </h2>
+      <h2 className="section-title">设置</h2>
 
       {/* —— 周期重置点 —— */}
       <div className="card pad-lg">
@@ -330,7 +328,8 @@ export default function SettingsPanel() {
         )}
         <div className="row" style={{ marginTop: 10 }}>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => void refreshUsage()}>
-            ↻ 重新统计
+            <Icon name="rotate" size={13} />
+            重新统计
           </button>
         </div>
       </div>
@@ -345,13 +344,15 @@ export default function SettingsPanel() {
           JSON，可复制留存或下载为文件。含图片时文件可能较大，建议用「下载」。
         </p>
         <div className="row row-wrap" style={{ marginBottom: exportText ? 12 : 0 }}>
-          <button type="button" className="btn btn-gold" onClick={handleExport}>
+          <button type="button" className="btn btn-primary" onClick={handleExport}>
             生成备份
           </button>
           <button type="button" className="btn" onClick={handleCopy}>
+            <Icon name="copy" size={14} />
             复制到剪贴板
           </button>
           <button type="button" className="btn" onClick={handleDownload}>
+            <Icon name="download" size={14} />
             下载为 .json 文件
           </button>
         </div>
@@ -389,7 +390,7 @@ export default function SettingsPanel() {
         <div className="row" style={{ marginTop: 12 }}>
           <button
             type="button"
-            className="btn btn-jade"
+            className="btn btn-primary"
             onClick={handleImport}
             disabled={!importText.trim()}
           >
@@ -413,7 +414,7 @@ export default function SettingsPanel() {
           此操作不可撤销，建议先「导出备份」。
         </p>
         <div className="row row-wrap">
-          <button type="button" className="btn btn-primary" onClick={handleResetClick}>
+          <button type="button" className="btn btn-danger" onClick={handleResetClick}>
             {confirmingReset ? '确认清空？再点一次' : '清空所有数据'}
           </button>
           {confirmingReset && (
@@ -457,7 +458,8 @@ export default function SettingsPanel() {
               onClick={() => void handleCheckWebUpdate()}
               disabled={checkingUpdate}
             >
-              {checkingUpdate ? '正在检查…' : '⇩ 从 GitHub Pages 检查网页更新'}
+              <Icon name="download" size={13} />
+              {checkingUpdate ? '正在检查…' : '从 GitHub Pages 检查网页更新'}
             </button>
             {updateToast && (
               <span className={`settings-toast pop-in is-${updateToast.kind}`}>

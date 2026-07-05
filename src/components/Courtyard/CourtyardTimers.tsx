@@ -55,9 +55,8 @@ export default function CourtyardTimers() {
   return (
     <section className="stack">
       <h2 className="section-title">
-        <span className="glyph">🌿</span>
         庭院种子
-        {ripeCount > 0 && <span className="badge badge-gold">{ripeCount} 株可收获</span>}
+        {ripeCount > 0 && <span className="badge badge-ok">{ripeCount} 株可收获</span>}
         {careCount > 0 && <span className="badge badge-warn">{careCount} 株待养护</span>}
       </h2>
 

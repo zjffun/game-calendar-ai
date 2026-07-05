@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="#9c2b22"/>
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="none" stroke="#e9c97e" stroke-width="3"/>
-  <text x="32" y="44" font-family="'PingFang SC','Microsoft YaHei',serif" font-size="38"
-        font-weight="700" text-anchor="middle" fill="#fbe9c9">梦</text>
+  <rect x="4" y="4" width="56" height="56" rx="15" fill="#c15f3c"/>
+  <text x="32" y="45" font-family="Georgia,'Songti SC','SimSun',serif" font-size="36"
+        font-weight="700" text-anchor="middle" fill="#faf9f5">梦</text>
 </svg>

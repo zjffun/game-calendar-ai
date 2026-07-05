@@ -8,7 +8,6 @@
 
 import { useMemo } from 'react'
 import type { TodoCycle, TodoTask } from '../../types'
-import type { TabId } from '../../tabs'
 import { useTodos, useSettings, useCharacters } from '../../store/useAppStore'
 import { useNow } from '../../hooks/useNow'
 import { getPeriodKey, getNextReset, formatCountdown } from '../../utils/time'
@@ -22,15 +21,12 @@ import './Todo.css'
 interface CycleMeta {
   cycle: TodoCycle
   label: string
-  glyph: string
-  /** 周期徽标对应的全局类名 */
-  badgeClass: string
 }
 
 const CYCLES: CycleMeta[] = [
-  { cycle: 'daily', label: '每日', glyph: '🌅', badgeClass: 'badge-daily' },
-  { cycle: 'weekly', label: '每周', glyph: '📅', badgeClass: 'badge-weekly' },
-  { cycle: 'monthly', label: '每月', glyph: '🌙', badgeClass: 'badge-monthly' },
+  { cycle: 'daily', label: '每日' },
+  { cycle: 'weekly', label: '每周' },
+  { cycle: 'monthly', label: '每月' },
 ]
 
 /** 按 order 升序排序（无 order 的排后面） */
@@ -38,12 +34,7 @@ function byOrder(a: TodoTask, b: TodoTask): number {
   return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
 }
 
-interface Props {
-  /** 跳转到其它标签页（用于「攻略大全」入口） */
-  onNavigate?: (tab: TabId) => void
-}
-
-export default function TodoSection({ onNavigate }: Props) {
+export default function TodoSection() {
   const { todos } = useTodos()
   const { settings } = useSettings()
   const { characters } = useCharacters()
@@ -61,29 +52,8 @@ export default function TodoSection({ onNavigate }: Props) {
   const hasAny = todos.length > 0
 
   return (
-    <section className="stack pop-in">
-      <h2 className="section-title">
-        <span className="glyph" aria-hidden>
-          📜
-        </span>
-        日常待办
-      </h2>
-
-      {/* 攻略大全入口：跳转到攻略模块（副本/神器/奇遇/看戏 + 自定义） */}
-      {onNavigate && (
-        <button type="button" className="todo-guide-entry" onClick={() => onNavigate('guide')}>
-          <span className="todo-guide-entry-glyph" aria-hidden>
-            📖
-          </span>
-          <span className="todo-guide-entry-text">
-            <strong>攻略大全</strong>
-            <span className="muted small">副本 · 神器 · 奇遇 · 看戏，支持自定义</span>
-          </span>
-          <span className="todo-guide-entry-arrow" aria-hidden>
-            ›
-          </span>
-        </button>
-      )}
+    <section className="stack">
+      <h2 className="section-title">日常待办</h2>
 
       {/* 角色管理：增加角色后按角色分别勾选 */}
       <CharacterBar />
@@ -102,13 +72,10 @@ export default function TodoSection({ onNavigate }: Props) {
         return (
           <div className="card" key={meta.cycle}>
             <div className="card-head todo-group-head">
-              <span className={`badge ${meta.badgeClass}`}>
-                {meta.glyph} {meta.label}
-              </span>
               <h3>{meta.label}任务</h3>
               {total > 0 && (
                 <span className="todo-group-progress">
-                  已完成 {doneCount}/{total}
+                  {doneCount}/{total} 已完成
                 </span>
               )}
               <span className="spacer" />
@@ -123,7 +90,7 @@ export default function TodoSection({ onNavigate }: Props) {
                 暂无{meta.label}任务，可从下方「常用任务」一键添加，或自定义新增。
               </div>
             ) : (
-              <ul className="stack" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              <ul className="todo-list">
                 {list.map((task) => (
                   <TodoItem key={task.id} task={task} periodKey={periodKey} />
                 ))}
@@ -136,9 +103,6 @@ export default function TodoSection({ onNavigate }: Props) {
       {/* 常用任务一键添加 */}
       <div className="card">
         <div className="card-head">
-          <span className="glyph" aria-hidden>
-            ⭐
-          </span>
           <h3>常用任务</h3>
           <span className="muted small">点击添加，已添加的点击可移除</span>
         </div>
@@ -148,9 +112,6 @@ export default function TodoSection({ onNavigate }: Props) {
       {/* 自定义添加 */}
       <div className="card">
         <div className="card-head">
-          <span className="glyph" aria-hidden>
-            ✍️
-          </span>
           <h3>自定义添加</h3>
         </div>
         <AddTodoForm />

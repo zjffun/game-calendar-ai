@@ -20,24 +20,24 @@
   white-space: pre;
   max-height: 180px;
   overflow: auto;
-  background: var(--c-paper-3);
-  border: 1px solid var(--c-line-strong);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
-  color: var(--c-ink-soft);
+  color: var(--ink-2);
   margin: 0;
 }
 
 /* 临时提示文案 */
 .settings-toast {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
 }
 .settings-toast.is-ok {
-  color: var(--c-ok);
+  color: var(--ok);
 }
 .settings-toast.is-err {
-  color: var(--c-danger);
+  color: var(--danger);
 }
 
 /* 导入用的多行文本框：等宽、固定高度 */
@@ -48,10 +48,9 @@
   resize: vertical;
 }
 
-/* 危险区域容器：朱红描边以示警示 */
+/* 危险区域容器：淡红描边以示警示 */
 .settings-danger-zone {
-  border-color: var(--c-red);
-  background: rgba(184, 57, 44, 0.05);
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
 }
 
 /* ---------- 存储用量 ---------- */
@@ -63,8 +62,8 @@
   flex-direction: column;
   gap: 5px;
   font-size: 13.5px;
-  color: var(--c-ink-soft);
+  color: var(--ink-2);
 }
 .settings-usage li::marker {
-  color: var(--c-gold);
+  color: var(--line-strong);
 }

@@ -29,6 +29,7 @@ import {
   msUntilDurabilityWarn,
   type HouseStatusLevel,
 } from '../../utils/house'
+import Icon, { type IconName } from '../common/Icon'
 import './Overview.css'
 
 interface Props {
@@ -44,12 +45,12 @@ const METER_CLASS: Record<HouseStatusLevel, string> = {
 
 /** 可点击的概览卡片外壳：支持鼠标点击与键盘（回车/空格）跳转 */
 function OverviewCard(props: {
-  glyph: string
+  icon: IconName
   title: string
   onNavigate: () => void
   children: ReactNode
 }) {
-  const { glyph, title, onNavigate, children } = props
+  const { icon, title, onNavigate, children } = props
   // 键盘可达性：回车或空格触发跳转
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -59,20 +60,16 @@ function OverviewCard(props: {
   }
   return (
     <div
-      className="card ov-card pop-in"
+      className="card ov-card"
       role="button"
       tabIndex={0}
       onClick={onNavigate}
       onKeyDown={onKeyDown}
     >
       <div className="ov-card-head">
-        <span className="ov-card-glyph" aria-hidden>
-          {glyph}
-        </span>
+        <Icon name={icon} size={16} className="ov-card-icon" />
         <span className="ov-card-title">{title}</span>
-        <span className="ov-card-arrow" aria-hidden>
-          ›
-        </span>
+        <Icon name="chevron-right" size={15} className="ov-card-arrow" />
       </div>
       {children}
     </div>
@@ -158,21 +155,18 @@ export default function OverviewDashboard({ onNavigate }: Props) {
   )
 
   return (
-    <div className="stack pop-in">
+    <div className="stack">
       {/* 顶部问候 / 今日概要 */}
-      <section className="card pad-lg ov-hero">
-        <span className="ov-hero-seal" aria-hidden>
-          签
-        </span>
+      <section className="ov-hero">
         <div className="ov-hero-main">
-          <span className="ov-hero-title">{greeting}，少侠</span>
-          <span className="muted small">
+          <h2 className="ov-hero-title">{greeting}，少侠</h2>
+          <span className="muted">
             {dateLabel} · {weekday}
           </span>
         </div>
         <div className="ov-hero-reset">
           <span className="muted small">距每日刷新</span>
-          <span className={`countdown ${dailyResetLeft <= 60 * 60 * 1000 ? 'urgent' : ''}`}>
+          <span className={`countdown ov-hero-countdown ${dailyResetLeft <= 60 * 60 * 1000 ? 'urgent' : ''}`}>
             {formatCountdown(dailyResetLeft, '即将刷新')}
           </span>
         </div>
@@ -180,16 +174,16 @@ export default function OverviewDashboard({ onNavigate }: Props) {
 
       <div className="grid ov-grid">
         {/* 待办卡片 */}
-        <OverviewCard glyph="📜" title="今日待办" onNavigate={() => onNavigate('todo')}>
+        <OverviewCard icon="todo" title="今日待办" onNavigate={() => onNavigate('todo')}>
           {dailyTodos.length === 0 ? (
             <div className="ov-line">
-              <span className="muted small">还没有每日待办，去添加吧 ›</span>
+              <span className="muted small">还没有每日待办，点击前往添加</span>
             </div>
           ) : (
             <>
               <div className="ov-stat">
                 <span
-                  className={`ov-stat-num ${dailyDone === dailyTodos.length ? 'is-jade' : 'is-red'}`}
+                  className={`ov-stat-num ${dailyDone === dailyTodos.length ? 'is-ok' : 'is-attention'}`}
                 >
                   {dailyDone}
                 </span>
@@ -210,25 +204,25 @@ export default function OverviewDashboard({ onNavigate }: Props) {
             </>
           )}
           <div className="ov-line row-wrap">
-            <span className="badge badge-weekly">周 {weeklyUndone} 未完成</span>
-            <span className="badge badge-monthly">月 {monthlyUndone} 未完成</span>
+            <span className="badge">周 {weeklyUndone} 未完成</span>
+            <span className="badge">月 {monthlyUndone} 未完成</span>
           </div>
         </OverviewCard>
 
         {/* 庭院卡片 */}
-        <OverviewCard glyph="🌱" title="庭院种子" onNavigate={() => onNavigate('courtyard')}>
+        <OverviewCard icon="sprout" title="庭院种子" onNavigate={() => onNavigate('courtyard')}>
           {seeds.length === 0 ? (
             <div className="ov-line">
-              <span className="muted small">还没有种植，去庭院播下种子吧 ›</span>
+              <span className="muted small">还没有种植，点击进入庭院播种</span>
             </div>
           ) : (
             <>
               <div className="ov-stat">
-                <span className={`ov-stat-num ${seedActionable > 0 ? 'is-gold' : ''}`}>
+                <span className={`ov-stat-num ${seedActionable > 0 ? 'is-attention' : ''}`}>
                   {seedActionable}
                 </span>
                 <span className="ov-stat-unit">株可处理</span>
-                {seedActionable > 0 && <span className="badge badge-gold">待收获</span>}
+                {seedActionable > 0 && <span className="badge badge-ok">待收获</span>}
                 {seedCareNeeded > 0 && (
                   <span className="badge badge-warn">{seedCareNeeded} 待养护</span>
                 )}
@@ -254,16 +248,16 @@ export default function OverviewDashboard({ onNavigate }: Props) {
         </OverviewCard>
 
         {/* 副本卡片 */}
-        <OverviewCard glyph="⚔️" title="副本进度" onNavigate={() => onNavigate('dungeon')}>
+        <OverviewCard icon="shield" title="副本进度" onNavigate={() => onNavigate('dungeon')}>
           {dungeons.length === 0 ? (
             <div className="ov-line">
-              <span className="muted small">还没有副本，去添加追踪吧 ›</span>
+              <span className="muted small">还没有副本，点击添加追踪</span>
             </div>
           ) : (
             <>
               <div className="ov-stat">
                 <span
-                  className={`ov-stat-num ${requiredUndone.length > 0 ? 'is-red' : 'is-jade'}`}
+                  className={`ov-stat-num ${requiredUndone.length > 0 ? 'is-attention' : 'is-ok'}`}
                 >
                   {requiredUndone.length}
                 </span>
@@ -287,7 +281,7 @@ export default function OverviewDashboard({ onNavigate }: Props) {
         </OverviewCard>
 
         {/* 房屋卡片 */}
-        <OverviewCard glyph="🏠" title="房屋状态" onNavigate={() => onNavigate('house')}>
+        <OverviewCard icon="home" title="房屋状态" onNavigate={() => onNavigate('house')}>
           <div className="ov-meters">
             <div className="ov-meter-row">
               <div className="ov-meter-top">
@@ -336,12 +330,12 @@ export default function OverviewDashboard({ onNavigate }: Props) {
         </OverviewCard>
 
         {/* 攻略卡片 */}
-        <OverviewCard glyph="📖" title="攻略大全" onNavigate={() => onNavigate('guide')}>
+        <OverviewCard icon="guide" title="攻略大全" onNavigate={() => onNavigate('guide')}>
           <div className="ov-stat">
-            <span className="ov-stat-num is-gold">{GUIDE_PRESETS.length}</span>
+            <span className="ov-stat-num">{GUIDE_PRESETS.length}</span>
             <span className="ov-stat-unit">条内置攻略</span>
             {customGuides.length > 0 && (
-              <span className="badge badge-gold">自定义 {customGuides.length}</span>
+              <span className="badge">自定义 {customGuides.length}</span>
             )}
           </div>
           <div className="ov-line row-wrap">

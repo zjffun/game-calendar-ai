@@ -17,6 +17,7 @@ import {
   formatClock,
   MS_PER_HOUR,
 } from '../../utils/time'
+import Icon from '../common/Icon'
 
 interface DungeonCardProps {
   dungeon: Dungeon
@@ -96,7 +97,7 @@ export default function DungeonCard({ dungeon }: DungeonCardProps) {
             </div>
           </div>
           <div className="row">
-            <button className="btn btn-jade btn-sm" onClick={saveEdit}>
+            <button className="btn btn-primary btn-sm" onClick={saveEdit}>
               保存
             </button>
             <button className="btn btn-ghost btn-sm" onClick={cancelEdit}>
@@ -123,7 +124,10 @@ export default function DungeonCard({ dungeon }: DungeonCardProps) {
       <div className="dgn-timer-row">
         <span className="dgn-timer-label">距下次刷新</span>
         {done ? (
-          <span className="dgn-done-mark">✅ 本周期已完成</span>
+          <span className="dgn-done-mark">
+            <Icon name="check" size={13} strokeWidth={2.5} />
+            本周期已完成
+          </span>
         ) : (
           <span className={`countdown${urgent ? ' urgent' : ''}`}>
             {formatCountdown(remainMs, '刷新中…')}
@@ -136,7 +140,7 @@ export default function DungeonCard({ dungeon }: DungeonCardProps) {
 
       <div className="dgn-card-actions">
         <button
-          className={`btn btn-sm ${done ? 'btn-ghost' : 'btn-jade'}`}
+          className={`btn btn-sm ${done ? 'btn-ghost' : 'btn-primary'}`}
           onClick={() => toggle(dungeon.id, periodKey)}
         >
           {done ? '撤销完成' : '标记完成'}
@@ -158,14 +162,14 @@ export default function DungeonCard({ dungeon }: DungeonCardProps) {
           title="编辑"
           onClick={() => setEditing(true)}
         >
-          ✎
+          <Icon name="pencil" size={14} />
         </button>
         <button
           className="btn btn-ghost btn-icon"
           title="删除"
           onClick={() => remove(dungeon.id)}
         >
-          🗑
+          <Icon name="trash" size={14} />
         </button>
       </div>
     </div>

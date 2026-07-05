@@ -21,6 +21,7 @@ import {
   CUSTOM_SEED_DEFAULT_DURATION_MS,
 } from '../../data/gameData'
 import { levelBadgeClass, levelLabel } from './seedLevel'
+import Icon from '../common/Icon'
 
 /** 把毫秒拆成 {小时, 分钟}，用于初始化输入框 */
 function msToHourMinute(ms: number): { hours: number; minutes: number } {
@@ -180,7 +181,8 @@ export default function AddSeedForm() {
           </div>
           {level >= 4 && (
             <div className="small courtyard-cycle-caveat">
-              ⚠ 四级逐日结果天为推断值（官方未公布实测），清除日(第 22 天)较可信
+              <Icon name="alert" size={12} /> 四级逐日结果天为推断值（官方未公布实测），清除日(第
+              22 天)较可信
             </div>
           )}
         </div>
@@ -243,8 +245,8 @@ export default function AddSeedForm() {
       </div>
 
       <div className="row">
-        <button type="submit" className="btn btn-jade" disabled={!canSubmit}>
-          🌱 种下
+        <button type="submit" className="btn btn-primary" disabled={!canSubmit}>
+          种下
         </button>
         {!canSubmit && (
           <span className="small muted">

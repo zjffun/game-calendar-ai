@@ -22,6 +22,7 @@ import {
 } from '../../utils/house'
 import { SERVANT_ROOM_TIERS, HOUSE_TIERS, HOUSE_GUIDE } from '../../data/gameData'
 import { formatClock, formatRemainingHuman } from '../../utils/time'
+import Icon from '../common/Icon'
 import './House.css'
 
 /** 把毫秒提示拼成「距离需要清洁/修理还有 X」，处理 Infinity（衰减关闭）情况 */
@@ -133,15 +134,14 @@ export default function HouseCleaning() {
   }
 
   return (
-    <div className="card pad-lg pop-in">
-      <div className="card-head">
-        <span className="section-title" style={{ margin: 0 }}>
-          <span className="glyph">🏯</span>
-          房屋清洁 · 耐久
-        </span>
+    <section className="stack">
+      <h2 className="section-title">
+        房屋状态
         <span className="spacer" />
         <span className="muted small">上次更新 {formatClock(house.updatedAt)}</span>
-      </div>
+      </h2>
+
+      <div className="card pad-lg">
 
       <div className="hc-top">
         <span className="badge badge-outline">{house.name || '我的房屋'}</span>
@@ -198,7 +198,7 @@ export default function HouseCleaning() {
         className={`hc-settings-toggle${showGuide ? ' hc-open' : ''}`}
         onClick={() => setShowGuide((s) => !s)}
       >
-        <span className="hc-caret">▶</span>
+        <Icon name="chevron-right" size={14} className="hc-caret" />
         房屋资料（参考梦幻西游电脑版）
       </button>
       {showGuide && (
@@ -224,7 +224,7 @@ export default function HouseCleaning() {
         className={`hc-settings-toggle${showSettings ? ' hc-open' : ''}`}
         onClick={() => setShowSettings((s) => !s)}
       >
-        <span className="hc-caret">▶</span>
+        <Icon name="chevron-right" size={14} className="hc-caret" />
         参数设置
       </button>
 
@@ -297,6 +297,7 @@ export default function HouseCleaning() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </section>
   )
 }

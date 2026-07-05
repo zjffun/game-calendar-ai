@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNow } from './hooks/useNow'
-import { formatClock, WEEKDAY_LABELS } from './utils/time'
+import { formatClock, formatCountdown, getNextReset, WEEKDAY_LABELS } from './utils/time'
 import { isTauri, checkAndDownloadWebUpdate } from './utils/webUpdate'
 import { appConfirm } from './components/common/ConfirmDialog'
 import { useSettings } from './store/useAppStore'
@@ -12,31 +12,60 @@ import HouseCleaning from './components/House/HouseCleaning'
 import GuideBook from './components/Guide/GuideBook'
 import SettingsPanel from './components/Settings/SettingsPanel'
 import ConfirmHost from './components/common/ConfirmDialog'
+import Icon, { type IconName } from './components/common/Icon'
 import type { TabId } from './tabs'
 import './App.css'
 
-interface TabDef {
-  id: TabId
-  label: string
-  glyph: string
-}
-
-const TABS: TabDef[] = [
-  { id: 'overview', label: '概览', glyph: '🧭' },
-  { id: 'todo', label: '待办', glyph: '📜' },
-  { id: 'courtyard', label: '庭院', glyph: '🌱' },
-  { id: 'dungeon', label: '副本', glyph: '⚔️' },
-  { id: 'house', label: '房屋', glyph: '🏠' },
-  { id: 'guide', label: '攻略', glyph: '📖' },
-  { id: 'settings', label: '设置', glyph: '⚙️' },
+/** 顶级导航：只保留 概览 / 待办 / 攻略；设置走侧边栏底部齿轮 */
+const NAV: { id: TabId; label: string; icon: IconName }[] = [
+  { id: 'overview', label: '概览', icon: 'overview' },
+  { id: 'todo', label: '待办', icon: 'todo' },
+  { id: 'guide', label: '攻略', icon: 'guide' },
 ]
 
-export default function App() {
-  const [tab, setTab] = useState<TabId>('overview')
+/** 子页（从概览进入，不出现在主导航）：显示为概览下的当前位置 */
+const SUB_PAGES: Partial<Record<TabId, { label: string; icon: IconName }>> = {
+  courtyard: { label: '庭院种子', icon: 'sprout' },
+  dungeon: { label: '副本进度', icon: 'shield' },
+  house: { label: '房屋状态', icon: 'home' },
+}
+
+/** 侧边栏时钟：独立组件，避免秒级刷新牵动整棵组件树 */
+function SideClock() {
   const now = useNow(1000)
   const { settings } = useSettings()
   const d = new Date(now)
+  const pad = (n: number) => (n < 10 ? `0${n}` : String(n))
   const weekday = WEEKDAY_LABELS[d.getDay() === 0 ? 7 : d.getDay()]
+  const resetLeft = getNextReset('daily', now, settings) - now
+  return (
+    <div className="side-clock">
+      <span className="side-clock-time">
+        {pad(d.getHours())}:{pad(d.getMinutes())}
+      </span>
+      <span className="side-clock-date">
+        {d.getMonth() + 1} 月 {d.getDate()} 日 · {weekday}
+      </span>
+      <span className="side-clock-reset">
+        距每日刷新
+        <span className="countdown">{formatCountdown(resetLeft, '即将刷新')}</span>
+      </span>
+    </div>
+  )
+}
+
+/** 移动端顶栏时钟（只显示 HH:MM） */
+function MobileClock() {
+  const now = useNow(1000)
+  return <span className="mobile-clock">{formatClock(now).slice(-5)}</span>
+}
+
+export default function App() {
+  const [tab, setTab] = useState<TabId>('overview')
+
+  const sub = SUB_PAGES[tab]
+  // 子页归属概览：主导航高亮「概览」
+  const navActive: TabId = sub ? 'overview' : tab
 
   // Tauri 桌面端：启动后静默检查 GitHub Pages 上是否有新的网页构建，
   // 有则下载到本地缓存并询问是否立即重载（离线/失败都静默忽略）
@@ -57,50 +86,111 @@ export default function App() {
   }, [])
 
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div className="app-header-main">
-          <div className="app-title">
-            <span className="app-seal">梦</span>
-            <div>
-              <h1>梦幻西游 · 游戏日历</h1>
-              <p className="app-subtitle muted small">
-                {formatClock(now)} · {weekday} · 每日 {settings.dailyResetHour} 点重置
-              </p>
-            </div>
+    <div className="app">
+      {/* 桌面侧边栏 */}
+      <aside className="sidebar">
+        <div className="brand">
+          <span className="brand-mark" aria-hidden>
+            梦
+          </span>
+          <div className="brand-text">
+            <span className="brand-name">游戏日历</span>
+            <span className="brand-sub">梦幻西游</span>
           </div>
         </div>
-        <nav className="tabbar" role="tablist" aria-label="功能切换">
-          {TABS.map((t) => (
+
+        <nav className="side-nav" aria-label="主导航">
+          {NAV.map((t) => (
             <button
               key={t.id}
-              role="tab"
-              aria-selected={tab === t.id}
-              className={`tab ${tab === t.id ? 'active' : ''}`}
+              className={`side-item${navActive === t.id ? ' active' : ''}`}
+              aria-current={navActive === t.id ? 'page' : undefined}
               onClick={() => setTab(t.id)}
             >
-              <span className="tab-glyph" aria-hidden>
-                {t.glyph}
-              </span>
-              <span className="tab-label">{t.label}</span>
+              <Icon name={t.icon} size={17} />
+              {t.label}
             </button>
           ))}
+          {sub && (
+            <span className="side-subitem" aria-current="page">
+              <Icon name={sub.icon} size={14} />
+              {sub.label}
+            </span>
+          )}
         </nav>
-      </header>
 
-      <main className="app-main">
-        {tab === 'overview' && <OverviewDashboard onNavigate={setTab} />}
-        {tab === 'todo' && <TodoSection onNavigate={setTab} />}
-        {tab === 'courtyard' && <CourtyardTimers />}
-        {tab === 'dungeon' && <DungeonTracker />}
-        {tab === 'house' && <HouseCleaning />}
-        {tab === 'guide' && <GuideBook />}
-        {tab === 'settings' && <SettingsPanel />}
-      </main>
+        <div className="side-foot">
+          <SideClock />
+          <nav className="side-nav" aria-label="设置">
+            <button
+              className={`side-item${tab === 'settings' ? ' active' : ''}`}
+              aria-current={tab === 'settings' ? 'page' : undefined}
+              onClick={() => setTab('settings')}
+            >
+              <Icon name="settings" size={17} />
+              设置
+            </button>
+          </nav>
+          <p className="side-note">数据仅保存在本机，可在设置中导出备份。</p>
+        </div>
+      </aside>
 
-      <footer className="app-footer muted small">
-        数据保存在本机（localStorage + IndexedDB），不会上传。可在「设置」中导出 / 导入备份。
-      </footer>
+      <div className="main-col">
+        {/* 移动端顶栏 */}
+        <header className="mobile-topbar">
+          <div className="brand">
+            <span className="brand-mark" aria-hidden>
+              梦
+            </span>
+            <div className="brand-text">
+              <span className="brand-name">游戏日历</span>
+            </div>
+          </div>
+          <MobileClock />
+          <button
+            className={`mobile-settings-btn${tab === 'settings' ? ' active' : ''}`}
+            aria-label="设置"
+            onClick={() => setTab('settings')}
+          >
+            <Icon name="settings" size={17} />
+          </button>
+        </header>
+
+        <main className="content">
+          <div className="content-inner">
+            {sub && (
+              <div className="subpage-bar">
+                <button className="back-btn" onClick={() => setTab('overview')}>
+                  <Icon name="arrow-left" size={15} />
+                  返回概览
+                </button>
+              </div>
+            )}
+            {tab === 'overview' && <OverviewDashboard onNavigate={setTab} />}
+            {tab === 'todo' && <TodoSection />}
+            {tab === 'courtyard' && <CourtyardTimers />}
+            {tab === 'dungeon' && <DungeonTracker />}
+            {tab === 'house' && <HouseCleaning />}
+            {tab === 'guide' && <GuideBook />}
+            {tab === 'settings' && <SettingsPanel />}
+          </div>
+        </main>
+      </div>
+
+      {/* 移动端底部导航 */}
+      <nav className="mobile-nav" aria-label="主导航">
+        {NAV.map((t) => (
+          <button
+            key={t.id}
+            className={`mobile-nav-item${navActive === t.id ? ' active' : ''}`}
+            aria-current={navActive === t.id ? 'page' : undefined}
+            onClick={() => setTab(t.id)}
+          >
+            <Icon name={t.icon} size={19} />
+            {t.label}
+          </button>
+        ))}
+      </nav>
 
       <ConfirmHost />
     </div>

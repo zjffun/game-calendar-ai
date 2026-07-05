@@ -8,6 +8,7 @@ import { useMemo } from 'react'
 import type { PresetTodo, TodoTask } from '../../types'
 import { useTodos } from '../../store/useAppStore'
 import { PRESET_TODOS } from '../../data/gameData'
+import Icon from '../common/Icon'
 
 /** 周期对应的中文标签，用于 chip 文案提示 */
 const CYCLE_LABEL: Record<PresetTodo['cycle'], string> = {
@@ -75,7 +76,7 @@ export default function PresetPicker() {
                     }
                   }}
                 >
-                  <span className="todo-chip-mark">{active ? '✓' : '＋'}</span>
+                  <Icon name={active ? 'check' : 'plus'} size={12} strokeWidth={2.25} />
                   {preset.name}
                   <span className="small muted" style={{ opacity: 0.8 }}>
                     {CYCLE_LABEL[preset.cycle]}

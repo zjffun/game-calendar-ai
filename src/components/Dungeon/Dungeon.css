@@ -7,7 +7,7 @@
 .dgn-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 /* 单张副本卡片 */
@@ -18,25 +18,26 @@
 }
 /* 已完成卡片置灰 */
 .dgn-card.dgn-done {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .dgn-card-top {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .dgn-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--c-ink);
-  line-height: 1.3;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
   word-break: break-word;
 }
 /* 已完成的副本名带删除线 */
 .dgn-card.dgn-done .dgn-name {
   text-decoration: line-through;
-  text-decoration-color: var(--c-line-strong);
+  text-decoration-color: var(--line-strong);
 }
 
 /* 倒计时行 */
@@ -48,16 +49,20 @@
 }
 .dgn-timer-label {
   font-size: 12px;
-  color: var(--c-ink-faint);
+  color: var(--ink-3);
 }
 .dgn-timer-row .countdown {
-  font-size: 18px;
+  font-size: 17px;
 }
 
 /* 完成标记区 */
 .dgn-done-mark {
-  color: var(--c-ok);
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ok);
+  font-weight: 600;
+  font-size: 13px;
 }
 
 /* 卡片底部操作行 */
@@ -74,15 +79,15 @@
   align-items: center;
   gap: 6px;
   font-size: 12.5px;
-  font-weight: 600;
-  color: var(--c-ink-soft);
+  font-weight: 500;
+  color: var(--ink-2);
   cursor: pointer;
   user-select: none;
 }
 .dgn-required input {
   width: 15px;
   height: 15px;
-  accent-color: var(--c-red);
+  accent-color: var(--ink);
   cursor: pointer;
 }
 
@@ -90,24 +95,25 @@
 .dgn-summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 10px 16px;
   align-items: center;
 }
 .dgn-summary-item {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 6px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--c-ink-soft);
+  font-weight: 500;
+  color: var(--ink-2);
 }
 .dgn-summary-num {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--c-red);
+  font-size: 20px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
 }
 .dgn-summary-num.dgn-clear {
-  color: var(--c-ok);
+  color: var(--ok);
 }
 
 /* 预设 chip 容器 */
@@ -122,10 +128,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--c-ink-soft);
-  margin: 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin: 6px 0 10px;
 }
 
 /* 编辑态内联表单 */

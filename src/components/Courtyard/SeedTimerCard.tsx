@@ -27,6 +27,7 @@ import {
 } from '../../utils/courtyard'
 import { getGrowthCycle, CARE_GUIDE } from '../../data/gameData'
 import { levelBadgeClass, levelLabel } from './seedLevel'
+import Icon from '../common/Icon'
 
 /** 把 0-1 的比例截断成 0-100 的百分比数值（用于进度条宽度） */
 function clamp01Percent(ratio: number): number {
@@ -133,10 +134,10 @@ function CycleSeedCard({
       >
         {sched.ended
           ? ripe
-            ? '🌾 可收获并清除'
-            : '♻️ 可清除重种'
+            ? '可收获 · 待清除'
+            : '周期结束 · 可清除重种'
           : ripe
-            ? '🌾 今日可收获'
+            ? '今日可收获'
             : formatCountdown(nextLeft)}
       </div>
       {!sched.ended && !ripe && (
@@ -160,7 +161,7 @@ function CycleSeedCard({
               className={'courtyard-tl-pill ' + h.status}
               title={`第 ${h.day} 天 · ${formatClock(h.at)}`}
             >
-              {h.status === 'done' ? '✓ ' : h.status === 'today' ? '🌾 ' : ''}第{h.day}天
+              第{h.day}天
             </span>
           ))}
         </div>
@@ -174,7 +175,9 @@ function CycleSeedCard({
           onClick={() => toggleCared(seed.id, dayKey)}
           title="浇水/施肥/除虫后勾选；跨日自动重置"
         >
-          <span className="courtyard-care-check">{cared ? '✅' : '⬜'}</span>
+          <span className="courtyard-care-check" aria-hidden>
+            <Icon name="check" size={11} strokeWidth={3} />
+          </span>
           <span>{cared ? '今日已养护' : '今日待养护'}</span>
           <span className="spacer" />
           <span className="small muted">
@@ -184,30 +187,32 @@ function CycleSeedCard({
       )}
 
       {/* 备注 */}
-      {seed.note && <div className="courtyard-note">📝 {seed.note}</div>}
+      {seed.note && <div className="courtyard-note">{seed.note}</div>}
 
       {/* 操作区 */}
       {!editing ? (
         <div className="row row-wrap">
           <button
             type="button"
-            className={'btn btn-sm ' + (sched.ended ? 'btn-jade' : 'btn-ghost')}
+            className={'btn btn-sm ' + (sched.ended ? 'btn-primary' : 'btn-ghost')}
             onClick={() => replant(seed.id, now)}
             title="把种植时间重置为现在，重新开始整个生长周期"
           >
-            {sched.ended ? '♻️ 清除并重种' : '↻ 重新种植'}
+            <Icon name="rotate" size={13} />
+            {sched.ended ? '清除并重种' : '重新种植'}
           </button>
           <button type="button" className="btn btn-sm btn-ghost" onClick={openEdit}>
-            🕓 改种植时间
+            <Icon name="clock" size={13} />
+            改种植时间
           </button>
           <span className="spacer" />
           <button
             type="button"
-            className="btn btn-sm btn-ghost"
+            className="btn btn-ghost btn-icon"
             onClick={() => remove(seed.id)}
             title="删除这株种子"
           >
-            🗑 删除
+            <Icon name="trash" size={14} />
           </button>
         </div>
       ) : (
@@ -223,7 +228,7 @@ function CycleSeedCard({
             />
           </div>
           <div className="row">
-            <button type="button" className="btn btn-sm btn-gold" onClick={saveEdit}>
+            <button type="button" className="btn btn-sm btn-primary" onClick={saveEdit}>
               保存
             </button>
             <button
@@ -309,7 +314,7 @@ function TimerSeedCard({ seed, now }: Props) {
           (ripe ? ' ready' : urgent ? ' urgent' : '')
         }
       >
-        {ripe ? '✅ 可收获' : formatCountdown(remaining)}
+        {ripe ? '可收获' : formatCountdown(remaining)}
       </div>
 
       {/* 生长进度条 */}
@@ -318,30 +323,32 @@ function TimerSeedCard({ seed, now }: Props) {
       </div>
 
       {/* 备注 */}
-      {seed.note && <div className="courtyard-note">📝 {seed.note}</div>}
+      {seed.note && <div className="courtyard-note">{seed.note}</div>}
 
       {/* 操作区 */}
       {!editing ? (
         <div className="row row-wrap">
           <button
             type="button"
-            className={'btn btn-sm ' + (ripe ? 'btn-jade' : 'btn-ghost')}
+            className={'btn btn-sm ' + (ripe ? 'btn-primary' : 'btn-ghost')}
             onClick={() => replant(seed.id, now)}
             title="把种植时间重置为现在，重新开始生长"
           >
-            {ripe ? '🌱 收获并重种' : '↻ 重新种植'}
+            <Icon name="rotate" size={13} />
+            {ripe ? '收获并重种' : '重新种植'}
           </button>
           <button type="button" className="btn btn-sm btn-ghost" onClick={openEdit}>
-            ⏱ 改时长
+            <Icon name="clock" size={13} />
+            改时长
           </button>
           <span className="spacer" />
           <button
             type="button"
-            className="btn btn-sm btn-ghost"
+            className="btn btn-ghost btn-icon"
             onClick={() => remove(seed.id)}
             title="删除这株种子"
           >
-            🗑 删除
+            <Icon name="trash" size={14} />
           </button>
         </div>
       ) : (
@@ -378,7 +385,7 @@ function TimerSeedCard({ seed, now }: Props) {
             </div>
           </div>
           <div className="row">
-            <button type="button" className="btn btn-sm btn-gold" onClick={saveEdit}>
+            <button type="button" className="btn btn-sm btn-primary" onClick={saveEdit}>
               保存
             </button>
             <button

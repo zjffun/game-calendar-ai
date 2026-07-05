@@ -16,6 +16,7 @@ import { useNow } from '../../hooks/useNow'
 import { getPeriodKey } from '../../utils/time'
 import { DUNGEON_PRESETS } from '../../data/gameData'
 import DungeonCard from './DungeonCard'
+import Icon from '../common/Icon'
 import './Dungeon.css'
 
 /** 筛选模式 */
@@ -102,9 +103,15 @@ export default function DungeonTracker() {
   }, [sorted, filter, now, settings])
 
   // 添加预设副本（已存在同名则忽略）
-  function addPreset(presetName: string, presetCycle: DungeonCycle) {
-    if (existingNames.has(presetName)) return
-    add({ name: presetName, resetCycle: presetCycle, required: true, preset: true })
+  function addPreset(preset: (typeof DUNGEON_PRESETS)[number]) {
+    if (existingNames.has(preset.name)) return
+    add({
+      name: preset.name,
+      resetCycle: preset.resetCycle,
+      required: true,
+      note: preset.note,
+      preset: true,
+    })
   }
 
   // 添加自定义副本
@@ -137,10 +144,7 @@ export default function DungeonTracker() {
 
   return (
     <section className="stack">
-      <h2 className="section-title">
-        <span className="glyph">⚔️</span>
-        副本刷新与完成追踪
-      </h2>
+      <h2 className="section-title">副本进度</h2>
 
       {/* 顶部汇总 */}
       <div className="card pad-lg">
@@ -179,7 +183,10 @@ export default function DungeonTracker() {
             summary.daily === 0 &&
             summary.weekly === 0 &&
             dungeons.length > 0 && (
-              <span className="badge badge-ok">✅ 本周期目标已全部完成</span>
+              <span className="badge badge-ok">
+                <Icon name="check" size={11} strokeWidth={2.5} />
+                本周期目标已全部完成
+              </span>
             )}
         </div>
       </div>
@@ -199,7 +206,7 @@ export default function DungeonTracker() {
                 key={p.name}
                 type="button"
                 className={`chip${added ? ' active' : ''}`}
-                onClick={() => addPreset(p.name, p.resetCycle)}
+                onClick={() => addPreset(p)}
                 disabled={added}
                 title={added ? '已添加' : '点击添加'}
               >
@@ -277,11 +284,12 @@ export default function DungeonTracker() {
           <div className="spacer" />
           <button
             type="button"
-            className={`btn btn-sm ${grouped ? 'btn-gold' : 'btn-ghost'}`}
+            className={`btn btn-sm ${grouped ? 'btn-tonal' : 'btn-ghost'}`}
             onClick={() => setGrouped((g) => !g)}
             title="按周期分组展示"
           >
-            {grouped ? '✓ 周期分组' : '周期分组'}
+            {grouped && <Icon name="check" size={12} strokeWidth={2.25} />}
+            周期分组
           </button>
         </div>
       </div>

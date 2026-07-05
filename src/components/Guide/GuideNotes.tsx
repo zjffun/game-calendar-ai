@@ -18,6 +18,7 @@ import {
   extractImageIds,
 } from '../../store/imageStore'
 import { appConfirm } from '../common/ConfirmDialog'
+import Icon from '../common/Icon'
 import MarkdownView from './MarkdownView'
 
 const PLACEHOLDER = `支持 Markdown（表格 / 任务列表也可以），例如：
@@ -207,7 +208,7 @@ export default function GuideNotes({ guideId }: Props) {
     return (
       <section className="guide-notes editing pop-in">
         <header className="guide-notes-head">
-          <span aria-hidden>📝</span>
+          <Icon name="note" size={14} className="guide-notes-glyph" />
           <span className="guide-notes-title">我的补充</span>
           <span className="spacer" />
           <button
@@ -215,7 +216,8 @@ export default function GuideNotes({ guideId }: Props) {
             onClick={() => fileInputRef.current?.click()}
             title="选择图片文件插入（也可直接 Ctrl+V 粘贴或拖拽）"
           >
-            🖼 插入图片
+            <Icon name="image" size={13} />
+            插入图片
           </button>
           <button className="btn btn-ghost btn-sm" onClick={handleCancel}>
             取消
@@ -252,7 +254,7 @@ export default function GuideNotes({ guideId }: Props) {
           支持 Markdown（GFM：表格、任务列表、删除线）；图片可 <code>Ctrl+V</code> 粘贴、
           拖拽或点「插入图片」，会自动压缩后保存在本机图片库。
         </span>
-        {busyCount > 0 && <span className="guide-notes-busy">⏳ 正在压缩 {busyCount} 张图片…</span>}
+        {busyCount > 0 && <span className="guide-notes-busy">正在压缩 {busyCount} 张图片…</span>}
         {imgError && <span className="guide-notes-error">{imgError}</span>}
         <div className="guide-notes-preview">
           <div className="muted small guide-notes-preview-label">预览</div>
@@ -270,7 +272,8 @@ export default function GuideNotes({ guideId }: Props) {
   if (!note) {
     return (
       <button className="guide-notes-add" onClick={startEdit}>
-        ＋ 补充自定义内容（支持 Markdown 与截图，仅存在本机）
+        <Icon name="plus" size={13} />
+        补充自定义内容（支持 Markdown 与截图，仅存在本机）
       </button>
     )
   }
@@ -279,15 +282,17 @@ export default function GuideNotes({ guideId }: Props) {
   return (
     <section className="guide-notes pop-in">
       <header className="guide-notes-head">
-        <span aria-hidden>📝</span>
+        <Icon name="note" size={14} className="guide-notes-glyph" />
         <span className="guide-notes-title">我的补充</span>
         <span className="muted small">更新于 {formatUpdatedAt(note.updatedAt)}</span>
         <span className="spacer" />
         <button className="btn btn-ghost btn-sm" onClick={startEdit}>
-          ✏️ 编辑
+          <Icon name="pencil" size={13} />
+          编辑
         </button>
         <button className="btn btn-ghost btn-sm" onClick={handleDelete}>
-          🗑 删除
+          <Icon name="trash" size={13} />
+          删除
         </button>
       </header>
       <MarkdownView markdown={note.markdown} images={images} />

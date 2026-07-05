@@ -16,6 +16,7 @@ import {
   isTaskPartlyDone,
   doneCharCount,
 } from '../../utils/todo'
+import Icon from '../common/Icon'
 
 interface TodoItemProps {
   task: TodoTask
@@ -89,7 +90,7 @@ export default function TodoItem({ task, periodKey }: TodoItemProps) {
             />
           </div>
           <div className="row">
-            <button className="btn btn-jade btn-sm" onClick={saveEdit} disabled={!name.trim()}>
+            <button className="btn btn-primary btn-sm" onClick={saveEdit} disabled={!name.trim()}>
               保存
             </button>
             <button className="btn btn-ghost btn-sm" onClick={() => setEditing(false)}>
@@ -122,7 +123,7 @@ export default function TodoItem({ task, periodKey }: TodoItemProps) {
         }
         onClick={toggleMaster}
       >
-        {partly ? '–' : '✓'}
+        <Icon name={partly && !allDone ? 'minus' : 'check'} size={13} strokeWidth={2.75} />
       </button>
 
       <div className="todo-body">
@@ -149,7 +150,11 @@ export default function TodoItem({ task, periodKey }: TodoItemProps) {
                   title={cdone ? `${c.name} 已完成，点击取消` : `${c.name} 未完成，点击标记完成`}
                   onClick={() => toggleCharacter(task.id, c.id, periodKey)}
                 >
-                  <span className="todo-charchip-mark">{cdone ? '✓' : '○'}</span>
+                  {cdone ? (
+                    <Icon name="check" size={10} strokeWidth={3} />
+                  ) : (
+                    <span className="todo-charchip-dot" aria-hidden />
+                  )}
                   {c.name}
                 </button>
               )
@@ -160,14 +165,14 @@ export default function TodoItem({ task, periodKey }: TodoItemProps) {
 
       <div className="todo-actions">
         <button className="btn btn-ghost btn-icon" title="编辑" onClick={startEdit}>
-          ✎
+          <Icon name="pencil" size={14} />
         </button>
         <button
           className="btn btn-ghost btn-icon"
           title="删除"
           onClick={() => remove(task.id)}
         >
-          🗑
+          <Icon name="trash" size={14} />
         </button>
       </div>
     </li>

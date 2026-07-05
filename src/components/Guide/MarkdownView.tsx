@@ -42,7 +42,7 @@ export default function MarkdownView({ markdown, images }: Props) {
           const dataUrl = images?.[url.slice(IMAGE_URL_PREFIX.length)]
           if (!dataUrl) {
             // 图片仍在加载或已被清理：显示占位而不是裂图
-            return <span className="md-img-missing">🖼 图片加载中或已丢失{alt ? `：${alt}` : ''}</span>
+            return <span className="md-img-missing">图片加载中或已丢失{alt ? `：${alt}` : ''}</span>
           }
           return <img {...props} className="md-img" src={dataUrl} alt={alt ?? ''} loading="lazy" />
         }

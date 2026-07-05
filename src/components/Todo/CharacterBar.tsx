@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { useCharacters } from '../../store/useAppStore'
 import { appConfirm } from '../common/ConfirmDialog'
+import Icon from '../common/Icon'
 
 export default function CharacterBar() {
   const { characters, add, rename, remove } = useCharacters()
@@ -46,9 +47,6 @@ export default function CharacterBar() {
   return (
     <div className="card char-bar">
       <div className="card-head">
-        <span className="glyph" aria-hidden>
-          👥
-        </span>
         <h3>角色（{characters.length}）</h3>
         <span className="muted small">
           {characters.length === 0
@@ -95,7 +93,7 @@ export default function CharacterBar() {
                 aria-label={`删除角色 ${c.name}`}
                 onClick={() => confirmRemove(c.id, c.name)}
               >
-                ✕
+                <Icon name="x" size={11} strokeWidth={2.25} />
               </button>
             </span>
           ),
@@ -115,8 +113,9 @@ export default function CharacterBar() {
               if (e.key === 'Enter') submitAdd()
             }}
           />
-          <button className="btn btn-gold btn-sm" onClick={submitAdd} disabled={!newName.trim()}>
-            ＋ 添加角色
+          <button className="btn btn-tonal btn-sm" onClick={submitAdd} disabled={!newName.trim()}>
+            <Icon name="plus" size={13} />
+            添加角色
           </button>
         </div>
       </div>

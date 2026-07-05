@@ -73,7 +73,7 @@ export default function AddTodoForm() {
       </div>
       <div className="row">
         <button className="btn btn-primary" onClick={submit} disabled={!name.trim()}>
-          ＋ 添加任务
+          添加任务
         </button>
       </div>
     </div>

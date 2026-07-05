@@ -171,6 +171,16 @@ export interface GuideSection {
 }
 
 /**
+ * 内置攻略的配图：已压缩后打包进应用（public/guide-img/），
+ * src 为相对 BASE_URL 的路径，如 'guide-img/dgn-wujiguo-1.jpg'。
+ */
+export interface GuideImage {
+  src: string
+  /** 配图说明（同时用作 alt 文本） */
+  caption?: string
+}
+
+/**
  * 一条攻略。
  * - 内置攻略（preset=true）来自资料整理，正文只读，不可编辑/删除；
  *   但可通过 GuideNote 补充用户自己的 Markdown 内容（另行存储，见 guideNotes）；
@@ -186,6 +196,8 @@ export interface GuideEntry {
   tags?: string[]
   /** 正文小节 */
   sections: GuideSection[]
+  /** 配图（内置攻略用；图片压缩后随应用打包） */
+  images?: GuideImage[]
   /** 资料出处 / 置信度备注（内置攻略用） */
   source?: string
   /** 是否内置（只读）。自定义为 false/省略 */

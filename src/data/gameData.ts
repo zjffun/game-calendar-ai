@@ -104,30 +104,24 @@ export const SEED_PRESETS: SeedPreset[] = [
 ]
 
 // ----------------------------------------------------------------------------
-// 副本预设（周期可在界面调整）
-// 依据梦幻西游电脑版「天命副本」系统（2024「天命之路」资料片起）：
-//   - 天命副本进度【每 4 天】刷新一次；
-//   - 仅 胡姬琵琶行、西域宝藏 为【每周】刷新；
-//   - 实际「天命」名单会随天命游记轮换，这里给出常见副本池，可自行增删。
+// 当前天命副本预设（更新于 2026-07-05）
+// 本期名单持续至 2026-09-01 08:00；青丘迷雾加入，虎牢魔影移出。
+// 天命名单会随维护轮换，最终以游戏内 Alt+R 的「天命」标识为准。
 // ----------------------------------------------------------------------------
 
 export const DUNGEON_PRESETS: DungeonPreset[] = [
-  // —— 天命副本（每 4 天刷新）——
-  { name: '车迟国', resetCycle: 'every4days' },
-  { name: '乌鸡国', resetCycle: 'every4days' },
+  { name: '青丘迷雾', resetCycle: 'every4days', note: '本期轮换英雄副本（至 2026-09-01 08:00）' },
+  { name: '秘境降妖', resetCycle: 'every4days', note: '本期开放全新竞速分支' },
   { name: '通天河', resetCycle: 'every4days' },
-  { name: '水陆大会', resetCycle: 'every4days' },
-  { name: '金兜洞', resetCycle: 'every4days' },
-  { name: '秘境降妖', resetCycle: 'every4days' },
-  { name: '红孩儿', resetCycle: 'every4days' },
+  { name: '大闹天宫', resetCycle: 'every4days' },
   { name: '黑风山', resetCycle: 'every4days' },
-  { name: '灵猴出世', resetCycle: 'every4days' },
-  { name: '东海巡珍', resetCycle: 'every4days' },
-  { name: '青丘迷雾', resetCycle: 'every4days' },
   { name: '七绝山', resetCycle: 'every4days' },
-  // —— 每周刷新 ——
-  { name: '胡姬琵琶行', resetCycle: 'weekly' },
-  { name: '西域宝藏', resetCycle: 'weekly' },
+  { name: '石猴授徒', resetCycle: 'every4days' },
+  { name: '乌鸡国', resetCycle: 'every4days' },
+  { name: '泾河龙王2', resetCycle: 'every4days' },
+  { name: '金兜洞', resetCycle: 'every4days' },
+  { name: '蟠桃宴', resetCycle: 'every4days' },
+  { name: '灵猴出世', resetCycle: 'every4days' },
 ]
 
 // ----------------------------------------------------------------------------

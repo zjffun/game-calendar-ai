@@ -15,57 +15,64 @@
 }
 .todo-group-progress {
   font-size: 12.5px;
-  color: var(--c-ink-faint);
+  color: var(--ink-3);
   font-variant-numeric: tabular-nums;
+}
+
+/* 任务列表：分隔线式，不再逐条描边 */
+.todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 一条 TODO 行 */
 .todo-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--c-line);
-  border-radius: var(--radius-sm);
-  background: var(--c-paper-3);
-  transition: border-color 0.15s ease, opacity 0.2s ease;
+  gap: 12px;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--line);
+  transition: opacity 0.2s ease;
 }
-.todo-item.todo-done {
-  opacity: 0.6;
-  background: rgba(120, 90, 50, 0.05);
+.todo-item:last-child {
+  border-bottom: none;
+  padding-bottom: 4px;
+}
+.todo-item:first-child {
+  padding-top: 4px;
 }
 
-/* 大复选框（方形国风按钮） */
+/* 主复选框：未选=空框，半选=横线，全选=墨色实心 */
 .todo-check {
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   margin-top: 1px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--c-line-strong);
-  background: var(--c-paper-2);
+  border-radius: 6px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface);
   color: transparent;
-  font-size: 16px;
-  font-weight: 800;
-  line-height: 1;
   transition: all 0.12s ease;
+  padding: 0;
 }
 .todo-check:hover {
-  border-color: var(--c-gold);
+  border-color: var(--ink-3);
 }
 .todo-check.checked {
-  background: linear-gradient(180deg, #3f9d72, var(--c-jade));
-  border-color: var(--c-jade);
-  color: #f3fff8;
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #faf9f5;
 }
-/* 部分角色完成：半选态（金色 –） */
+/* 部分角色完成：半选态 */
 .todo-check.partial {
-  background: #f6e6bf;
-  border-color: var(--c-gold);
-  color: var(--c-gold);
+  border-color: var(--ink-2);
+  color: var(--ink-2);
 }
 
 /* TODO 主体（名称 + 备注） */
@@ -74,28 +81,41 @@
   min-width: 0;
 }
 .todo-name {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: var(--c-ink);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
   word-break: break-word;
+  line-height: 1.5;
 }
 .todo-done .todo-name {
   text-decoration: line-through;
-  color: var(--c-ink-faint);
+  text-decoration-color: var(--line-strong);
+  color: var(--ink-3);
 }
 .todo-note {
-  margin-top: 2px;
+  margin-top: 1px;
   font-size: 12px;
-  color: var(--c-ink-faint);
+  color: var(--ink-3);
   word-break: break-word;
 }
 
-/* 行尾操作区 */
+/* 行尾操作区：桌面端 hover 才显现，触屏常显 */
 .todo-actions {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.todo-item:hover .todo-actions,
+.todo-item:focus-within .todo-actions {
+  opacity: 1;
+}
+@media (hover: none) {
+  .todo-actions {
+    opacity: 1;
+  }
 }
 
 /* 编辑态表单 */
@@ -111,12 +131,12 @@
 .todo-preset-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 .todo-preset-cat {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--c-ink-soft);
+  font-weight: 500;
+  color: var(--ink-3);
 }
 .todo-preset-chips {
   display: flex;
@@ -126,20 +146,17 @@
 .todo-chip {
   cursor: pointer;
 }
-.todo-chip .todo-chip-mark {
-  font-size: 12px;
-}
 
 /* —— 任务名后的「已完成角色/总数」 —— */
 .todo-charcount {
   margin-left: 8px;
   font-size: 12px;
-  font-weight: 700;
-  color: var(--c-gold);
+  font-weight: 500;
+  color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 .todo-charcount.all {
-  color: var(--c-jade);
+  color: var(--ok);
 }
 
 /* —— 每条 TODO 下的角色小勾选 —— */
@@ -147,34 +164,34 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 8px;
+  margin-top: 7px;
 }
 .todo-charchip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
+  gap: 5px;
+  padding: 3px 10px;
   border-radius: 999px;
-  border: 1px solid var(--c-line-strong);
-  background: var(--c-paper-2);
-  color: var(--c-ink-soft);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-2);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   transition: all 0.12s ease;
 }
 .todo-charchip:hover {
-  border-color: var(--c-gold);
+  border-color: var(--ink-3);
 }
 .todo-charchip.done {
-  background: var(--c-jade-soft);
-  border-color: var(--c-jade);
-  color: var(--c-jade);
+  background: var(--ok-soft);
+  border-color: transparent;
+  color: var(--ok);
 }
-.todo-charchip-mark {
-  font-size: 11px;
-  display: inline-block;
-  width: 1em;
-  text-align: center;
+.todo-charchip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1.25px solid var(--line-strong);
 }
 
 /* —— 角色管理条 —— */
@@ -193,8 +210,8 @@
   gap: 2px;
   padding: 2px 2px 2px 4px;
   border-radius: 999px;
-  border: 1px solid var(--c-line-strong);
-  background: var(--c-paper-3);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
 }
 .char-chip.editing {
   padding: 0;
@@ -203,30 +220,31 @@
   border: none;
   background: transparent;
   font-size: 13px;
-  font-weight: 700;
-  color: var(--c-ink);
+  font-weight: 500;
+  color: var(--ink);
   padding: 4px 6px;
   border-radius: 999px;
 }
 .char-chip-name:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(43, 42, 38, 0.05);
 }
 .char-chip-del {
   border: none;
   background: transparent;
-  color: var(--c-ink-faint);
-  font-size: 12px;
+  color: var(--ink-3);
   line-height: 1;
-  padding: 4px 7px;
+  padding: 5px 7px;
   border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
 }
 .char-chip-del:hover {
-  background: var(--c-red-soft);
-  color: var(--c-red);
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .char-edit-input {
   width: 96px;
-  border: 1px solid var(--c-gold);
+  border: 1px solid var(--accent);
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 13px;
@@ -242,49 +260,8 @@
 }
 .char-err {
   margin: 8px 0 0;
-  color: var(--c-red);
-  font-weight: 600;
-}
-
-/* —— 攻略大全入口（待办页顶部）—— */
-.todo-guide-entry {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  text-align: left;
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  border: 1px solid var(--c-gold);
-  background: linear-gradient(180deg, #fbf1d4, #f6e6bf);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.05s ease, box-shadow 0.15s ease;
-}
-.todo-guide-entry:hover {
-  box-shadow: var(--shadow);
-}
-.todo-guide-entry:active {
-  transform: translateY(1px);
-}
-.todo-guide-entry-glyph {
-  font-size: 24px;
-  line-height: 1;
-}
-.todo-guide-entry-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.todo-guide-entry-text strong {
-  font-size: 15px;
-  color: var(--c-red);
-}
-.todo-guide-entry-arrow {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--c-gold);
+  color: var(--danger);
+  font-weight: 500;
 }
 
 @media (max-width: 560px) {

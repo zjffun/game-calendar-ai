@@ -2,78 +2,68 @@
    概览仪表盘 —— 模块私有样式（类名统一加 ov- 前缀，避免与全局冲突）
    ========================================================================== */
 
-/* 顶部问候横幅 */
+/* 顶部问候：不放卡片里，直接落在页面底色上（Claude 式问候语） */
 .ov-hero {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 16px;
   flex-wrap: wrap;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(216, 169, 58, 0.18), transparent 55%),
-    linear-gradient(180deg, var(--c-paper-3), var(--c-paper-2));
-  border: 1px solid var(--c-line-strong);
-}
-.ov-hero-seal {
-  flex: none;
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  font-size: 26px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, var(--c-red-2), var(--c-red));
-  color: #fff5ec;
-  box-shadow: var(--shadow-sm);
+  padding: 10px 2px 6px;
 }
 .ov-hero-main {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 180px;
 }
 .ov-hero-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--c-red);
+  font-family: var(--font-display);
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--ink);
+  line-height: 1.25;
 }
 .ov-hero-reset {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  align-items: flex-end;
   text-align: right;
   margin-left: auto;
 }
+.ov-hero-countdown {
+  font-size: 19px;
+}
 
-/* 卡片网格：自适应两列 / 单列 */
+/* 卡片网格：随宽度自适应列数 */
 .ov-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-@media (max-width: 560px) {
-  .ov-grid {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-/* 可点击卡片：hover 上浮 + 鎏金描边，键盘可聚焦 */
+/* 可点击卡片 */
 .ov-card {
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  gap: 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
 }
 .ov-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
-  border-color: var(--c-line-strong);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 .ov-card:focus-visible {
-  outline: none;
-  border-color: var(--c-gold);
-  box-shadow: 0 0 0 3px rgba(216, 169, 58, 0.25);
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
 }
 .ov-card:active {
   transform: translateY(0);
+}
+.ov-card:hover .ov-card-arrow {
+  color: var(--ink-2);
+  transform: translateX(2px);
 }
 
 .ov-card-head {
@@ -81,19 +71,18 @@
   align-items: center;
   gap: 8px;
 }
-.ov-card-glyph {
-  font-size: 20px;
+.ov-card-icon {
+  color: var(--ink-3);
 }
 .ov-card-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--c-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
 }
 .ov-card-arrow {
   margin-left: auto;
-  color: var(--c-ink-faint);
-  font-size: 14px;
-  font-weight: 700;
+  color: var(--line-strong);
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
 /* 主数字 + 单位 */
@@ -101,26 +90,24 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
+  flex-wrap: wrap;
 }
 .ov-stat-num {
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 27px;
+  font-weight: 650;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--c-ink);
+  color: var(--ink);
 }
-.ov-stat-num.is-red {
-  color: var(--c-red);
+.ov-stat-num.is-attention {
+  color: var(--accent);
 }
-.ov-stat-num.is-gold {
-  color: var(--c-gold);
-}
-.ov-stat-num.is-jade {
-  color: var(--c-jade);
+.ov-stat-num.is-ok {
+  color: var(--ok);
 }
 .ov-stat-unit {
   font-size: 13px;
-  color: var(--c-ink-faint);
+  color: var(--ink-3);
 }
 
 /* 卡片内分行信息 */
@@ -129,13 +116,7 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: var(--c-ink-soft);
-}
-.ov-line .ov-line-label {
-  color: var(--c-ink-faint);
-}
-.ov-line-spacer {
-  flex: 1;
+  color: var(--ink-2);
 }
 
 /* 倒计时小条 */
@@ -144,7 +125,7 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--c-ink-soft);
+  color: var(--ink-2);
 }
 
 /* 房屋迷你进度条组 */
@@ -163,10 +144,16 @@
   align-items: center;
   gap: 6px;
   font-size: 12.5px;
-  color: var(--c-ink-soft);
+  color: var(--ink-2);
 }
 .ov-meter-val {
   margin-left: auto;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .ov-hero-title {
+    font-size: 23px;
+  }
 }

@@ -8,7 +8,7 @@
 // - 内置攻略正文只读，但可在详情下方「我的补充」追加自定义 Markdown 内容。
 // ============================================================================
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { GuideEntry } from '../../types'
 import { useGuides, useGuideNotes } from '../../store/useAppStore'
 import { GUIDE_PRESETS, GUIDE_CATEGORY_META } from '../../data/guides'
@@ -22,6 +22,24 @@ import './Guide.css'
 
 type Mode = 'view' | 'add' | 'edit'
 
+/** 当前查看的攻略记录在 URL 查询参数里，刷新后可恢复（App 见到该参数会打开攻略页） */
+export const GUIDE_URL_PARAM = 'guide'
+
+function readGuideParam(): string | null {
+  if (typeof window === 'undefined') return null
+  return new URLSearchParams(window.location.search).get(GUIDE_URL_PARAM)
+}
+
+/** 把当前攻略 id 写回地址栏（用 replaceState，不新增历史记录） */
+function writeGuideParam(id: string | null): void {
+  if (typeof window === 'undefined') return
+  const url = new URL(window.location.href)
+  if (url.searchParams.get(GUIDE_URL_PARAM) === (id ?? null)) return
+  if (id) url.searchParams.set(GUIDE_URL_PARAM, id)
+  else url.searchParams.delete(GUIDE_URL_PARAM)
+  window.history.replaceState(null, '', url)
+}
+
 /** 自定义攻略按 order 升序（无 order 排后） */
 function byOrder(a: GuideEntry, b: GuideEntry): number {
   return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
@@ -31,8 +49,11 @@ export default function GuideBook() {
   const { guides: customGuides, add, update, remove } = useGuides()
   const { guideNotes } = useGuideNotes()
   const [query, setQuery] = useState('')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  // 初始选中优先取 URL 参数（刷新后恢复上次查看的攻略）
+  const [selectedId, setSelectedId] = useState<string | null>(() => readGuideParam())
   const [mode, setMode] = useState<Mode>('view')
+  // 窄屏：默认展开搜索+列表；选中攻略后把搜索区收成一个图标（桌面端此状态无视觉影响）
+  const [navCollapsed, setNavCollapsed] = useState(false)
 
   // 全部攻略（内置在前、自定义在后）——用于按 id 查找
   const allEntries = useMemo<GuideEntry[]>(
@@ -59,12 +80,18 @@ export default function GuideBook() {
   const activeEntry =
     visibleFlat.find((e) => e.id === selectedId) ?? visibleFlat[0] ?? null
 
+  // 地址栏始终反映当前查看的攻略（含默认第一条 / URL 中失效 id 的自愈）
+  useEffect(() => {
+    writeGuideParam(activeEntry?.id ?? null)
+  }, [activeEntry?.id])
+
   const presetCount = GUIDE_PRESETS.length
   const customCount = customGuides.length
 
   function select(id: string) {
     setSelectedId(id)
     setMode('view')
+    setNavCollapsed(true) // 窄屏：选中后收起搜索区，把主区留给正文
   }
 
   function handleSaveAdd(draft: GuideDraft) {
@@ -96,7 +123,18 @@ export default function GuideBook() {
         </span>
       </h2>
 
-      <div className="guide-layout">
+      <div className={`guide-layout${navCollapsed ? ' nav-collapsed' : ''}`}>
+        {/* 窄屏收起态：把搜索+列表收成一个可点回的图标（桌面端始终隐藏） */}
+        <button
+          type="button"
+          className="guide-nav-toggle"
+          onClick={() => setNavCollapsed(false)}
+          aria-label="展开搜索与攻略列表"
+        >
+          <Icon name="search" size={15} />
+          <span>攻略列表</span>
+        </button>
+
         {/* 侧边栏：分类 + 攻略导航 */}
         <aside className="guide-sidebar">
           <div className="guide-side-tools">
@@ -211,6 +249,11 @@ export default function GuideBook() {
                 </div>
               )}
 
+              {/* 内置攻略：把「我的补充」自定义内容置顶，正文之前 */}
+              {activeEntry.preset && (
+                <GuideNotes key={activeEntry.id} guideId={activeEntry.id} />
+              )}
+
               <div className="divider" />
 
               <GuideContentView sections={activeEntry.sections} />
@@ -233,11 +276,6 @@ export default function GuideBook() {
 
               {activeEntry.source && (
                 <p className="muted small guide-detail-source">资料出处：{activeEntry.source}</p>
-              )}
-
-              {/* 内置攻略：正文只读，但可补充自定义 Markdown 内容 */}
-              {activeEntry.preset && (
-                <GuideNotes key={activeEntry.id} guideId={activeEntry.id} />
               )}
             </article>
           ) : (

@@ -9,6 +9,11 @@
   gap: 16px;
 }
 
+/* 收起态图标入口：桌面端始终隐藏，仅窄屏收起后出现（见底部媒体查询） */
+.guide-nav-toggle {
+  display: none;
+}
+
 /* ---------- 侧边栏 ---------- */
 
 .guide-sidebar {
@@ -25,28 +30,38 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 12px;
+  padding: 0 12px 12px;
 }
 
+/* 搜索 + 新增：置顶固定，列表在其下方滚动时始终可见 */
 .guide-side-tools {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* 拉伸到侧栏内边距外沿，滚动时下方列表不从两侧透出 */
+  margin: 0 -12px;
+  padding: 12px 12px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
 }
 .guide-search-wrap {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 .guide-search-icon {
   position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 11px;
   color: var(--ink-3);
   pointer-events: none;
 }
-.guide-search {
+/* 提高选择器权重，确保左内边距压过全局 .input 的 padding 简写，避免文字压到图标下 */
+.guide-search-wrap .guide-search {
   width: 100%;
-  padding-left: 30px;
+  padding-left: 32px;
 }
 .guide-add-btn {
   width: 100%;
@@ -501,5 +516,30 @@
   }
   .guide-editor-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* 选中攻略后：隐藏整个搜索+列表侧栏，改用置顶的图标入口 */
+  .guide-layout.nav-collapsed .guide-sidebar {
+    display: none;
+  }
+  .guide-layout.nav-collapsed .guide-nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-2);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: color 0.12s ease, border-color 0.12s ease;
+  }
+  .guide-layout.nav-collapsed .guide-nav-toggle:hover {
+    color: var(--ink);
+    border-color: var(--line-strong);
   }
 }

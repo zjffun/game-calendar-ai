@@ -61,7 +61,23 @@ function MobileClock() {
 }
 
 export default function App() {
-  const [tab, setTab] = useState<TabId>('overview')
+  // 带 ?guide= 参数刷新时直接落到攻略页（GuideBook 再据此恢复选中的攻略）
+  const [tab, setTab] = useState<TabId>(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('guide')) {
+      return 'guide'
+    }
+    return 'overview'
+  })
+
+  // 离开攻略页时清掉 guide 参数，避免在其它页刷新又被拉回攻略
+  useEffect(() => {
+    if (tab === 'guide' || typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (url.searchParams.has('guide')) {
+      url.searchParams.delete('guide')
+      window.history.replaceState(null, '', url)
+    }
+  }, [tab])
 
   const sub = SUB_PAGES[tab]
   // 子页归属概览：主导航高亮「概览」

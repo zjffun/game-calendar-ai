@@ -10,4 +10,5 @@ export type TabId =
   | 'dungeon'
   | 'house'
   | 'guide'
+  | 'price'
   | 'settings'

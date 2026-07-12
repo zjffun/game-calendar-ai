@@ -164,6 +164,7 @@ export interface DungeonPreset {
  */
 export type GuideCategory =
   | '副本'
+  | '周末活动'
   | '神器·起'
   | '神器·转'
   | '神器·合'
@@ -234,6 +235,43 @@ export interface GuideNote {
 }
 
 // ----------------------------------------------------------------------------
+// 物价（常见任务产出物品参考价）
+// ----------------------------------------------------------------------------
+
+/**
+ * 一条物价条目。
+ * - 内置参考条目（preset=true）来自 data/prices，联网整理，只读；
+ * - 自定义条目（preset 省略/false）由用户添加，可编辑/删除；
+ * 两类都可通过 priceComments（条目id -> 备注）附加用户自己的评论。
+ * 说明：游戏物价随服务器与版本大幅波动，price 为「参考价」文本，最终以游戏内摊位为准。
+ */
+export interface PriceItem {
+  id: string
+  name: string
+  /** 分类：兽决 / 五宝 / 宝石 / 珍宝 / 材料 / 其它 */
+  category?: string
+  /** 参考价（自由文本，如「约 80 万」「135–140 万」「1000 银/支」），因服而异 */
+  price?: string
+  /** 产出来源 / 用途 / 说明 */
+  desc?: string
+  /** 是否内置参考条目（只读，可被自定义备注补充） */
+  preset?: boolean
+  /** 排序权重，越小越靠前 */
+  order?: number
+}
+
+/**
+ * 用户给某条物价条目附加的备注/评论。
+ * 以条目 id 为键存储（Record<物品id, PriceComment>），内置条目保持只读。
+ */
+export interface PriceComment {
+  /** 备注文本 */
+  text: string
+  /** 最近更新时间（epoch 毫秒） */
+  updatedAt: number
+}
+
+// ----------------------------------------------------------------------------
 // 房屋清洁度 / 耐久度（参考梦幻西游电脑版「房屋属性」）
 // ----------------------------------------------------------------------------
 
@@ -297,4 +335,8 @@ export const STORAGE_KEYS = {
   guides: 'mhxy.guides.v1',
   /** 内置攻略的用户补充内容（攻略id -> Markdown） */
   guideNotes: 'mhxy.guideNotes.v1',
+  /** 用户自定义物价条目（内置参考条目来自代码，不入库） */
+  priceItems: 'mhxy.priceItems.v1',
+  /** 物价条目的用户备注（物品id -> 备注） */
+  priceComments: 'mhxy.priceComments.v1',
 } as const

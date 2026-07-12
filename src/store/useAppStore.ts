@@ -21,6 +21,8 @@ import {
   type GuideCategory,
   type GuideSection,
   type GuideNote,
+  type PriceItem,
+  type PriceComment,
   SOLO_CHARACTER_ID,
 } from '../types'
 import { DEFAULT_SETTINGS, createDefaultHouse, SERVANT_ROOM_TIERS } from '../data/gameData'
@@ -43,6 +45,10 @@ interface AppState {
   guides: GuideEntry[]
   /** 内置攻略的用户补充内容：攻略id -> Markdown 笔记 */
   guideNotes: Record<string, GuideNote>
+  /** 用户自定义物价条目（内置参考条目来自 data，不在此） */
+  priceItems: PriceItem[]
+  /** 物价条目的用户备注：物品id -> 备注 */
+  priceComments: Record<string, PriceComment>
 }
 
 function load<T>(key: string, fallback: T): T {
@@ -97,6 +103,8 @@ let state: AppState = {
   characters: load<Character[]>(STORAGE_KEYS.characters, []),
   guides: load<GuideEntry[]>(STORAGE_KEYS.guides, []),
   guideNotes: load<Record<string, GuideNote>>(STORAGE_KEYS.guideNotes, {}),
+  priceItems: load<PriceItem[]>(STORAGE_KEYS.priceItems, []),
+  priceComments: load<Record<string, PriceComment>>(STORAGE_KEYS.priceComments, {}),
 }
 
 // 若初始加载触发了迁移（migrateTodos 对未变项保持同一引用），立即落盘，
@@ -156,6 +164,12 @@ if (typeof window !== 'undefined') {
           break
         case STORAGE_KEYS.guideNotes:
           state = { ...state, guideNotes: parsed }
+          break
+        case STORAGE_KEYS.priceItems:
+          state = { ...state, priceItems: parsed }
+          break
+        case STORAGE_KEYS.priceComments:
+          state = { ...state, priceComments: parsed }
           break
         default:
           return
@@ -503,6 +517,51 @@ export const guideNoteActions = {
   },
 }
 
+// ---- 物价（仅用户自定义条目；内置参考条目来自 data，不入库） ----
+export const priceActions = {
+  add(input: { name: string; category?: string; price?: string; desc?: string }): string {
+    const item: PriceItem = {
+      id: uid('price_'),
+      name: input.name.trim() || '未命名物品',
+      category: input.category?.trim() || '其它',
+      price: input.price?.trim() || undefined,
+      desc: input.desc?.trim() || undefined,
+      preset: false,
+      order: nextOrder(state.priceItems),
+    }
+    setSlice('priceItems', [...state.priceItems, item], STORAGE_KEYS.priceItems)
+    return item.id
+  },
+  update(id: string, patch: Partial<Omit<PriceItem, 'id' | 'preset'>>) {
+    setSlice(
+      'priceItems',
+      state.priceItems.map((it) => (it.id === id ? { ...it, ...patch } : it)),
+      STORAGE_KEYS.priceItems,
+    )
+  },
+  remove(id: string) {
+    setSlice('priceItems', state.priceItems.filter((it) => it.id !== id), STORAGE_KEYS.priceItems)
+  },
+}
+
+// ---- 物价备注（可附加在内置或自定义条目上；物品id -> 备注） ----
+export const priceCommentActions = {
+  /** 写入/更新某条物品的备注；内容为空则等同删除 */
+  set(itemId: string, text: string) {
+    const t = text.trim()
+    const next = { ...state.priceComments }
+    if (t) next[itemId] = { text: t, updatedAt: Date.now() }
+    else delete next[itemId]
+    setSlice('priceComments', next, STORAGE_KEYS.priceComments)
+  },
+  remove(itemId: string) {
+    if (!(itemId in state.priceComments)) return
+    const next = { ...state.priceComments }
+    delete next[itemId]
+    setSlice('priceComments', next, STORAGE_KEYS.priceComments)
+  },
+}
+
 // ---- 数据管理（导入 / 导出 / 重置） ----
 // 备份格式 = 全量 state + images（IndexedDB 图片库，id -> base64 data URL）。
 // 图片在 IndexedDB（异步），因此导出/导入/重置均为 async。
@@ -525,6 +584,9 @@ export const dataActions = {
       if (parsed.characters) setSlice('characters', parsed.characters, STORAGE_KEYS.characters)
       if (parsed.guides) setSlice('guides', parsed.guides, STORAGE_KEYS.guides)
       if (parsed.guideNotes) setSlice('guideNotes', parsed.guideNotes, STORAGE_KEYS.guideNotes)
+      if (parsed.priceItems) setSlice('priceItems', parsed.priceItems, STORAGE_KEYS.priceItems)
+      if (parsed.priceComments)
+        setSlice('priceComments', parsed.priceComments, STORAGE_KEYS.priceComments)
       if (parsed.images) await putImages(parsed.images)
       return true
     } catch {
@@ -540,6 +602,8 @@ export const dataActions = {
     setSlice('characters', [], STORAGE_KEYS.characters)
     setSlice('guides', [], STORAGE_KEYS.guides)
     setSlice('guideNotes', {}, STORAGE_KEYS.guideNotes)
+    setSlice('priceItems', [], STORAGE_KEYS.priceItems)
+    setSlice('priceComments', {}, STORAGE_KEYS.priceComments)
     await clearImages().catch(() => {})
   },
 }
@@ -602,6 +666,18 @@ export function useGuides() {
 export function useGuideNotes() {
   const guideNotes = useSelector((s) => s.guideNotes)
   return { guideNotes, ...guideNoteActions }
+}
+
+/** 物价分片：仅返回用户自定义条目（内置参考条目由组件合并 data 提供） */
+export function usePriceItems() {
+  const priceItems = useSelector((s) => s.priceItems)
+  return { priceItems, ...priceActions }
+}
+
+/** 物价备注分片：物品id -> 用户备注 */
+export function usePriceComments() {
+  const priceComments = useSelector((s) => s.priceComments)
+  return { priceComments, ...priceCommentActions }
 }
 
 /** 只读全量状态（用于概览 / 导出） */

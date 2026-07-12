@@ -31,6 +31,7 @@ export type IconName =
   | 'copy'
   | 'alert'
   | 'note'
+  | 'coin'
 
 const PATHS: Record<IconName, ReactNode> = {
   overview: (
@@ -167,6 +168,14 @@ const PATHS: Record<IconName, ReactNode> = {
       <polyline points="14 2 14 8 20 8" />
       <line x1="16" y1="13" x2="8" y2="13" />
       <line x1="16" y1="17" x2="8" y2="17" />
+    </>
+  ),
+  coin: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M14.8 9.2a3 3 0 0 0-2.8-1.7c-1.7 0-2.6.9-2.6 2 0 2.7 5.4 1.4 5.4 4.2 0 1.2-1 2.1-2.8 2.1a3 3 0 0 1-2.8-1.7" />
+      <line x1="12" y1="6" x2="12" y2="7.5" />
+      <line x1="12" y1="16.5" x2="12" y2="18" />
     </>
   ),
 }

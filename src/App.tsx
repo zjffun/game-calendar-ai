@@ -10,6 +10,7 @@ import CourtyardTimers from './components/Courtyard/CourtyardTimers'
 import DungeonTracker from './components/Dungeon/DungeonTracker'
 import HouseCleaning from './components/House/HouseCleaning'
 import GuideBook from './components/Guide/GuideBook'
+import PriceBook from './components/Price/PriceBook'
 import SettingsPanel from './components/Settings/SettingsPanel'
 import ConfirmHost from './components/common/ConfirmDialog'
 import Icon, { type IconName } from './components/common/Icon'
@@ -21,6 +22,7 @@ const NAV: { id: TabId; label: string; icon: IconName }[] = [
   { id: 'overview', label: '概览', icon: 'overview' },
   { id: 'todo', label: '待办', icon: 'todo' },
   { id: 'guide', label: '攻略', icon: 'guide' },
+  { id: 'price', label: '物价', icon: 'coin' },
 ]
 
 /** 子页（从概览进入，不出现在主导航）：显示为概览下的当前位置 */
@@ -188,6 +190,7 @@ export default function App() {
             {tab === 'dungeon' && <DungeonTracker />}
             {tab === 'house' && <HouseCleaning />}
             {tab === 'guide' && <GuideBook />}
+            {tab === 'price' && <PriceBook />}
             {tab === 'settings' && <SettingsPanel />}
           </div>
         </main>

@@ -1,0 +1,174 @@
+/* ==========================================================================
+   物价模块样式
+   ========================================================================== */
+
+.price-book {
+  max-width: 860px;
+}
+
+.price-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.price-head .section-title {
+  margin-bottom: 2px;
+}
+
+/* 顶部提示条 */
+.price-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--warn-soft, var(--line));
+  background: var(--warn-soft, var(--surface-2));
+  border-radius: var(--radius);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.price-note .icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--warn);
+}
+
+/* 搜索框 */
+.price-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.price-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.price-search {
+  padding-left: 34px;
+}
+
+/* 列表 */
+.price-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.price-item {
+  padding: 12px 2px;
+  border-top: 1px solid var(--line);
+}
+.price-item:first-child {
+  border-top: none;
+}
+
+.price-row-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+.price-item-info {
+  min-width: 0;
+}
+.price-item-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.price-custom-badge {
+  font-weight: 500;
+}
+.price-item-desc {
+  margin-top: 3px;
+  line-height: 1.5;
+}
+.price-item-value {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--accent-ink, var(--accent));
+  white-space: nowrap;
+}
+
+/* 行内操作 */
+.price-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* 备注展示 */
+.price-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--accent-soft, var(--surface-2));
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.price-comment-icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+/* 备注编辑 */
+.price-comment-edit {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.price-comment-input {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* 新增 / 编辑表单 */
+.price-add-card {
+  border-color: var(--accent-soft, var(--line-strong));
+}
+.price-edit {
+  width: 100%;
+}
+
+/* 超小按钮（行内操作用） */
+.btn-xs {
+  padding: 3px 9px;
+  font-size: 12px;
+  gap: 4px;
+  border-radius: var(--radius-sm);
+}
+.price-book .btn.danger {
+  color: var(--danger);
+}
+.price-book .btn.danger:hover {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+@media (max-width: 640px) {
+  .price-row-main {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .price-item-value {
+    align-self: flex-start;
+  }
+}

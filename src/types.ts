@@ -164,7 +164,8 @@ export interface DungeonPreset {
  */
 export type GuideCategory =
   | '副本'
-  | '周末活动'
+  | '周六活动'
+  | '周日活动'
   | '神器·起'
   | '神器·转'
   | '神器·合'
@@ -271,6 +272,36 @@ export interface PriceComment {
   updatedAt: number
 }
 
+/** 价格观测来源：游戏聊天频道 / 摊位 */
+export type PriceSource = 'chat' | 'stall'
+
+/**
+ * 一次带时间戳的「价格观测」——来自对游戏聊天/摊位截图的 OCR 识别。
+ * 多条观测按时间累积，即可绘制某物品的价格趋势。
+ * 图片 OCR 在本机完成，观测数据仅存本地。
+ */
+export interface PriceObservation {
+  id: string
+  /** 关联的物价条目 id（内置或自定义）；未归类时可空 */
+  itemId?: string
+  /** 物品名（OCR 得到或用户校正后的显示名） */
+  itemName: string
+  /** 归一化后的价格数值（梦幻币）；用于趋势计算，解析失败时可空 */
+  value?: number
+  /** 原始价格文本，如 "80w" "3500万" "1.2亿" */
+  priceText?: string
+  /** 买卖方向：收(buy) / 卖(sell)；识别不到时可空 */
+  side?: 'buy' | 'sell'
+  /** 来源：聊天 / 摊位 */
+  source: PriceSource
+  /** 区服（聊天里常带，可选） */
+  server?: string
+  /** 采集时间（epoch 毫秒）——默认取导入时刻，可由用户改成截图时间 */
+  capturedAt: number
+  /** OCR 原始整行文本，便于回溯核对 */
+  rawText?: string
+}
+
 // ----------------------------------------------------------------------------
 // 房屋清洁度 / 耐久度（参考梦幻西游电脑版「房屋属性」）
 // ----------------------------------------------------------------------------
@@ -339,4 +370,6 @@ export const STORAGE_KEYS = {
   priceItems: 'mhxy.priceItems.v1',
   /** 物价条目的用户备注（物品id -> 备注） */
   priceComments: 'mhxy.priceComments.v1',
+  /** 价格观测（OCR 识别的带时间戳记录，用于趋势） */
+  priceObservations: 'mhxy.priceObservations.v1',
 } as const

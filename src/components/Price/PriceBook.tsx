@@ -7,11 +7,14 @@
 // ============================================================================
 
 import { useMemo, useState } from 'react'
-import type { PriceItem, PriceComment } from '../../types'
-import { usePriceItems, usePriceComments } from '../../store/useAppStore'
+import type { PriceItem, PriceComment, PriceObservation } from '../../types'
+import { usePriceItems, usePriceComments, usePriceObservations } from '../../store/useAppStore'
 import { PRICE_PRESETS, PRICE_CATEGORY_ORDER } from '../../data/prices'
+import { formatMoney, statsFor } from '../../utils/priceParse'
 import { appConfirm } from '../common/ConfirmDialog'
 import Icon from '../common/Icon'
+import OcrImport from './OcrImport'
+import { Sparkline, TrendChart } from './Trend'
 import './Price.css'
 
 const CATEGORY_OPTIONS = [...PRICE_CATEGORY_ORDER]
@@ -24,8 +27,26 @@ function byOrder(a: PriceItem, b: PriceItem): number {
 export default function PriceBook() {
   const { priceItems, add, update, remove } = usePriceItems()
   const { priceComments, set: setComment } = usePriceComments()
+  const { priceObservations, clearItem } = usePriceObservations()
   const [query, setQuery] = useState('')
   const [showAdd, setShowAdd] = useState(false)
+  const [showOcr, setShowOcr] = useState(false)
+
+  // 物品 id -> 该物品的观测列表（用于趋势）
+  const obsByItem = useMemo(() => {
+    const map = new Map<string, PriceObservation[]>()
+    for (const o of priceObservations) {
+      if (!o.itemId) continue
+      if (!map.has(o.itemId)) map.set(o.itemId, [])
+      map.get(o.itemId)!.push(o)
+    }
+    return map
+  }, [priceObservations])
+
+  const unlinkedCount = useMemo(
+    () => priceObservations.filter((o) => !o.itemId).length,
+    [priceObservations],
+  )
 
   const allItems = useMemo(
     () => [...PRICE_PRESETS, ...[...priceItems].sort(byOrder)],
@@ -73,13 +94,16 @@ export default function PriceBook() {
             内置参考 {presetCount} 条 · 自定义 {customCount} 条
           </p>
         </div>
-        <button
-          className="btn btn-primary btn-sm"
-          onClick={() => setShowAdd((v) => !v)}
-        >
-          <Icon name={showAdd ? 'x' : 'plus'} size={14} />
-          {showAdd ? '收起' : '新增物品'}
-        </button>
+        <div className="row">
+          <button className="btn btn-tonal btn-sm" onClick={() => setShowOcr((v) => !v)}>
+            <Icon name={showOcr ? 'x' : 'image'} size={14} />
+            {showOcr ? '收起' : 'OCR 导入'}
+          </button>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowAdd((v) => !v)}>
+            <Icon name={showAdd ? 'x' : 'plus'} size={14} />
+            {showAdd ? '收起' : '新增物品'}
+          </button>
+        </div>
       </div>
 
       <div className="price-note">
@@ -90,7 +114,16 @@ export default function PriceBook() {
         </span>
       </div>
 
+      {showOcr && <OcrImport onClose={() => setShowOcr(false)} />}
       {showAdd && <AddPriceForm onAdd={add} onDone={() => setShowAdd(false)} />}
+
+      {priceObservations.length > 0 && (
+        <p className="muted small price-obs-note">
+          已记录 {priceObservations.length} 条价格观测
+          {unlinkedCount > 0 && `（其中 ${unlinkedCount} 条未归类，不计入任何物品趋势）`}
+          ，趋势显示在对应物品下。
+        </p>
+      )}
 
       <div className="price-search-wrap">
         <Icon name="search" size={14} className="price-search-icon" />
@@ -117,9 +150,11 @@ export default function PriceBook() {
                   key={item.id}
                   item={item}
                   comment={priceComments[item.id]}
+                  observations={obsByItem.get(item.id) ?? []}
                   onSetComment={setComment}
                   onUpdate={update}
                   onRemove={remove}
+                  onClearObs={clearItem}
                 />
               ))}
             </ul>
@@ -137,15 +172,28 @@ export default function PriceBook() {
 interface PriceRowProps {
   item: PriceItem
   comment?: PriceComment
+  observations: PriceObservation[]
   onSetComment: (id: string, text: string) => void
   onUpdate: (id: string, patch: Partial<Omit<PriceItem, 'id' | 'preset'>>) => void
   onRemove: (id: string) => void
+  onClearObs: (itemId: string) => void
 }
 
-function PriceRow({ item, comment, onSetComment, onUpdate, onRemove }: PriceRowProps) {
+function PriceRow({
+  item,
+  comment,
+  observations,
+  onSetComment,
+  onUpdate,
+  onRemove,
+  onClearObs,
+}: PriceRowProps) {
   const [commenting, setCommenting] = useState(false)
   const [draft, setDraft] = useState(comment?.text ?? '')
   const [editing, setEditing] = useState(false)
+  const [showTrend, setShowTrend] = useState(false)
+
+  const stats = useMemo(() => statsFor(observations), [observations])
 
   function saveComment() {
     onSetComment(item.id, draft)
@@ -154,6 +202,13 @@ function PriceRow({ item, comment, onSetComment, onUpdate, onRemove }: PriceRowP
 
   async function del() {
     if (await appConfirm(`删除自定义物品「${item.name}」？`)) onRemove(item.id)
+  }
+
+  async function clearObs() {
+    if (await appConfirm(`清空「${item.name}」的 ${observations.length} 条价格观测？`)) {
+      onClearObs(item.id)
+      setShowTrend(false)
+    }
   }
 
   if (editing) {
@@ -183,6 +238,33 @@ function PriceRow({ item, comment, onSetComment, onUpdate, onRemove }: PriceRowP
         </div>
         <div className="price-item-value">{item.price || '—'}</div>
       </div>
+
+      {stats.count > 0 && (
+        <div className="price-trend-bar">
+          <Sparkline obs={observations} />
+          <div className="price-trend-stats">
+            <span className="price-trend-latest">最新 {formatMoney(stats.latest)}</span>
+            <span className="muted small">
+              低 {formatMoney(stats.min)} · 高 {formatMoney(stats.max)} · {stats.count} 条
+            </span>
+          </div>
+          <span className="spacer" />
+          <button className="btn btn-ghost btn-xs" onClick={() => setShowTrend((v) => !v)}>
+            <Icon name={showTrend ? 'chevron-down' : 'chevron-right'} size={13} />
+            趋势
+          </button>
+        </div>
+      )}
+
+      {showTrend && stats.count > 0 && (
+        <div className="price-trend-detail">
+          <TrendChart obs={observations} />
+          <button className="btn btn-ghost btn-xs danger" onClick={clearObs}>
+            <Icon name="trash" size={13} />
+            清空该物品观测
+          </button>
+        </div>
+      )}
 
       <div className="price-row-actions">
         <button

@@ -23,6 +23,7 @@ import {
   type GuideNote,
   type PriceItem,
   type PriceComment,
+  type PriceObservation,
   SOLO_CHARACTER_ID,
 } from '../types'
 import { DEFAULT_SETTINGS, createDefaultHouse, SERVANT_ROOM_TIERS } from '../data/gameData'
@@ -49,6 +50,8 @@ interface AppState {
   priceItems: PriceItem[]
   /** 物价条目的用户备注：物品id -> 备注 */
   priceComments: Record<string, PriceComment>
+  /** 价格观测（OCR 识别的带时间戳记录，用于趋势） */
+  priceObservations: PriceObservation[]
 }
 
 function load<T>(key: string, fallback: T): T {
@@ -105,6 +108,7 @@ let state: AppState = {
   guideNotes: load<Record<string, GuideNote>>(STORAGE_KEYS.guideNotes, {}),
   priceItems: load<PriceItem[]>(STORAGE_KEYS.priceItems, []),
   priceComments: load<Record<string, PriceComment>>(STORAGE_KEYS.priceComments, {}),
+  priceObservations: load<PriceObservation[]>(STORAGE_KEYS.priceObservations, []),
 }
 
 // 若初始加载触发了迁移（migrateTodos 对未变项保持同一引用），立即落盘，
@@ -170,6 +174,9 @@ if (typeof window !== 'undefined') {
           break
         case STORAGE_KEYS.priceComments:
           state = { ...state, priceComments: parsed }
+          break
+        case STORAGE_KEYS.priceObservations:
+          state = { ...state, priceObservations: parsed }
           break
         default:
           return
@@ -562,6 +569,38 @@ export const priceCommentActions = {
   },
 }
 
+// ---- 价格观测（OCR 识别的带时间戳记录，用于趋势） ----
+export const priceObservationActions = {
+  /** 批量写入观测（OCR 校对后一次性保存） */
+  addMany(inputs: Omit<PriceObservation, 'id'>[]): PriceObservation[] {
+    const created = inputs.map((o) => ({ ...o, id: uid('obs_') }))
+    setSlice(
+      'priceObservations',
+      [...state.priceObservations, ...created],
+      STORAGE_KEYS.priceObservations,
+    )
+    return created
+  },
+  remove(id: string) {
+    setSlice(
+      'priceObservations',
+      state.priceObservations.filter((o) => o.id !== id),
+      STORAGE_KEYS.priceObservations,
+    )
+  },
+  /** 删除某物品的全部观测 */
+  clearItem(itemId: string) {
+    setSlice(
+      'priceObservations',
+      state.priceObservations.filter((o) => o.itemId !== itemId),
+      STORAGE_KEYS.priceObservations,
+    )
+  },
+  clearAll() {
+    setSlice('priceObservations', [], STORAGE_KEYS.priceObservations)
+  },
+}
+
 // ---- 数据管理（导入 / 导出 / 重置） ----
 // 备份格式 = 全量 state + images（IndexedDB 图片库，id -> base64 data URL）。
 // 图片在 IndexedDB（异步），因此导出/导入/重置均为 async。
@@ -587,6 +626,8 @@ export const dataActions = {
       if (parsed.priceItems) setSlice('priceItems', parsed.priceItems, STORAGE_KEYS.priceItems)
       if (parsed.priceComments)
         setSlice('priceComments', parsed.priceComments, STORAGE_KEYS.priceComments)
+      if (parsed.priceObservations)
+        setSlice('priceObservations', parsed.priceObservations, STORAGE_KEYS.priceObservations)
       if (parsed.images) await putImages(parsed.images)
       return true
     } catch {
@@ -604,6 +645,7 @@ export const dataActions = {
     setSlice('guideNotes', {}, STORAGE_KEYS.guideNotes)
     setSlice('priceItems', [], STORAGE_KEYS.priceItems)
     setSlice('priceComments', {}, STORAGE_KEYS.priceComments)
+    setSlice('priceObservations', [], STORAGE_KEYS.priceObservations)
     await clearImages().catch(() => {})
   },
 }
@@ -678,6 +720,12 @@ export function usePriceItems() {
 export function usePriceComments() {
   const priceComments = useSelector((s) => s.priceComments)
   return { priceComments, ...priceCommentActions }
+}
+
+/** 价格观测分片：OCR 识别的带时间戳记录（用于趋势） */
+export function usePriceObservations() {
+  const priceObservations = useSelector((s) => s.priceObservations)
+  return { priceObservations, ...priceObservationActions }
 }
 
 /** 只读全量状态（用于概览 / 导出） */

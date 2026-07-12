@@ -9,7 +9,7 @@ import type { GuideCategory, GuideEntry, GuideSection } from '../../types'
 import { parseGuideContent, serializeGuideContent, parseTags } from '../../utils/guide'
 import GuideContentView from './GuideContentView'
 
-const CATEGORIES: GuideCategory[] = ['副本', '周末活动', '神器·起', '神器·转', '神器·合', '奇遇', '看戏', '自定义']
+const CATEGORIES: GuideCategory[] = ['副本', '周六活动', '周日活动', '神器·起', '神器·转', '神器·合', '奇遇', '看戏', '自定义']
 
 export interface GuideDraft {
   title: string

@@ -340,7 +340,8 @@ export default function OverviewDashboard({ onNavigate }: Props) {
           </div>
           <div className="ov-line row-wrap">
             <span className="badge badge-outline">副本</span>
-            <span className="badge badge-outline">周末活动</span>
+            <span className="badge badge-outline">周六活动</span>
+            <span className="badge badge-outline">周日活动</span>
             <span className="badge badge-outline">神器·起</span>
             <span className="badge badge-outline">神器·转</span>
             <span className="badge badge-outline">神器·合</span>

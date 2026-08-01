@@ -16,13 +16,9 @@ import {
 import { STORAGE_KEYS } from '../../types'
 import { imagesUsage } from '../../store/imageStore'
 import { formatBytes } from '../../utils/image'
-import {
-  isTauri,
-  activeWebVersion,
-  checkAndDownloadWebUpdate,
-  type ActiveWebVersion,
-} from '../../utils/webUpdate'
+import { activeWebVersion, type ActiveWebVersion } from '../../utils/webUpdate'
 import Icon from '../common/Icon'
+import AccountPanel from './AccountPanel'
 import './Settings.css'
 
 /** 存储用量快照：文本（localStorage）+ 图片库（IndexedDB）+ 浏览器配额 */
@@ -60,36 +56,12 @@ export default function SettingsPanel() {
   const [confirmingReset, setConfirmingReset] = useState(false)
   const [resetToast, setResetToast] = useState<Toast | null>(null)
 
-  // —— 网页版本 / 更新（Tauri 桌面端） ——
+  // —— 网页版本（关于） ——
   const [webVersion, setWebVersion] = useState<ActiveWebVersion | null>(null)
-  const [updateToast, setUpdateToast] = useState<Toast | null>(null)
-  const [checkingUpdate, setCheckingUpdate] = useState(false)
 
   useEffect(() => {
     void activeWebVersion().then(setWebVersion)
   }, [])
-
-  async function handleCheckWebUpdate() {
-    setCheckingUpdate(true)
-    try {
-      const res = await checkAndDownloadWebUpdate()
-      if (res.status === 'updated') {
-        setUpdateToast({ text: `已更新到 ${res.remote ?? '新版本'}，正在重载…`, kind: 'ok' })
-        window.setTimeout(() => window.location.reload(), 800)
-        return
-      }
-      if (res.status === 'upToDate') {
-        setUpdateToast({ text: '已是最新版本。', kind: 'ok' })
-      } else {
-        setUpdateToast({ text: `检查失败：${res.message ?? '未知错误'}`, kind: 'err' })
-      }
-    } catch {
-      setUpdateToast({ text: '检查失败：无法与桌面端通信。', kind: 'err' })
-    } finally {
-      setCheckingUpdate(false)
-      autoClear(() => setUpdateToast(null), 4000)
-    }
-  }
 
   // —— 存储用量 ——
   const [usage, setUsage] = useState<UsageInfo | null>(null)
@@ -232,6 +204,9 @@ export default function SettingsPanel() {
   return (
     <section className="stack">
       <h2 className="section-title">设置</h2>
+
+      {/* —— 账号与云同步 —— */}
+      <AccountPanel />
 
       {/* —— 周期重置点 —— */}
       <div className="card pad-lg">
@@ -438,9 +413,9 @@ export default function SettingsPanel() {
           <h3>关于</h3>
         </div>
         <p className="muted small" style={{ margin: 0 }}>
-          梦幻西游 · 游戏日历，支持网页与 Tauri 桌面端。所有数据仅保存在本机（文本存
-          localStorage、图片存 IndexedDB），不会上传到任何服务器；清除浏览器数据或更换设备 /
-          浏览器后将无法恢复，请及时「导出备份」。
+          梦幻西游 · 游戏日历（网页应用）。未登录时数据仅保存在本机（文本存 localStorage、
+          图片存 IndexedDB）；登录后会同步到云端并在各设备间保持一致。未登录时清除浏览器数据或
+          更换设备 / 浏览器将无法恢复，请及时「导出备份」或登录启用云同步。
         </p>
         <p className="muted small" style={{ margin: '10px 0 0' }}>
           网页版本：
@@ -450,30 +425,6 @@ export default function SettingsPanel() {
               }`
             : '开发模式 / 未知'}
         </p>
-        {isTauri() && (
-          <div className="row row-wrap" style={{ marginTop: 10 }}>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => void handleCheckWebUpdate()}
-              disabled={checkingUpdate}
-            >
-              <Icon name="download" size={13} />
-              {checkingUpdate ? '正在检查…' : '从 GitHub Pages 检查网页更新'}
-            </button>
-            {updateToast && (
-              <span className={`settings-toast pop-in is-${updateToast.kind}`}>
-                {updateToast.text}
-              </span>
-            )}
-          </div>
-        )}
-        {isTauri() && (
-          <p className="muted small" style={{ margin: '8px 0 0' }}>
-            桌面端内置了构建时的网页，可完全离线使用；联网时会自动（或点上方按钮）从
-            GitHub Pages 获取最新网页内容，更新后本机数据不受影响。
-          </p>
-        )}
       </div>
     </section>
   )

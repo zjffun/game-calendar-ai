@@ -52,9 +52,36 @@ function txRequest<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => 
   )
 }
 
+// ---------------------------------------------------------------------------
+// 图片变更通知（供云同步层订阅）：本地增删图片时通知，云同步据此上/下行。
+// 来自云端下行的写入走 applyImagesFromRemote（notifyEnabled=false），不触发通知，
+// 避免回声（收到远程图片 → 又被推回云端）。
+// ---------------------------------------------------------------------------
+export type ImageCommit =
+  | { type: 'put'; id: string; dataUrl: string }
+  | { type: 'delete'; ids: string[] }
+  | { type: 'clear' }
+
+const imageListeners = new Set<(c: ImageCommit) => void>()
+let notifyEnabled = true
+
+/** 订阅图片变更；返回取消订阅函数。 */
+export function onImageCommit(fn: (c: ImageCommit) => void): () => void {
+  imageListeners.add(fn)
+  return () => {
+    imageListeners.delete(fn)
+  }
+}
+
+function notify(c: ImageCommit) {
+  if (!notifyEnabled) return
+  for (const l of imageListeners) l(c)
+}
+
 /** 写入/覆盖一张图片（base64 data URL） */
-export function putImage(id: string, dataUrl: string): Promise<unknown> {
-  return txRequest('readwrite', (s) => s.put(dataUrl, id))
+export async function putImage(id: string, dataUrl: string): Promise<void> {
+  await txRequest('readwrite', (s) => s.put(dataUrl, id))
+  notify({ type: 'put', id, dataUrl })
 }
 
 /** 批量读取：返回 id -> dataUrl（不存在的 id 直接缺席） */
@@ -82,13 +109,14 @@ export async function deleteImages(ids: string[]): Promise<void> {
   const unique = [...new Set(ids)]
   if (unique.length === 0) return
   const db = await openDb()
-  return new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite')
     const store = tx.objectStore(STORE)
     for (const id of unique) store.delete(id)
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error ?? new Error('删除图片失败'))
   })
+  notify({ type: 'delete', ids: unique })
 }
 
 /** 全量导出：id -> dataUrl（备份用） */
@@ -111,12 +139,12 @@ export async function getAllImages(): Promise<Record<string, string>> {
   })
 }
 
-/** 批量写入（导入备份用） */
+/** 批量写入（导入备份 / 云端下行用） */
 export async function putImages(images: Record<string, string>): Promise<void> {
   const entries = Object.entries(images)
   if (entries.length === 0) return
   const db = await openDb()
-  return new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite')
     const store = tx.objectStore(STORE)
     for (const [id, dataUrl] of entries) {
@@ -125,11 +153,28 @@ export async function putImages(images: Record<string, string>): Promise<void> {
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error ?? new Error('导入图片失败'))
   })
+  for (const [id, dataUrl] of entries) {
+    if (typeof dataUrl === 'string') notify({ type: 'put', id, dataUrl })
+  }
+}
+
+/**
+ * 从云端下行写入图片：与 putImages 相同，但【不】触发变更通知，避免回声。
+ * 云同步拉取远程图片时使用。
+ */
+export async function applyImagesFromRemote(images: Record<string, string>): Promise<void> {
+  notifyEnabled = false
+  try {
+    await putImages(images)
+  } finally {
+    notifyEnabled = true
+  }
 }
 
 /** 清空图片库（清空所有数据用） */
-export function clearImages(): Promise<unknown> {
-  return txRequest('readwrite', (s) => s.clear())
+export async function clearImages(): Promise<void> {
+  await txRequest('readwrite', (s) => s.clear())
+  notify({ type: 'clear' })
 }
 
 /** 用量统计：图片张数与近似总字节数（data URL 字符数 × 0.75） */

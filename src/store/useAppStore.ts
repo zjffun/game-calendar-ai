@@ -128,11 +128,110 @@ function subscribe(listener: () => void): () => void {
   return () => listeners.delete(listener)
 }
 
-/** 以不可变方式更新某个分片并持久化 + 通知 */
+// ---------------------------------------------------------------------------
+// 本地变更监听（供云同步层订阅）
+// 每次「本地」发起的分片提交都会通知，携带对应 storageKey 与新值，
+// 云同步据此把该分片防抖上传。注意：来自远程/跨标签页的「外部更新」
+// 走 applyExternalUpdate，不触发这些监听，避免回声（收到→又推上去）。
+// ---------------------------------------------------------------------------
+type CommitListener = (storageKey: string, value: unknown) => void
+const commitListeners = new Set<CommitListener>()
+
+/** 订阅本地分片提交；返回取消订阅函数。 */
+export function onLocalCommit(fn: CommitListener): () => void {
+  commitListeners.add(fn)
+  return () => {
+    commitListeners.delete(fn)
+  }
+}
+
+/** 以不可变方式更新某个分片并持久化 + 通知（本地提交，会触发 commitListeners） */
 function setSlice<K extends keyof AppState>(key: K, value: AppState[K], storageKey: string) {
   state = { ...state, [key]: value }
   save(storageKey, value)
   emit()
+  for (const l of commitListeners) l(storageKey, value)
+}
+
+/**
+ * 应用一条「外部更新」到对应分片：用于跨标签页 storage 事件与云同步下行。
+ * 会做与初始加载一致的规范化（todos 迁移、settings/house 合并默认值），
+ * 落盘 + 通知订阅者，但【不】触发 commitListeners（防止回声）。
+ * @returns 是否识别并应用了该 storageKey
+ */
+export function applyExternalUpdate(storageKey: string, parsed: unknown): boolean {
+  let sliceKey: keyof AppState
+  let value: AppState[keyof AppState]
+  switch (storageKey) {
+    case STORAGE_KEYS.todos:
+      sliceKey = 'todos'
+      value = migrateTodos(parsed as TodoTask[])
+      break
+    case STORAGE_KEYS.seeds:
+      sliceKey = 'seeds'
+      value = parsed as SeedTimer[]
+      break
+    case STORAGE_KEYS.dungeons:
+      sliceKey = 'dungeons'
+      value = parsed as Dungeon[]
+      break
+    case STORAGE_KEYS.house:
+      sliceKey = 'house'
+      value = { ...createDefaultHouse(Date.now()), ...(parsed as Partial<HouseState>) }
+      break
+    case STORAGE_KEYS.settings:
+      sliceKey = 'settings'
+      value = { ...DEFAULT_SETTINGS, ...(parsed as Partial<AppSettings>) }
+      break
+    case STORAGE_KEYS.characters:
+      sliceKey = 'characters'
+      value = parsed as Character[]
+      break
+    case STORAGE_KEYS.guides:
+      sliceKey = 'guides'
+      value = parsed as GuideEntry[]
+      break
+    case STORAGE_KEYS.guideNotes:
+      sliceKey = 'guideNotes'
+      value = parsed as Record<string, GuideNote>
+      break
+    case STORAGE_KEYS.priceItems:
+      sliceKey = 'priceItems'
+      value = parsed as PriceItem[]
+      break
+    case STORAGE_KEYS.priceComments:
+      sliceKey = 'priceComments'
+      value = parsed as Record<string, PriceComment>
+      break
+    case STORAGE_KEYS.priceObservations:
+      sliceKey = 'priceObservations'
+      value = parsed as PriceObservation[]
+      break
+    default:
+      return false
+  }
+  // 内联落盘 + 通知（刻意不走 setSlice，避免触发 commitListeners 造成回声）
+  state = { ...state, [sliceKey]: value }
+  save(storageKey, value)
+  emit()
+  return true
+}
+
+/** 全量读取各分片（storageKey -> 当前值），云同步首次上传时使用。 */
+export function readAllSlices(): { key: string; value: unknown }[] {
+  return [
+    { key: STORAGE_KEYS.todos, value: state.todos },
+    { key: STORAGE_KEYS.seeds, value: state.seeds },
+    { key: STORAGE_KEYS.dungeons, value: state.dungeons },
+    { key: STORAGE_KEYS.house, value: state.house },
+    { key: STORAGE_KEYS.settings, value: state.settings },
+    { key: STORAGE_KEYS.characters, value: state.characters },
+    { key: STORAGE_KEYS.guides, value: state.guides },
+    { key: STORAGE_KEYS.guideNotes, value: state.guideNotes },
+    { key: STORAGE_KEYS.priceItems, value: state.priceItems },
+    { key: STORAGE_KEYS.priceComments, value: state.priceComments },
+    { key: STORAGE_KEYS.priceObservations, value: state.priceObservations },
+  ]
 }
 
 // ---------------------------------------------------------------------------
@@ -143,45 +242,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
     if (!e.key || e.newValue == null) return
     try {
-      const parsed = JSON.parse(e.newValue)
-      switch (e.key) {
-        case STORAGE_KEYS.todos:
-          state = { ...state, todos: migrateTodos(parsed) }
-          break
-        case STORAGE_KEYS.seeds:
-          state = { ...state, seeds: parsed }
-          break
-        case STORAGE_KEYS.dungeons:
-          state = { ...state, dungeons: parsed }
-          break
-        case STORAGE_KEYS.house:
-          state = { ...state, house: parsed }
-          break
-        case STORAGE_KEYS.settings:
-          state = { ...state, settings: { ...DEFAULT_SETTINGS, ...parsed } }
-          break
-        case STORAGE_KEYS.characters:
-          state = { ...state, characters: parsed }
-          break
-        case STORAGE_KEYS.guides:
-          state = { ...state, guides: parsed }
-          break
-        case STORAGE_KEYS.guideNotes:
-          state = { ...state, guideNotes: parsed }
-          break
-        case STORAGE_KEYS.priceItems:
-          state = { ...state, priceItems: parsed }
-          break
-        case STORAGE_KEYS.priceComments:
-          state = { ...state, priceComments: parsed }
-          break
-        case STORAGE_KEYS.priceObservations:
-          state = { ...state, priceObservations: parsed }
-          break
-        default:
-          return
-      }
-      emit()
+      applyExternalUpdate(e.key, JSON.parse(e.newValue))
     } catch {
       /* ignore */
     }

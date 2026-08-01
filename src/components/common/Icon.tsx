@@ -32,6 +32,7 @@ export type IconName =
   | 'alert'
   | 'note'
   | 'coin'
+  | 'mail'
 
 const PATHS: Record<IconName, ReactNode> = {
   overview: (
@@ -176,6 +177,12 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M14.8 9.2a3 3 0 0 0-2.8-1.7c-1.7 0-2.6.9-2.6 2 0 2.7 5.4 1.4 5.4 4.2 0 1.2-1 2.1-2.8 2.1a3 3 0 0 1-2.8-1.7" />
       <line x1="12" y1="6" x2="12" y2="7.5" />
       <line x1="12" y1="16.5" x2="12" y2="18" />
+    </>
+  ),
+  mail: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
     </>
   ),
 }

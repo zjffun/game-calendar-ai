@@ -41,6 +41,12 @@ jobs:
 
       - name: Build
         run: pnpm run build
+        # 云同步配置：Vite 在构建时把 VITE_* 内联进产物。这两个值是「可公开」的前端配置
+        # （数据隔离由数据库 RLS 保证），在仓库 Settings → Secrets and variables → Actions
+        # 里配置为 Secrets（或 Variables）后注入。未配置则线上站点退回纯本地模式。
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       # 若仓库尚未开启 Pages，这一步会自动开启（构建源 = GitHub Actions）
       - name: Setup Pages

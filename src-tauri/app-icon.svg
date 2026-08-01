@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- 陶土色圆角方块 + 白色衬线「梦」，与应用内品牌标识 / favicon 同一设计 -->
-  <rect x="64" y="64" width="896" height="896" rx="232" fill="#c15f3c"/>
-  <text x="512" y="716" font-family="Georgia,'Songti SC','STSong','SimSun',serif" font-size="576"
-        font-weight="700" text-anchor="middle" fill="#faf9f5">梦</text>
-</svg>

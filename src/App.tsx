@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNow } from './hooks/useNow'
 import { formatClock, formatCountdown, getNextReset, WEEKDAY_LABELS } from './utils/time'
-import { isTauri, checkAndDownloadWebUpdate } from './utils/webUpdate'
-import { appConfirm } from './components/common/ConfirmDialog'
 import { useSettings } from './store/useAppStore'
+import { initAuth, useAuth } from './store/authStore'
 import OverviewDashboard from './components/Overview/OverviewDashboard'
 import TodoSection from './components/Todo/TodoSection'
 import CourtyardTimers from './components/Courtyard/CourtyardTimers'
@@ -63,6 +62,12 @@ function MobileClock() {
 }
 
 export default function App() {
+  // 应用启动时恢复登录态并监听认证事件（未配置云端时为空操作）
+  useEffect(() => {
+    initAuth()
+  }, [])
+  const { status: authStatus } = useAuth()
+
   // 带 ?guide= 参数刷新时直接落到攻略页（GuideBook 再据此恢复选中的攻略）
   const [tab, setTab] = useState<TabId>(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('guide')) {
@@ -84,24 +89,6 @@ export default function App() {
   const sub = SUB_PAGES[tab]
   // 子页归属概览：主导航高亮「概览」
   const navActive: TabId = sub ? 'overview' : tab
-
-  // Tauri 桌面端：启动后静默检查 GitHub Pages 上是否有新的网页构建，
-  // 有则下载到本地缓存并询问是否立即重载（离线/失败都静默忽略）
-  useEffect(() => {
-    if (!import.meta.env.PROD || !isTauri()) return
-    const timer = window.setTimeout(async () => {
-      try {
-        const res = await checkAndDownloadWebUpdate()
-        if (res.status !== 'updated') return
-        if (await appConfirm(`网页内容有新版本（${res.remote ?? '未知'}），已下载完成。\n立即重载使用新版本吗？`)) {
-          window.location.reload()
-        }
-      } catch {
-        /* 网页端 / 通信失败：忽略 */
-      }
-    }, 3000)
-    return () => window.clearTimeout(timer)
-  }, [])
 
   return (
     <div className="app">
@@ -149,7 +136,11 @@ export default function App() {
               设置
             </button>
           </nav>
-          <p className="side-note">数据仅保存在本机，可在设置中导出备份。</p>
+          <p className="side-note">
+            {authStatus === 'signedIn'
+              ? '已登录，数据自动云端同步，可在设置中管理。'
+              : '数据保存在本机，可在设置中登录云同步或导出备份。'}
+          </p>
         </div>
       </aside>
 

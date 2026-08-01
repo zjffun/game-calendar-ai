@@ -142,6 +142,5 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# Tauri（Rust 构建产物与自动生成文件）
-src-tauri/target/
-src-tauri/gen/
+# Claude Code 本地开发配置（含机器相关的绝对 Node 路径，不入库）
+.claude/launch.json

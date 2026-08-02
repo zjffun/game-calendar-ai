@@ -13,7 +13,7 @@ import type { GuideEntry } from '../types'
 export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   {
     id: 'tianming-wujiguo-2026',
-    category: '副本',
+    category: '天命副本',
     title: '乌鸡国',
     summary:
       '≥50级、可五人模式的低难高效率本；重点是三阵眼限时连杀、真假国王与点化任务。',
@@ -58,8 +58,8 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-mijing-2026',
-    category: '副本',
-    title: '秘境降妖（含2026竞速）',
+    category: '天命副本',
+    title: '秘境降妖',
     summary:
       '≥60级、5人模式优先、11层常规闯关；本期竞速增加紧急任务、浊念熊山君与双通关宝册。',
     tags: ['2026竞速', '英雄副本', '60级', '11层', '浊念熊山君', '双宝册'],
@@ -111,7 +111,7 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-tongtianhe-2026',
-    category: '副本',
+    category: '天命副本',
     title: '通天河',
     summary:
       '≥80级侠士团队本；儿童答题、变身、灵感大王与五脏庙机制多，奖励好但翻车成本也高。',
@@ -156,7 +156,7 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-jindoudong-2026',
-    category: '副本',
+    category: '天命副本',
     title: '金兜洞兕大王',
     summary:
       '≥60级、10—12人普通本；等待与道具机制较多，令旗、金丹砂和最终兕大王是效率关键。',
@@ -201,7 +201,7 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-pantaoyan-2026',
-    category: '副本',
+    category: '天命副本',
     title: '蟠桃宴',
     summary:
       '≥50级、5人、120分钟侠士本；战斗密集、法伤偏高，核心是打断蟠桃树苗和处理三阶段浊念蟠桃树。',
@@ -260,7 +260,7 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-linghou-2026',
-    category: '副本',
+    category: '天命副本',
     title: '灵猴出世',
     summary:
       '≥50级、5人、120分钟；流程紧凑的新式普通本，包含采灵气、猴群特训与平衡水灵。',
@@ -305,7 +305,7 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-heifengshan-2026',
-    category: '副本',
+    category: '天命副本',
     title: '黑风山',
     summary:
       '≥60级、5人侠士本；抄经、灭火与打鬼需要操作，黑熊精阶段重点保人和控高伤单位。',
@@ -350,8 +350,8 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-qingqiu-2026',
-    category: '副本',
-    title: '青丘迷雾（本期轮换）',
+    category: '天命副本',
+    title: '青丘迷雾',
     summary:
       '≥50级、5人、180分钟的高难英雄本；流程长、战斗压制强，本期重新进入天命列表。',
     tags: ['本期轮换', '英雄副本', '50级', '5人', '涂山雪', '高难'],
@@ -409,7 +409,7 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-jinghe2-2026',
-    category: '副本',
+    category: '天命副本',
     title: '泾河龙王2',
     summary:
       '≥70级的多阶段普通团队本；分三环推进，幽森洞找怪、寝殿驱鬼和龙宫终战都需要队伍分工。',
@@ -454,7 +454,7 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-danaotiangong-2026',
-    category: '副本',
+    category: '天命副本',
     title: '大闹天宫',
     summary:
       '大闹天宫系列终章，团队侠士本；蟠桃园、瑶池宴、炼丹炉与终战连续推进，流程长但收益稳定。',
@@ -499,7 +499,7 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-qijueshan-2026',
-    category: '副本',
+    category: '天命副本',
     title: '七绝山',
     summary:
       '≥80级、可五人模式的普通本；单人动作多、怪量大，效率关键在分工完成老者任务与集中清怪。',
@@ -544,7 +544,7 @@ export const CURRENT_TIANMING_GUIDES: GuideEntry[] = [
   },
   {
     id: 'tianming-shihou-2026',
-    category: '副本',
+    category: '天命副本',
     title: '石猴授徒',
     summary:
       '≥60级、5人普通本，随机进入王子或穿山甲支线；流程短、分支差异大，适合优先清。',

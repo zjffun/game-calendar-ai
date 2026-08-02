@@ -92,6 +92,12 @@ export function getMonthlyPeriodKey(now: number, resetHour: number): string {
   return `${start.getFullYear()}-${pad2(start.getMonth() + 1)}`
 }
 
+/**
+ * 单次待办的固定周期 Key：永不变化，
+ * 因此标记完成后长期保持已完成（不会跨周期自动重置，可手动删除）。
+ */
+export const ONCE_PERIOD_KEY = 'ONCE'
+
 /** 按周期类型取得当前周期 Key（TODO 与副本通用） */
 export function getPeriodKey(
   cycle: TodoCycle | DungeonCycle,
@@ -99,6 +105,8 @@ export function getPeriodKey(
   settings: AppSettings,
 ): string {
   switch (cycle) {
+    case 'once':
+      return ONCE_PERIOD_KEY
     case 'daily':
       return getDailyPeriodKey(now, settings.dailyResetHour)
     case 'weekly':
@@ -167,6 +175,9 @@ export function getNextReset(
   settings: AppSettings,
 ): number {
   switch (cycle) {
+    case 'once':
+      // 单次待办没有下次刷新时刻
+      return Number.POSITIVE_INFINITY
     case 'daily':
       return getNextDailyReset(now, settings.dailyResetHour)
     case 'weekly':

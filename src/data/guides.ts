@@ -17,8 +17,8 @@ export const GUIDE_CATEGORY_META: {
   /** 分组下方的一句话说明 */
   desc: string
 }[] = [
-  { category: '奇遇', glyph: '🎴', desc: '奇遇事件的触发、流程与收益' },
   { category: '自定义', glyph: '📝', desc: '你自己整理、添加的攻略内容' },
+  { category: '奇遇', glyph: '🎴', desc: '奇遇事件的触发、流程与收益' },
   { category: '神器·起', glyph: '🗡️', desc: '神器任务·起：开启门派神器剧情线的日常任务，含备战、流程与分场打法' },
   { category: '神器·转', glyph: '🔁', desc: '神器任务·转：承接「起」的进阶战斗，Boss机制、点杀顺序与备战要点' },
   { category: '看戏', glyph: '🎭', desc: '长安大剧院看戏的玩法、周期与奖励' },

@@ -1,0 +1,97 @@
+/* ==========================================================================
+   算价页（宝石合成 / 九转金丹）——多数样式复用全局工具类，这里只补充表格与输入组。
+   ========================================================================== */
+
+.synth-page {
+  max-width: 640px;
+}
+
+.synth-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.synth-card-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+.synth-card-head .icon {
+  color: var(--accent);
+}
+
+.synth-inputs {
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.synth-hint {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+.synth-empty {
+  margin-top: 14px;
+}
+
+/* 结果表格 */
+.synth-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 14px;
+}
+.synth-table thead th {
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--line);
+}
+.synth-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.synth-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.synth-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.synth-level {
+  font-weight: 600;
+}
+.synth-price {
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.synth-base-row {
+  background: var(--surface-2);
+}
+.synth-you {
+  margin-left: 8px;
+  font-size: 11px;
+}
+
+.synth-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 14px;
+  line-height: 1.55;
+}
+.synth-note .icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--warn);
+}
+.synth-note b {
+  color: var(--ink-2);
+  font-weight: 650;
+}

@@ -6,7 +6,8 @@ import { useState } from 'react'
 import type { TodoCycle } from '../../types'
 import { useTodos } from '../../store/useAppStore'
 
-const CYCLE_OPTIONS: { value: TodoCycle; label: string }[] = [
+// 单次待办在「单次待办」分组内就地添加，这里只保留周期性任务
+const CYCLE_OPTIONS: { value: Exclude<TodoCycle, 'once'>; label: string }[] = [
   { value: 'daily', label: '每日' },
   { value: 'weekly', label: '每周' },
   { value: 'monthly', label: '每月' },

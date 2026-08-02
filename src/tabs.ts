@@ -11,4 +11,6 @@ export type TabId =
   | 'house'
   | 'guide'
   | 'price'
+  | 'synth'
+  | 'ocr'
   | 'settings'

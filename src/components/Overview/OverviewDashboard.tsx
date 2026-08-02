@@ -6,7 +6,7 @@ import {
   useCharacters,
   useGuides,
 } from '../../store/useAppStore'
-import { GUIDE_PRESETS } from '../../data/guides'
+import { GUIDE_PRESETS, GUIDE_CATEGORY_META } from '../../data/guides'
 import { useNow } from '../../hooks/useNow'
 import {
   getPeriodKey,
@@ -75,9 +75,13 @@ export default function OverviewDashboard({ onNavigate }: Props) {
   const dailyKey = getPeriodKey('daily', now, settings)
   const weeklyKey = getPeriodKey('weekly', now, settings)
   const monthlyKey = getPeriodKey('monthly', now, settings)
+  const onceKey = getPeriodKey('once', now, settings)
   const dailyTodos = todos.filter((t) => t.cycle === 'daily')
   // 一条任务「全部角色完成」才算完成
   const dailyDone = dailyTodos.filter((t) => isTaskAllDone(t, charIds, dailyKey)).length
+  const onceUndone = todos.filter(
+    (t) => t.cycle === 'once' && !isTaskAllDone(t, charIds, onceKey),
+  ).length
   const weeklyUndone = todos.filter(
     (t) => t.cycle === 'weekly' && !isTaskAllDone(t, charIds, weeklyKey),
   ).length
@@ -135,6 +139,7 @@ export default function OverviewDashboard({ onNavigate }: Props) {
             </>
           )}
           <div className="ov-line row-wrap">
+            {onceUndone > 0 && <span className="badge">单次 {onceUndone} 未完成</span>}
             <span className="badge">周 {weeklyUndone} 未完成</span>
             <span className="badge">月 {monthlyUndone} 未完成</span>
           </div>
@@ -150,14 +155,11 @@ export default function OverviewDashboard({ onNavigate }: Props) {
             )}
           </div>
           <div className="ov-line row-wrap">
-            <span className="badge badge-outline">副本</span>
-            <span className="badge badge-outline">周六活动</span>
-            <span className="badge badge-outline">周日活动</span>
-            <span className="badge badge-outline">神器·起</span>
-            <span className="badge badge-outline">神器·转</span>
-            <span className="badge badge-outline">神器·合</span>
-            <span className="badge badge-outline">奇遇</span>
-            <span className="badge badge-outline">看戏</span>
+            {GUIDE_CATEGORY_META.filter((m) => m.category !== '自定义').map((m) => (
+              <span className="badge badge-outline" key={m.category}>
+                {m.category}
+              </span>
+            ))}
           </div>
         </OverviewCard>
       </div>

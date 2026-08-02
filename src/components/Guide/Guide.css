@@ -149,6 +149,47 @@
   background: var(--accent);
 }
 
+/* 详情页「置顶」开关：未置顶=描边竖直，已置顶=强调色 + 图钉倾斜填充 */
+.guide-pin-btn .icon {
+  transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.6, 1), fill 0.15s ease;
+}
+.guide-pin-btn.pinned {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+  background: var(--accent-soft);
+}
+.guide-pin-btn.pinned:hover {
+  color: var(--accent-strong);
+}
+.guide-pin-btn.pinned .icon {
+  fill: currentColor;
+  transform: rotate(45deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-pin-btn .icon {
+    transition: none;
+  }
+  .guide-pin-btn.pinned .icon {
+    transform: none; /* 不倾斜，仅填充表意 */
+  }
+}
+
+/* 置顶分组：轻强调 + 与下方分类区隔 */
+.guide-group-pinned {
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.guide-group-pin-icon {
+  color: var(--accent);
+  fill: var(--accent);
+  transform: rotate(45deg);
+}
+.guide-group-pinned .guide-group-name,
+.guide-group-pinned .guide-group-count {
+  color: var(--accent-ink);
+}
+
 /* ---------- 主区 ---------- */
 
 .guide-main {

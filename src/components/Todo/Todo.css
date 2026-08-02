@@ -19,6 +19,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 单次待办分组内的行内添加入口：与上方列表留出间距 */
+.todo-add-once {
+  margin-top: 10px;
+}
+
 /* 任务列表：分隔线式，不再逐条描边 */
 .todo-list {
   list-style: none;

@@ -1,0 +1,122 @@
+/* ==========================================================================
+   取字（OCR）页——图片输入区 + 进度 + 可编辑结果。复用全局 .card / .btn / .meter。
+   ========================================================================== */
+
+.ocr-page {
+  max-width: 680px;
+}
+
+/* ---------- 图片输入 / 拖放区 ---------- */
+
+.ocr-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 168px;
+  padding: 18px;
+  border: 1.5px dashed var(--line-strong);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  overflow: hidden;
+}
+.ocr-drop:hover,
+.ocr-drop:focus-visible {
+  border-color: var(--accent);
+}
+.ocr-drop.drag {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.ocr-drop.busy {
+  cursor: progress;
+  opacity: 0.85;
+}
+
+.ocr-drop-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  color: var(--ink-3);
+}
+.ocr-drop-hint .icon {
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+.ocr-drop-title {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.ocr-drop-hint p {
+  margin: 0;
+}
+
+.ocr-drop kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 6px;
+  margin: 0 1px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--surface);
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.ocr-preview {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+
+/* ---------- 进度 ---------- */
+
+.ocr-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ---------- 错误 / 空结果提示 ---------- */
+
+.ocr-error {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 13px;
+}
+
+/* ---------- 可编辑结果 ---------- */
+
+.ocr-result-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ocr-result-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ocr-result-title .icon {
+  color: var(--accent);
+}
+
+.ocr-textarea {
+  min-height: 220px;
+  line-height: 1.7;
+  resize: vertical;
+  font-size: 14px;
+}

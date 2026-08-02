@@ -32,7 +32,10 @@ export type IconName =
   | 'alert'
   | 'note'
   | 'coin'
+  | 'gem'
   | 'mail'
+  | 'pin'
+  | 'scan-text'
 
 const PATHS: Record<IconName, ReactNode> = {
   overview: (
@@ -179,10 +182,34 @@ const PATHS: Record<IconName, ReactNode> = {
       <line x1="12" y1="16.5" x2="12" y2="18" />
     </>
   ),
+  gem: (
+    <>
+      <path d="M6 3h12l4 6-10 12L2 9z" />
+      <line x1="2" y1="9" x2="22" y2="9" />
+      <path d="m9.5 3-2 6 4.5 12 4.5-12-2-6" />
+    </>
+  ),
   mail: (
     <>
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="m3 7 9 6 9-6" />
+    </>
+  ),
+  pin: (
+    <>
+      <line x1="12" y1="17" x2="12" y2="22" />
+      <path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2v.8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.7l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
+    </>
+  ),
+  'scan-text': (
+    <>
+      <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+      <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+      <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+      <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+      <path d="M7 8h8" />
+      <path d="M7 12h6" />
+      <path d="M7 16h8" />
     </>
   ),
 }

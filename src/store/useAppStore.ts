@@ -46,6 +46,8 @@ interface AppState {
   guides: GuideEntry[]
   /** 内置攻略的用户补充内容：攻略id -> Markdown 笔记 */
   guideNotes: Record<string, GuideNote>
+  /** 置顶攻略 id 列表（内置/自定义均可，按置顶顺序，最新在前） */
+  pinnedGuides: string[]
   /** 用户自定义物价条目（内置参考条目来自 data，不在此） */
   priceItems: PriceItem[]
   /** 物价条目的用户备注：物品id -> 备注 */
@@ -106,6 +108,7 @@ let state: AppState = {
   characters: load<Character[]>(STORAGE_KEYS.characters, []),
   guides: load<GuideEntry[]>(STORAGE_KEYS.guides, []),
   guideNotes: load<Record<string, GuideNote>>(STORAGE_KEYS.guideNotes, {}),
+  pinnedGuides: load<string[]>(STORAGE_KEYS.pinnedGuides, []),
   priceItems: load<PriceItem[]>(STORAGE_KEYS.priceItems, []),
   priceComments: load<Record<string, PriceComment>>(STORAGE_KEYS.priceComments, {}),
   priceObservations: load<PriceObservation[]>(STORAGE_KEYS.priceObservations, []),
@@ -195,6 +198,10 @@ export function applyExternalUpdate(storageKey: string, parsed: unknown): boolea
       sliceKey = 'guideNotes'
       value = parsed as Record<string, GuideNote>
       break
+    case STORAGE_KEYS.pinnedGuides:
+      sliceKey = 'pinnedGuides'
+      value = parsed as string[]
+      break
     case STORAGE_KEYS.priceItems:
       sliceKey = 'priceItems'
       value = parsed as PriceItem[]
@@ -228,6 +235,7 @@ export function readAllSlices(): { key: string; value: unknown }[] {
     { key: STORAGE_KEYS.characters, value: state.characters },
     { key: STORAGE_KEYS.guides, value: state.guides },
     { key: STORAGE_KEYS.guideNotes, value: state.guideNotes },
+    { key: STORAGE_KEYS.pinnedGuides, value: state.pinnedGuides },
     { key: STORAGE_KEYS.priceItems, value: state.priceItems },
     { key: STORAGE_KEYS.priceComments, value: state.priceComments },
     { key: STORAGE_KEYS.priceObservations, value: state.priceObservations },
@@ -556,6 +564,10 @@ export const guideActions = {
   },
   remove(id: string) {
     setSlice('guides', state.guides.filter((g) => g.id !== id), STORAGE_KEYS.guides)
+    // 删除自定义攻略时一并清理置顶，避免留下失效 id
+    if (state.pinnedGuides.includes(id)) {
+      setSlice('pinnedGuides', state.pinnedGuides.filter((x) => x !== id), STORAGE_KEYS.pinnedGuides)
+    }
   },
   reorder(orderedIds: string[]) {
     const orderMap = new Map(orderedIds.map((id, i) => [id, i]))
@@ -582,6 +594,16 @@ export const guideNoteActions = {
     const next = { ...state.guideNotes }
     delete next[guideId]
     setSlice('guideNotes', next, STORAGE_KEYS.guideNotes)
+  },
+}
+
+// ---- 攻略置顶（内置/自定义均可，仅存 id 列表；最新置顶排在最前） ----
+export const pinnedGuideActions = {
+  /** 切换某条攻略的置顶状态：未置顶则置顶（置于最前），已置顶则取消 */
+  togglePin(guideId: string) {
+    const cur = state.pinnedGuides
+    const next = cur.includes(guideId) ? cur.filter((x) => x !== guideId) : [guideId, ...cur]
+    setSlice('pinnedGuides', next, STORAGE_KEYS.pinnedGuides)
   },
 }
 
@@ -684,6 +706,8 @@ export const dataActions = {
       if (parsed.characters) setSlice('characters', parsed.characters, STORAGE_KEYS.characters)
       if (parsed.guides) setSlice('guides', parsed.guides, STORAGE_KEYS.guides)
       if (parsed.guideNotes) setSlice('guideNotes', parsed.guideNotes, STORAGE_KEYS.guideNotes)
+      if (parsed.pinnedGuides)
+        setSlice('pinnedGuides', parsed.pinnedGuides, STORAGE_KEYS.pinnedGuides)
       if (parsed.priceItems) setSlice('priceItems', parsed.priceItems, STORAGE_KEYS.priceItems)
       if (parsed.priceComments)
         setSlice('priceComments', parsed.priceComments, STORAGE_KEYS.priceComments)
@@ -704,6 +728,7 @@ export const dataActions = {
     setSlice('characters', [], STORAGE_KEYS.characters)
     setSlice('guides', [], STORAGE_KEYS.guides)
     setSlice('guideNotes', {}, STORAGE_KEYS.guideNotes)
+    setSlice('pinnedGuides', [], STORAGE_KEYS.pinnedGuides)
     setSlice('priceItems', [], STORAGE_KEYS.priceItems)
     setSlice('priceComments', {}, STORAGE_KEYS.priceComments)
     setSlice('priceObservations', [], STORAGE_KEYS.priceObservations)
@@ -769,6 +794,12 @@ export function useGuides() {
 export function useGuideNotes() {
   const guideNotes = useSelector((s) => s.guideNotes)
   return { guideNotes, ...guideNoteActions }
+}
+
+/** 攻略置顶分片：置顶的攻略 id 列表 + 操作 */
+export function usePinnedGuides() {
+  const pinnedGuides = useSelector((s) => s.pinnedGuides)
+  return { pinnedGuides, ...pinnedGuideActions }
 }
 
 /** 物价分片：仅返回用户自定义条目（内置参考条目由组件合并 data 提供） */

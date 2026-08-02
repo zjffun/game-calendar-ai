@@ -10,6 +10,8 @@ import DungeonTracker from './components/Dungeon/DungeonTracker'
 import HouseCleaning from './components/House/HouseCleaning'
 import GuideBook from './components/Guide/GuideBook'
 import PriceBook from './components/Price/PriceBook'
+import SynthCalculator from './components/Synth/SynthCalculator'
+import OcrTool from './components/Ocr/OcrTool'
 import SettingsPanel from './components/Settings/SettingsPanel'
 import ConfirmHost from './components/common/ConfirmDialog'
 import Icon, { type IconName } from './components/common/Icon'
@@ -22,6 +24,8 @@ const NAV: { id: TabId; label: string; icon: IconName }[] = [
   { id: 'todo', label: '待办', icon: 'todo' },
   { id: 'guide', label: '攻略', icon: 'guide' },
   { id: 'price', label: '物价', icon: 'coin' },
+  { id: 'synth', label: '算价', icon: 'gem' },
+  { id: 'ocr', label: '取字', icon: 'scan-text' },
 ]
 
 /** 子页（从概览进入，不出现在主导航）：显示为概览下的当前位置 */
@@ -182,6 +186,8 @@ export default function App() {
             {tab === 'house' && <HouseCleaning />}
             {tab === 'guide' && <GuideBook />}
             {tab === 'price' && <PriceBook />}
+            {tab === 'synth' && <SynthCalculator />}
+            {tab === 'ocr' && <OcrTool />}
             {tab === 'settings' && <SettingsPanel />}
           </div>
         </main>

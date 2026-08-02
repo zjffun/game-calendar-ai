@@ -3,8 +3,13 @@
 // 所有功能模块都依赖此文件中的类型。请勿在功能模块中重复定义这些类型。
 // ============================================================================
 
-/** TODO 周期类型 */
-export type TodoCycle = 'daily' | 'weekly' | 'monthly'
+/**
+ * TODO 周期类型。
+ * - 'once'：单次待办，做完即止，不会自动重置（可手动删除）；展示在每日之前，
+ *   在「单次待办」分组内就地添加，不走底部「自定义添加」。
+ * - 'daily' / 'weekly' / 'monthly'：跨天/周/月自动重置。
+ */
+export type TodoCycle = 'once' | 'daily' | 'weekly' | 'monthly'
 
 /**
  * 一个角色（账号）。五开/多号玩家可为每个角色单独记录待办完成情况。
@@ -368,6 +373,8 @@ export const STORAGE_KEYS = {
   guides: 'mhxy.guides.v1',
   /** 内置攻略的用户补充内容（攻略id -> Markdown） */
   guideNotes: 'mhxy.guideNotes.v1',
+  /** 置顶的攻略 id 列表（内置/自定义均可，按置顶顺序，最新在前） */
+  pinnedGuides: 'mhxy.pinnedGuides.v1',
   /** 用户自定义物价条目（内置参考条目来自代码，不入库） */
   priceItems: 'mhxy.priceItems.v1',
   /** 物价条目的用户备注（物品id -> 备注） */

@@ -12,6 +12,7 @@ import Icon from '../common/Icon'
 
 /** 周期对应的中文标签，用于 chip 文案提示 */
 const CYCLE_LABEL: Record<PresetTodo['cycle'], string> = {
+  once: '单次',
   daily: '日',
   weekly: '周',
   monthly: '月',

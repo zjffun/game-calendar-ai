@@ -59,20 +59,52 @@ export function parseTags(text: string): string[] {
     .slice(0, 8)
 }
 
+// ── 标题拼音搜索 ────────────────────────────────────────────────────────
+// 拼音字典约 142KB gzip，按需动态加载：仅当用户输入含拉丁字母（拼音意图）时
+// 才拉取，纯中文搜索的用户不会下载它。见 ensurePinyinLoaded / usePinyinSearch。
+type PinyinFn = typeof import('pinyin-pro').pinyin
+let pinyinFn: PinyinFn | null = null
+let pinyinLoad: Promise<void> | null = null
+
+/** 触发按需加载拼音字典；加载完成后 resolve。重复调用复用同一 Promise。 */
+export function ensurePinyinLoaded(): Promise<void> {
+  if (pinyinFn) return Promise.resolve()
+  if (!pinyinLoad) {
+    pinyinLoad = import('pinyin-pro').then((m) => {
+      pinyinFn = m.pinyin
+    })
+  }
+  return pinyinLoad
+}
+
+/** 标题拼音缓存：{ full: 全拼, initials: 首字母 }，均为小写、无声调、无分隔 */
+const titlePinyinCache = new Map<string, { full: string; initials: string }>()
+
+/** 字典未就绪时返回 null（此时跳过拼音匹配，仅中文子串生效） */
+function titlePinyin(title: string): { full: string; initials: string } | null {
+  if (!pinyinFn) return null
+  let cached = titlePinyinCache.get(title)
+  if (!cached) {
+    const full = pinyinFn(title, { toneType: 'none', type: 'array' }).join('').toLowerCase()
+    const initials = pinyinFn(title, { pattern: 'first', toneType: 'none', type: 'array' })
+      .join('')
+      .toLowerCase()
+    cached = { full, initials }
+    titlePinyinCache.set(title, cached)
+  }
+  return cached
+}
+
 /**
- * 搜索匹配：标题 / 摘要 / 标签 / 正文要点，任一命中即可（不区分大小写）。
- * extraText 用于附加可搜索文本（如内置攻略的用户补充 Markdown）。
+ * 搜索匹配：仅按标题匹配（不区分大小写），并支持标题拼音——
+ * 全拼（如「秘境降妖」→ mijingjiangyao）或首字母（→ mjjy）任一子串命中即可。
+ * 拼音字典按需加载，未就绪时仅做中文子串匹配（见 ensurePinyinLoaded）。
  */
-export function guideMatches(entry: GuideEntry, query: string, extraText?: string): boolean {
+export function guideMatches(entry: GuideEntry, query: string): boolean {
   const q = query.trim().toLowerCase()
   if (!q) return true
   if (entry.title.toLowerCase().includes(q)) return true
-  if (entry.summary?.toLowerCase().includes(q)) return true
-  if (entry.tags?.some((t) => t.toLowerCase().includes(q))) return true
-  if (extraText?.toLowerCase().includes(q)) return true
-  return entry.sections.some(
-    (s) =>
-      s.heading?.toLowerCase().includes(q) ||
-      s.items.some((it) => it.toLowerCase().includes(q)),
-  )
+  const py = titlePinyin(entry.title)
+  if (!py) return false
+  return py.full.includes(q) || py.initials.includes(q)
 }

@@ -2,7 +2,7 @@
 // 攻略大全 模块（入口）
 // - 左侧边栏：按分类（副本 / 神器 / 奇遇 / 看戏 / 自定义）分组列出所有攻略；
 //   内置攻略只读，用户自定义攻略可编辑/删除，二者一并展示在侧边；
-// - 顶部搜索：按标题 / 摘要 / 标签 / 正文（含「我的补充」）匹配；
+// - 顶部搜索：仅按标题匹配，支持拼音（全拼 / 首字母）；
 // - 右侧主区：展示选中攻略的正文，或新增/编辑表单；
 // - 「＋ 新增攻略」让用户把自己的内容加入侧边；
 // - 内置攻略正文只读，但可在详情下方「我的补充」追加自定义 Markdown 内容。
@@ -10,9 +10,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { GuideEntry } from '../../types'
-import { useGuides, useGuideNotes } from '../../store/useAppStore'
+import { useGuides, useGuideNotes, usePinnedGuides } from '../../store/useAppStore'
 import { GUIDE_PRESETS, GUIDE_CATEGORY_META } from '../../data/guides'
-import { guideMatches } from '../../utils/guide'
+import { guideMatches, ensurePinyinLoaded } from '../../utils/guide'
 import GuideContentView from './GuideContentView'
 import GuideEditor, { type GuideDraft } from './GuideEditor'
 import GuideNotes from './GuideNotes'
@@ -48,7 +48,10 @@ function byOrder(a: GuideEntry, b: GuideEntry): number {
 export default function GuideBook() {
   const { guides: customGuides, add, update, remove } = useGuides()
   const { guideNotes } = useGuideNotes()
+  const { pinnedGuides, togglePin } = usePinnedGuides()
   const [query, setQuery] = useState('')
+  // 拼音字典是否就绪；就绪后重算分组，让拼音匹配生效
+  const [pinyinReady, setPinyinReady] = useState(false)
   // 初始选中优先取 URL 参数（刷新后恢复上次查看的攻略）
   const [selectedId, setSelectedId] = useState<string | null>(() => readGuideParam())
   const [mode, setMode] = useState<Mode>('view')
@@ -61,20 +64,46 @@ export default function GuideBook() {
     [customGuides],
   )
 
-  // 按分类分组并按搜索过滤（「我的补充」内容也参与匹配）；保留分类展示顺序
+  // 查询含拉丁字母 = 拼音意图，按需加载拼音字典（纯中文搜索不会触发下载）
+  useEffect(() => {
+    if (pinyinReady || !/[a-z]/i.test(query)) return
+    let cancelled = false
+    ensurePinyinLoaded().then(() => {
+      if (!cancelled) setPinyinReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [query, pinyinReady])
+
+  const pinnedSet = useMemo(() => new Set(pinnedGuides), [pinnedGuides])
+
+  // 置顶条目：按置顶顺序（最新在前），仍受搜索过滤；失效 id 自动跳过
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const pinnedEntries = useMemo(() => {
+    const byId = new Map(allEntries.map((e) => [e.id, e]))
+    return pinnedGuides
+      .map((id) => byId.get(id))
+      .filter((e): e is GuideEntry => !!e && guideMatches(e, query))
+  }, [pinnedGuides, allEntries, query, pinyinReady])
+
+  // 按分类分组并按搜索过滤（仅按标题匹配，支持拼音）；置顶项移到顶部分组，故这里排除
+  // pinyinReady 入依赖：字典加载完成后重算，纳入拼音匹配结果
   const groups = useMemo(() => {
     return GUIDE_CATEGORY_META.map((meta) => {
       const list = allEntries.filter(
-        (e) =>
-          e.category === meta.category &&
-          guideMatches(e, query, guideNotes[e.id]?.markdown),
+        (e) => e.category === meta.category && !pinnedSet.has(e.id) && guideMatches(e, query),
       )
       return { meta, list }
     }).filter((g) => g.list.length > 0)
-  }, [allEntries, query, guideNotes])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allEntries, query, pinyinReady, pinnedSet])
 
-  // 过滤后的扁平列表（用于默认选中第一条）
-  const visibleFlat = useMemo(() => groups.flatMap((g) => g.list), [groups])
+  // 过滤后的扁平列表（置顶在前，用于默认选中第一条）
+  const visibleFlat = useMemo(
+    () => [...pinnedEntries, ...groups.flatMap((g) => g.list)],
+    [pinnedEntries, groups],
+  )
 
   // 当前选中：优先 selectedId（仍可见），否则取第一条
   const activeEntry =
@@ -111,6 +140,25 @@ export default function GuideBook() {
     remove(entry.id)
     setSelectedId(null)
     setMode('view')
+  }
+
+  // 侧边一条攻略项（置顶分组与各分类分组共用）：标题按钮
+  function renderNavItem(entry: GuideEntry) {
+    const active = activeEntry?.id === entry.id && mode === 'view'
+    return (
+      <li key={entry.id}>
+        <button
+          className={`guide-nav-item${active ? ' active' : ''}`}
+          onClick={() => select(entry.id)}
+        >
+          <span className="guide-nav-title">{entry.title}</span>
+          {entry.preset && guideNotes[entry.id] && (
+            <span className="guide-nav-note" title="已补充自定义内容" aria-hidden />
+          )}
+          {!entry.preset && <span className="guide-nav-tag">自定义</span>}
+        </button>
+      </li>
+    )
   }
 
   return (
@@ -157,37 +205,27 @@ export default function GuideBook() {
             </button>
           </div>
 
-          {groups.length === 0 ? (
+          {pinnedEntries.length === 0 && groups.length === 0 ? (
             <div className="empty">没有匹配「{query}」的攻略</div>
           ) : (
             <nav className="guide-nav" aria-label="攻略列表">
+              {pinnedEntries.length > 0 && (
+                <div className="guide-group guide-group-pinned pop-in" key="__pinned__">
+                  <div className="guide-group-head">
+                    <Icon name="pin" size={12} className="guide-group-pin-icon" />
+                    <span className="guide-group-name">置顶</span>
+                    <span className="guide-group-count">{pinnedEntries.length}</span>
+                  </div>
+                  <ul className="guide-nav-list">{pinnedEntries.map(renderNavItem)}</ul>
+                </div>
+              )}
               {groups.map(({ meta, list }) => (
                 <div className="guide-group" key={meta.category}>
                   <div className="guide-group-head">
                     <span className="guide-group-name">{meta.category}</span>
                     <span className="guide-group-count">{list.length}</span>
                   </div>
-                  <ul className="guide-nav-list">
-                    {list.map((entry) => {
-                      const active = activeEntry?.id === entry.id && mode === 'view'
-                      return (
-                        <li key={entry.id}>
-                          <button
-                            className={`guide-nav-item${active ? ' active' : ''}`}
-                            onClick={() => select(entry.id)}
-                          >
-                            <span className="guide-nav-title">{entry.title}</span>
-                            {entry.preset && guideNotes[entry.id] && (
-                              <span className="guide-nav-note" title="已补充自定义内容" aria-hidden />
-                            )}
-                            {!entry.preset && (
-                              <span className="guide-nav-tag">自定义</span>
-                            )}
-                          </button>
-                        </li>
-                      )
-                    })}
-                  </ul>
+                  <ul className="guide-nav-list">{list.map(renderNavItem)}</ul>
                 </div>
               ))}
             </nav>
@@ -219,24 +257,38 @@ export default function GuideBook() {
                     <p className="muted guide-detail-summary">{activeEntry.summary}</p>
                   )}
                 </div>
-                {!activeEntry.preset && (
-                  <div className="guide-detail-actions">
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => setMode('edit')}
-                    >
-                      <Icon name="pencil" size={13} />
-                      编辑
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => handleDelete(activeEntry)}
-                    >
-                      <Icon name="trash" size={13} />
-                      删除
-                    </button>
-                  </div>
-                )}
+                <div className="guide-detail-actions">
+                  <button
+                    type="button"
+                    className={`btn btn-ghost btn-sm guide-pin-btn${
+                      pinnedSet.has(activeEntry.id) ? ' pinned' : ''
+                    }`}
+                    onClick={() => togglePin(activeEntry.id)}
+                    aria-pressed={pinnedSet.has(activeEntry.id)}
+                    title={pinnedSet.has(activeEntry.id) ? '取消置顶' : '置顶到侧边顶部'}
+                  >
+                    <Icon name="pin" size={13} />
+                    {pinnedSet.has(activeEntry.id) ? '已置顶' : '置顶'}
+                  </button>
+                  {!activeEntry.preset && (
+                    <>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setMode('edit')}
+                      >
+                        <Icon name="pencil" size={13} />
+                        编辑
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => handleDelete(activeEntry)}
+                      >
+                        <Icon name="trash" size={13} />
+                        删除
+                      </button>
+                    </>
+                  )}
+                </div>
               </header>
 
               {activeEntry.tags && activeEntry.tags.length > 0 && (

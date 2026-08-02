@@ -1,13 +1,13 @@
 // ============================================================================
 // 合成算价页：宝石 / 星辉石 / 五色灵尘（各级材料成本）与九转金丹（各品质价格）。
-// - 纯计算工具，输入仅本机持久化（localStorage，不参与云同步）。
+// - 输入通过 store 的 synth 分片持久化，随其它数据一并云同步（换设备也能找回填过的价）。
 // - 价格用裸数值（不带万/亿单位）；宝石按「不同宝石」分别存价。
 // - 计算规则与置信度见 utils/synth.ts；价格为材料成本，不含合成手续费与失败损耗。
 // ============================================================================
 
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
-import { useLocalStorage } from '../../hooks/useLocalStorage'
+import { useSynth } from '../../store/useAppStore'
 import {
   GEM_NAMES,
   GEM_COUNTS,
@@ -20,17 +20,6 @@ import {
 } from '../../utils/synth'
 import Icon, { type IconName } from '../common/Icon'
 import './Synth.css'
-
-// 本机持久化键（仅本地记忆上次输入，不进 STORAGE_KEYS、不云同步）
-const LS = {
-  gemName: 'mhxy.calc.gemName.v1',
-  /** 每种宝石各自的 1 级单价：{ 宝石名: 价格文本 } */
-  gemPrices: 'mhxy.calc.gemPrices.v2',
-  starPrice: 'mhxy.calc.starPrice.v1',
-  dustPrice: 'mhxy.calc.dustPrice.v1',
-  pillQuality: 'mhxy.calc.pillQuality.v1',
-  pillPrice: 'mhxy.calc.pillPrice.v2',
-}
 
 /** 解析裸数值文本；空/非法/非正返回 0。 */
 function toNum(text: string): number {
@@ -155,12 +144,14 @@ function PriceInput({
 // ---------------------------------------------------------------------------
 
 function GemCalculator() {
-  const [name, setName] = useLocalStorage<string>(LS.gemName, GEM_NAMES[0])
-  const [prices, setPrices] = useLocalStorage<Record<string, string>>(LS.gemPrices, {})
+  const { synth, update } = useSynth()
+  const name = synth.gemName
+  const setName = (v: string) => update({ gemName: v })
+  const prices = synth.gemPrices
 
   const priceText = prices[name] ?? ''
   const base = toNum(priceText)
-  const setPrice = (v: string) => setPrices((prev) => ({ ...prev, [name]: v }))
+  const setPrice = (v: string) => update({ gemPrices: { ...prices, [name]: v } })
 
   // 已填过价的宝石数量（用于提示「各宝石单独存」已生效）
   const filledCount = Object.entries(prices).filter(([, v]) => toNum(v) > 0).length
@@ -207,7 +198,9 @@ function GemCalculator() {
 // ---------------------------------------------------------------------------
 
 function StarCalculator() {
-  const [priceText, setPrice] = useLocalStorage<string>(LS.starPrice, '')
+  const { synth, update } = useSynth()
+  const priceText = synth.starPrice
+  const setPrice = (v: string) => update({ starPrice: v })
   const base = toNum(priceText)
   return (
     <LevelCard
@@ -239,7 +232,9 @@ function StarCalculator() {
 // ---------------------------------------------------------------------------
 
 function DustCalculator() {
-  const [priceText, setPrice] = useLocalStorage<string>(LS.dustPrice, '')
+  const { synth, update } = useSynth()
+  const priceText = synth.dustPrice
+  const setPrice = (v: string) => update({ dustPrice: v })
   const base = toNum(priceText)
   return (
     <LevelCard
@@ -271,8 +266,11 @@ function DustCalculator() {
 // ---------------------------------------------------------------------------
 
 function PillCalculator() {
-  const [quality, setQuality] = useLocalStorage<string>(LS.pillQuality, '1')
-  const [priceText, setPrice] = useLocalStorage<string>(LS.pillPrice, '')
+  const { synth, update } = useSynth()
+  const quality = synth.pillQuality
+  const setQuality = (v: string) => update({ pillQuality: v })
+  const priceText = synth.pillPrice
+  const setPrice = (v: string) => update({ pillPrice: v })
 
   const base = toNum(priceText)
   const q = parseInt(quality, 10)

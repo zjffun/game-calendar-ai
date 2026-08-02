@@ -315,8 +315,8 @@ export default function SettingsPanel() {
           <h3>导出备份</h3>
         </div>
         <p className="muted small" style={{ margin: '0 0 12px' }}>
-          导出当前全部数据（待办、种子、副本、房屋、设置、自定义攻略、攻略补充与其中的图片）为
-          JSON，可复制留存或下载为文件。含图片时文件可能较大，建议用「下载」。
+          导出当前全部数据（待办、种子、副本、房屋、设置、自定义攻略、攻略补充、物价、算价与其中的
+          图片）为 JSON，可复制留存或下载为文件。含图片时文件可能较大，建议用「下载」。
         </p>
         <div className="row row-wrap" style={{ marginBottom: exportText ? 12 : 0 }}>
           <button type="button" className="btn btn-primary" onClick={handleExport}>
@@ -385,7 +385,7 @@ export default function SettingsPanel() {
           <h3 style={{ color: 'var(--c-danger)' }}>清空所有数据</h3>
         </div>
         <p className="muted small" style={{ margin: '0 0 12px' }}>
-          删除全部待办、种子、副本、房屋记录、攻略补充与图片库，并把所有设置恢复为默认值。
+          删除全部待办、种子、副本、房屋记录、攻略补充、物价、算价与图片库，并把所有设置恢复为默认值。
           此操作不可撤销，建议先「导出备份」。
         </p>
         <div className="row row-wrap">

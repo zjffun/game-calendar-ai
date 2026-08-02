@@ -24,9 +24,11 @@ import {
   type PriceItem,
   type PriceComment,
   type PriceObservation,
+  type SynthInputs,
   SOLO_CHARACTER_ID,
 } from '../types'
 import { DEFAULT_SETTINGS, createDefaultHouse, SERVANT_ROOM_TIERS } from '../data/gameData'
+import { DEFAULT_SYNTH_INPUTS } from '../utils/synth'
 import { currentCleanliness, currentDurability, clamp } from '../utils/house'
 import { uid } from '../utils/id'
 import { getAllImages, putImages, clearImages } from './imageStore'
@@ -54,6 +56,8 @@ interface AppState {
   priceComments: Record<string, PriceComment>
   /** 价格观测（OCR 识别的带时间戳记录，用于趋势） */
   priceObservations: PriceObservation[]
+  /** 算价页的输入记忆（宝石/星辉石/五色灵尘/九转金丹的基准价与品质） */
+  synth: SynthInputs
 }
 
 function load<T>(key: string, fallback: T): T {
@@ -112,6 +116,7 @@ let state: AppState = {
   priceItems: load<PriceItem[]>(STORAGE_KEYS.priceItems, []),
   priceComments: load<Record<string, PriceComment>>(STORAGE_KEYS.priceComments, {}),
   priceObservations: load<PriceObservation[]>(STORAGE_KEYS.priceObservations, []),
+  synth: { ...DEFAULT_SYNTH_INPUTS, ...load<Partial<SynthInputs>>(STORAGE_KEYS.synth, {}) },
 }
 
 // 若初始加载触发了迁移（migrateTodos 对未变项保持同一引用），立即落盘，
@@ -214,6 +219,10 @@ export function applyExternalUpdate(storageKey: string, parsed: unknown): boolea
       sliceKey = 'priceObservations'
       value = parsed as PriceObservation[]
       break
+    case STORAGE_KEYS.synth:
+      sliceKey = 'synth'
+      value = { ...DEFAULT_SYNTH_INPUTS, ...(parsed as Partial<SynthInputs>) }
+      break
     default:
       return false
   }
@@ -239,6 +248,7 @@ export function readAllSlices(): { key: string; value: unknown }[] {
     { key: STORAGE_KEYS.priceItems, value: state.priceItems },
     { key: STORAGE_KEYS.priceComments, value: state.priceComments },
     { key: STORAGE_KEYS.priceObservations, value: state.priceObservations },
+    { key: STORAGE_KEYS.synth, value: state.synth },
   ]
 }
 
@@ -684,6 +694,14 @@ export const priceObservationActions = {
   },
 }
 
+// ---- 算价（合成价格推算器的输入记忆；随其它分片本地持久化并云同步） ----
+export const synthActions = {
+  /** 局部更新算价输入（合并进现有值）。 */
+  update(patch: Partial<SynthInputs>) {
+    setSlice('synth', { ...state.synth, ...patch }, STORAGE_KEYS.synth)
+  },
+}
+
 // ---- 数据管理（导入 / 导出 / 重置） ----
 // 备份格式 = 全量 state + images（IndexedDB 图片库，id -> base64 data URL）。
 // 图片在 IndexedDB（异步），因此导出/导入/重置均为 async。
@@ -713,6 +731,8 @@ export const dataActions = {
         setSlice('priceComments', parsed.priceComments, STORAGE_KEYS.priceComments)
       if (parsed.priceObservations)
         setSlice('priceObservations', parsed.priceObservations, STORAGE_KEYS.priceObservations)
+      if (parsed.synth)
+        setSlice('synth', { ...DEFAULT_SYNTH_INPUTS, ...parsed.synth }, STORAGE_KEYS.synth)
       if (parsed.images) await putImages(parsed.images)
       return true
     } catch {
@@ -732,6 +752,7 @@ export const dataActions = {
     setSlice('priceItems', [], STORAGE_KEYS.priceItems)
     setSlice('priceComments', {}, STORAGE_KEYS.priceComments)
     setSlice('priceObservations', [], STORAGE_KEYS.priceObservations)
+    setSlice('synth', { ...DEFAULT_SYNTH_INPUTS }, STORAGE_KEYS.synth)
     await clearImages().catch(() => {})
   },
 }
@@ -818,6 +839,12 @@ export function usePriceComments() {
 export function usePriceObservations() {
   const priceObservations = useSelector((s) => s.priceObservations)
   return { priceObservations, ...priceObservationActions }
+}
+
+/** 算价分片：合成价格推算器的输入记忆 + 操作 */
+export function useSynth() {
+  const synth = useSelector((s) => s.synth)
+  return { synth, ...synthActions }
 }
 
 /** 只读全量状态（用于概览 / 导出） */

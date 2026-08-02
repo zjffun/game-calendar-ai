@@ -14,6 +14,8 @@
 // 参考：网易官方物品页 + 163/腾讯/叶子猪/技术宅 等多来源交叉（详见对话记录）。
 // ============================================================================
 
+import type { SynthInputs } from '../types'
+
 export interface LevelRow {
   level: number
   /** 该等级需要多少个 1 级材料 */
@@ -108,4 +110,18 @@ export function pillQualityPrices(baseQuality: number, basePrice: number): PillR
     rows.push({ quality: q, price: unitPrice * q, exp: pillExp(q) })
   }
   return rows
+}
+
+// ----------------------------------------------------------------------------
+// 算价页输入的默认值（空价 + 默认宝石 + 金丹基准品质 1）
+// ----------------------------------------------------------------------------
+
+/** 「算价」页输入记忆的默认值（详见 types 的 SynthInputs）。 */
+export const DEFAULT_SYNTH_INPUTS: SynthInputs = {
+  gemName: GEM_NAMES[0],
+  gemPrices: {},
+  starPrice: '',
+  dustPrice: '',
+  pillQuality: '1',
+  pillPrice: '',
 }

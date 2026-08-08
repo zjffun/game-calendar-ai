@@ -407,4 +407,6 @@ export const STORAGE_KEYS = {
   priceObservations: 'mhxy.priceObservations.v1',
   /** 算价页的输入记忆（宝石/星辉石/五色灵尘/九转金丹的基准价与品质） */
   synth: 'mhxy.synth.v1',
+  /** 签到答题识别区域（相对视频帧的 0–1 比例框，记住后无需每次重选） */
+  quizRegion: 'mhxy.quizRegion.v1',
 } as const

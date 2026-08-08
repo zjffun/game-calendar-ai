@@ -1,0 +1,326 @@
+/* ==========================================================================
+   签到答题页——窗口 OCR 识别 + 关键词搜索。复用全局 .card / .btn / .input / .meter。
+   ========================================================================== */
+
+.quiz-page {
+  max-width: 720px;
+}
+
+/* ---------- 窗口识别卡片 ---------- */
+
+.quiz-cap-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.quiz-cap-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.quiz-cap-title .icon {
+  color: var(--accent);
+}
+.quiz-cap-hint {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.quiz-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+}
+.quiz-auto input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+}
+
+/* ---------- 视频预览 ---------- */
+
+.quiz-video-wrap {
+  position: relative;
+  background: #000;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+}
+.quiz-video {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  background: #000;
+}
+.quiz-video-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 12px;
+}
+
+/* ---------- 框选识别区域 ---------- */
+
+/* 覆盖在视频上的拖拽层；touch-action:none 让移动端拖拽不触发页面滚动 */
+.quiz-region-layer {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+/* 选框：内描边 + 超大 box-shadow 把框外区域压暗（被 wrap 的 overflow:hidden 裁掉） */
+.quiz-region-box {
+  position: absolute;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.quiz-region-tip {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* 视频下方的框选状态条 */
+.quiz-region-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.quiz-region-bar .icon {
+  flex: none;
+  color: var(--accent);
+}
+.quiz-region-clear {
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.quiz-region-clear:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+/* ---------- 识别到的答案 ---------- */
+
+.quiz-answer {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--ok);
+  background: var(--ok-soft);
+}
+.quiz-answer.weak {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+.quiz-answer-q {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.quiz-answer-tag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  font-size: 11px;
+  color: var(--ink-3);
+  vertical-align: middle;
+}
+.quiz-answer-a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ok);
+  line-height: 1.4;
+}
+.quiz-answer.weak .quiz-answer-a {
+  color: var(--warn);
+}
+.quiz-answer-a .icon {
+  flex: none;
+}
+.quiz-answer-note {
+  margin: 8px 0 0;
+}
+
+.quiz-others {
+  margin-top: 10px;
+  font-size: 13px;
+}
+.quiz-others summary {
+  cursor: pointer;
+  color: var(--ink-3);
+}
+.quiz-other-item {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.quiz-other-score {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.quiz-other-q {
+  color: var(--ink-2);
+  min-width: 0;
+}
+.quiz-other-a {
+  color: var(--ok);
+  font-weight: 600;
+  text-align: right;
+}
+
+/* ---------- 错误 / OCR 原文 ---------- */
+
+.quiz-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.quiz-ocr-raw {
+  margin-top: 10px;
+  font-size: 12px;
+}
+.quiz-ocr-raw summary {
+  cursor: pointer;
+  color: var(--ink-3);
+}
+.quiz-ocr-raw pre {
+  margin: 8px 0 0;
+  padding: 10px;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+/* ---------- 关键词搜索 ---------- */
+
+.quiz-search-block {
+  margin-top: 4px;
+}
+.quiz-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.quiz-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.quiz-search {
+  width: 100%;
+  padding-left: 34px;
+  padding-right: 34px;
+}
+.quiz-search-clear {
+  position: absolute;
+  right: 8px;
+  display: inline-flex;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  border-radius: 6px;
+}
+.quiz-search-clear:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.quiz-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quiz-list-item {
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.quiz-list-q {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.quiz-list-a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ok);
+}
+.quiz-list-a .icon {
+  flex: none;
+}
+
+/* ---------- 识别中图标转动 ---------- */
+
+.icon.spin {
+  animation: quiz-spin 0.9s linear infinite;
+}
+@keyframes quiz-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

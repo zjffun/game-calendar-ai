@@ -14,6 +14,7 @@ import { useMemo } from 'react'
 import Markdown, { defaultUrlTransform, type Components, type UrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
+import { openImageLightbox } from '../common/ImageLightbox'
 
 /** 本机图片引用协议前缀（配合图片库使用） */
 export const IMAGE_URL_PREFIX = 'img:'
@@ -44,9 +45,27 @@ export default function MarkdownView({ markdown, images }: Props) {
             // 图片仍在加载或已被清理：显示占位而不是裂图
             return <span className="md-img-missing">图片加载中或已丢失{alt ? `：${alt}` : ''}</span>
           }
-          return <img {...props} className="md-img" src={dataUrl} alt={alt ?? ''} loading="lazy" />
+          return (
+            <img
+              {...props}
+              className="md-img"
+              src={dataUrl}
+              alt={alt ?? ''}
+              loading="lazy"
+              onClick={() => openImageLightbox(dataUrl, alt ?? '')}
+            />
+          )
         }
-        return <img {...props} className="md-img" src={url} alt={alt ?? ''} loading="lazy" />
+        return (
+          <img
+            {...props}
+            className="md-img"
+            src={url}
+            alt={alt ?? ''}
+            loading="lazy"
+            onClick={() => openImageLightbox(url, alt ?? '')}
+          />
+        )
       },
     }),
     [images],

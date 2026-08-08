@@ -17,6 +17,7 @@ import GuideContentView from './GuideContentView'
 import GuideEditor, { type GuideDraft } from './GuideEditor'
 import GuideNotes from './GuideNotes'
 import { appConfirm } from '../common/ConfirmDialog'
+import { openImageLightbox } from '../common/ImageLightbox'
 import Icon from '../common/Icon'
 import './Guide.css'
 
@@ -319,6 +320,12 @@ export default function GuideBook() {
                         src={import.meta.env.BASE_URL + img.src}
                         alt={img.caption ?? activeEntry.title}
                         loading="lazy"
+                        onClick={() =>
+                          openImageLightbox(
+                            import.meta.env.BASE_URL + img.src,
+                            img.caption ?? activeEntry.title,
+                          )
+                        }
                       />
                       {img.caption && <figcaption>{img.caption}</figcaption>}
                     </figure>

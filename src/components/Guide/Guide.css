@@ -259,6 +259,7 @@
 }
 .guide-figure img {
   display: block;
+  cursor: zoom-in;
   max-width: 100%;
   max-height: 460px;
   /* 未加载时给出占位高度：否则 loading="lazy" 的图会塌成 2×2，
@@ -532,6 +533,7 @@
   color: var(--accent);
 }
 .md-img {
+  cursor: zoom-in;
   max-width: 100%;
   max-height: 480px;
   border-radius: var(--radius-sm);

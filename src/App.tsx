@@ -12,8 +12,10 @@ import GuideBook from './components/Guide/GuideBook'
 import PriceBook from './components/Price/PriceBook'
 import SynthCalculator from './components/Synth/SynthCalculator'
 import OcrTool from './components/Ocr/OcrTool'
+import QuizBook from './components/Quiz/QuizBook'
 import SettingsPanel from './components/Settings/SettingsPanel'
 import ConfirmHost from './components/common/ConfirmDialog'
+import ImageLightbox from './components/common/ImageLightbox'
 import Icon, { type IconName } from './components/common/Icon'
 import type { TabId } from './tabs'
 import './App.css'
@@ -26,6 +28,7 @@ const NAV: { id: TabId; label: string; icon: IconName }[] = [
   { id: 'price', label: '物价', icon: 'coin' },
   { id: 'synth', label: '算价', icon: 'gem' },
   { id: 'ocr', label: '取字', icon: 'scan-text' },
+  { id: 'quiz', label: '答题', icon: 'quiz' },
 ]
 
 /** 子页（从概览进入，不出现在主导航）：显示为概览下的当前位置 */
@@ -188,6 +191,7 @@ export default function App() {
             {tab === 'price' && <PriceBook />}
             {tab === 'synth' && <SynthCalculator />}
             {tab === 'ocr' && <OcrTool />}
+            {tab === 'quiz' && <QuizBook />}
             {tab === 'settings' && <SettingsPanel />}
           </div>
         </main>
@@ -209,6 +213,7 @@ export default function App() {
       </nav>
 
       <ConfirmHost />
+      <ImageLightbox />
     </div>
   )
 }

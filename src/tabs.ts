@@ -13,4 +13,5 @@ export type TabId =
   | 'price'
   | 'synth'
   | 'ocr'
+  | 'quiz'
   | 'settings'

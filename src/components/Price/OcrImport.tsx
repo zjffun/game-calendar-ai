@@ -7,7 +7,6 @@
 import { useMemo, useRef, useState } from 'react'
 import type { PriceSource } from '../../types'
 import { usePriceItems, usePriceObservations } from '../../store/useAppStore'
-import { PRICE_PRESETS } from '../../data/prices'
 import { ocrImage, type OcrProgress } from '../../utils/ocr'
 import { parseText, normalizePrice, formatMoney, type PriceCandidate } from '../../utils/priceParse'
 import Icon from '../common/Icon'
@@ -44,7 +43,7 @@ export default function OcrImport({ onClose }: { onClose: () => void }) {
   const { priceItems, add: addItem } = usePriceItems()
   const { addMany } = usePriceObservations()
 
-  const allItems = useMemo(() => [...PRICE_PRESETS, ...priceItems], [priceItems])
+  const allItems = priceItems
   const known = useMemo(() => allItems.map((it) => ({ id: it.id, name: it.name })), [allItems])
 
   const [blob, setBlob] = useState<Blob | null>(null)

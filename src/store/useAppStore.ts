@@ -28,6 +28,7 @@ import {
   SOLO_CHARACTER_ID,
 } from '../types'
 import { DEFAULT_SETTINGS, createDefaultHouse, SERVANT_ROOM_TIERS } from '../data/gameData'
+import { DEFAULT_PRICE_ITEMS } from '../data/prices'
 import { DEFAULT_SYNTH_INPUTS } from '../utils/synth'
 import { currentCleanliness, currentDurability, clamp } from '../utils/house'
 import { uid } from '../utils/id'
@@ -67,6 +68,25 @@ function load<T>(key: string, fallback: T): T {
     return JSON.parse(raw) as T
   } catch {
     return fallback
+  }
+}
+
+/**
+ * 物价条目加载：仅在「本浏览器从未写过该 key」（真·首次进入）时，植入一份可删除的
+ * 默认清单（常见任务产出道具，价格留空自填）。用户删空后 key 已存在，不会再补回。
+ * 已有数据（含空数组）的老用户保持原样，避免打扰。
+ */
+function loadPriceItems(): PriceItem[] {
+  const raw = localStorage.getItem(STORAGE_KEYS.priceItems)
+  if (raw == null) {
+    const seeded = DEFAULT_PRICE_ITEMS.map((it) => ({ ...it }))
+    save(STORAGE_KEYS.priceItems, seeded)
+    return seeded
+  }
+  try {
+    return JSON.parse(raw) as PriceItem[]
+  } catch {
+    return []
   }
 }
 
@@ -113,7 +133,7 @@ let state: AppState = {
   guides: load<GuideEntry[]>(STORAGE_KEYS.guides, []),
   guideNotes: load<Record<string, GuideNote>>(STORAGE_KEYS.guideNotes, {}),
   pinnedGuides: load<string[]>(STORAGE_KEYS.pinnedGuides, []),
-  priceItems: load<PriceItem[]>(STORAGE_KEYS.priceItems, []),
+  priceItems: loadPriceItems(),
   priceComments: load<Record<string, PriceComment>>(STORAGE_KEYS.priceComments, {}),
   priceObservations: load<PriceObservation[]>(STORAGE_KEYS.priceObservations, []),
   synth: { ...DEFAULT_SYNTH_INPUTS, ...load<Partial<SynthInputs>>(STORAGE_KEYS.synth, {}) },

@@ -16,25 +16,6 @@
   margin-bottom: 2px;
 }
 
-/* 顶部提示条 */
-.price-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--warn-soft, var(--line));
-  background: var(--warn-soft, var(--surface-2));
-  border-radius: var(--radius);
-  color: var(--ink-2);
-  font-size: 12.5px;
-  line-height: 1.55;
-}
-.price-note .icon {
-  flex: 0 0 auto;
-  margin-top: 2px;
-  color: var(--warn);
-}
-
 /* 搜索框 */
 .price-search-wrap {
   position: relative;
@@ -51,46 +32,52 @@
   padding-left: 34px;
 }
 
-/* 列表 */
+/* 分类卡片：更紧凑，让一屏容纳更多 */
+.price-cat {
+  padding: 10px 12px;
+}
+.price-cat-head {
+  margin-bottom: 4px;
+}
+
+/* 列表：宽屏自动多列铺满，尽量多展示 */
 .price-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  column-gap: 18px;
 }
 .price-item {
-  padding: 12px 2px;
+  padding: 5px 2px;
   border-top: 1px solid var(--line);
+  min-width: 0;
 }
+/* 顶部一排的项去掉上边框（每列首行） */
 .price-item:first-child {
   border-top: none;
+}
+/* 编辑中的行占满整行宽度，避免挤在一列里 */
+.price-item-editing {
+  grid-column: 1 / -1;
+  padding: 8px 2px;
 }
 
 .price-row-main {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 14px;
-}
-.price-item-info {
-  min-width: 0;
+  align-items: center;
+  gap: 8px;
 }
 .price-item-name {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 500;
   color: var(--ink);
   line-height: 1.4;
-}
-.price-custom-badge {
-  font-weight: 500;
-}
-.price-item-desc {
-  margin-top: 3px;
-  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .price-item-value {
   flex: 0 0 auto;
@@ -100,44 +87,45 @@
   white-space: nowrap;
 }
 
-/* 行内操作 */
+/* 行内图标操作：默认淡出，hover/focus 时清晰，保持行紧凑 */
 .price-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-/* 备注展示 */
-.price-comment {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  margin-top: 8px;
-  padding: 8px 10px;
-  background: var(--accent-soft, var(--surface-2));
-  border-radius: var(--radius-sm);
-  color: var(--ink-2);
-  font-size: 13px;
-  line-height: 1.5;
-  word-break: break-word;
-}
-.price-comment-icon {
   flex: 0 0 auto;
-  margin-top: 2px;
-  color: var(--accent);
+  display: flex;
+  gap: 1px;
+  opacity: 0.5;
+  transition: opacity 0.12s ease;
+}
+.price-item:hover .price-row-actions,
+.price-row-actions:focus-within {
+  opacity: 1;
+}
+.btn-icon-xs {
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  line-height: 0;
+}
+/* 触屏无 hover：始终显示操作 */
+@media (hover: none) {
+  .price-row-actions {
+    opacity: 1;
+  }
 }
 
-/* 备注编辑 */
-.price-comment-edit {
-  margin-top: 8px;
+/* 空态：居中提示 + 快捷新增 */
+.price-empty {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 }
-.price-comment-input {
-  resize: vertical;
-  line-height: 1.5;
+
+/* 紧凑内联趋势（有观测时，折叠态） */
+.price-trend-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 2px 2px;
+  font-size: 11.5px;
 }
 
 /* 新增 / 编辑表单 */
@@ -167,15 +155,6 @@
 .price-obs-note {
   margin-top: -4px;
 }
-.price-trend-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 8px;
-  padding: 6px 10px;
-  background: var(--surface-2);
-  border-radius: var(--radius-sm);
-}
 .spark {
   color: var(--ink-3);
   flex: 0 0 auto;
@@ -185,17 +164,6 @@
 }
 .spark-down {
   color: var(--ok);
-}
-.price-trend-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-.price-trend-latest {
-  font-weight: 600;
-  color: var(--ink);
-  font-size: 13px;
 }
 .price-trend-detail {
   margin-top: 8px;
@@ -354,13 +322,6 @@
 }
 
 @media (max-width: 640px) {
-  .price-row-main {
-    flex-direction: column;
-    gap: 4px;
-  }
-  .price-item-value {
-    align-self: flex-start;
-  }
   .price-ocr-fields {
     flex-direction: column;
     align-items: stretch;

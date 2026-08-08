@@ -1,15 +1,15 @@
 // ============================================================================
-// 物价模块主入口。
-// - 展示「常见任务产出物品」的参考价（内置，只读，来自 data/prices）；
-// - 支持自定义新增物品（名称 / 分类 / 参考价 / 说明），可编辑、删除；
-// - 每条物品（内置或自定义）都可添加一段自己的备注（如本区实时价）。
-// 物价随服务器与版本波动，内置价仅供参考，实际以游戏内摊位为准。
+// 物价模块主入口（自定义物价本）。
+// - 物品与价格全部由用户自行录入，只有「分类 / 名字 / 价格」三项，价格为自由文本；
+// - 一屏尽量多展示：分类分组 + 密集单行列表（名字 · 价格）；
+// - 进阶：可用「OCR 导入」从截图批量录入观测，并在有观测的物品下看价格趋势。
+// 物价随服务器与版本波动，实际以游戏内摊位（Alt+X）为准。
 // ============================================================================
 
 import { useMemo, useState } from 'react'
-import type { PriceItem, PriceComment, PriceObservation } from '../../types'
-import { usePriceItems, usePriceComments, usePriceObservations } from '../../store/useAppStore'
-import { PRICE_PRESETS, PRICE_CATEGORY_ORDER } from '../../data/prices'
+import type { PriceItem, PriceObservation } from '../../types'
+import { usePriceItems, usePriceObservations } from '../../store/useAppStore'
+import { PRICE_CATEGORY_ORDER } from '../../data/prices'
 import { formatMoney, statsFor } from '../../utils/priceParse'
 import { appConfirm } from '../common/ConfirmDialog'
 import Icon from '../common/Icon'
@@ -19,14 +19,13 @@ import './Price.css'
 
 const CATEGORY_OPTIONS = [...PRICE_CATEGORY_ORDER]
 
-/** 自定义条目按 order 升序（无 order 排后） */
+/** 条目按 order 升序（无 order 排后） */
 function byOrder(a: PriceItem, b: PriceItem): number {
   return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
 }
 
 export default function PriceBook() {
   const { priceItems, add, update, remove } = usePriceItems()
-  const { priceComments, set: setComment } = usePriceComments()
   const { priceObservations, clearItem } = usePriceObservations()
   const [query, setQuery] = useState('')
   const [showAdd, setShowAdd] = useState(false)
@@ -48,16 +47,13 @@ export default function PriceBook() {
     [priceObservations],
   )
 
-  const allItems = useMemo(
-    () => [...PRICE_PRESETS, ...[...priceItems].sort(byOrder)],
-    [priceItems],
-  )
+  const allItems = useMemo(() => [...priceItems].sort(byOrder), [priceItems])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return allItems
     return allItems.filter((it) =>
-      [it.name, it.price, it.desc, it.category]
+      [it.name, it.price, it.category]
         .filter(Boolean)
         .some((s) => s!.toLowerCase().includes(q)),
     )
@@ -82,17 +78,12 @@ export default function PriceBook() {
     return ordered
   }, [filtered])
 
-  const presetCount = PRICE_PRESETS.length
-  const customCount = priceItems.length
-
   return (
     <section className="stack price-book">
       <div className="price-head">
         <div>
           <h2 className="section-title">物价</h2>
-          <p className="muted small">
-            内置参考 {presetCount} 条 · 自定义 {customCount} 条
-          </p>
+          <p className="muted small">共 {priceItems.length} 条 · 价格自填，随服务器/版本波动，以摊位实价为准</p>
         </div>
         <div className="row">
           <button className="btn btn-tonal btn-sm" onClick={() => setShowOcr((v) => !v)}>
@@ -101,17 +92,9 @@ export default function PriceBook() {
           </button>
           <button className="btn btn-primary btn-sm" onClick={() => setShowAdd((v) => !v)}>
             <Icon name={showAdd ? 'x' : 'plus'} size={14} />
-            {showAdd ? '收起' : '新增物品'}
+            {showAdd ? '收起' : '新增'}
           </button>
         </div>
-      </div>
-
-      <div className="price-note">
-        <Icon name="alert" size={15} />
-        <span>
-          梦幻西游物价随「服务器 / 时段 / 版本」大幅波动，内置价仅为参考区间；
-          点每条右侧「备注」可记录本区实时价，实际成交以游戏内摊位（Alt+X）为准。
-        </span>
       </div>
 
       {showOcr && <OcrImport onClose={() => setShowOcr(false)} />}
@@ -125,22 +108,32 @@ export default function PriceBook() {
         </p>
       )}
 
-      <div className="price-search-wrap">
-        <Icon name="search" size={14} className="price-search-icon" />
-        <input
-          className="input price-search"
-          placeholder="搜索物品 / 分类 / 价格…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
+      {priceItems.length > 0 && (
+        <div className="price-search-wrap">
+          <Icon name="search" size={14} className="price-search-icon" />
+          <input
+            className="input price-search"
+            placeholder="搜索物品 / 分类 / 价格…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      )}
 
-      {groups.length === 0 ? (
+      {priceItems.length === 0 ? (
+        <div className="empty price-empty">
+          <p>还没有物价记录。</p>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>
+            <Icon name="plus" size={14} />
+            新增第一条
+          </button>
+        </div>
+      ) : groups.length === 0 ? (
         <div className="empty">没有匹配的物品，换个关键词或新增一条。</div>
       ) : (
         groups.map(({ category, list }) => (
-          <div className="card" key={category}>
-            <div className="card-head">
+          <div className="card price-cat" key={category}>
+            <div className="card-head price-cat-head">
               <h3>{category}</h3>
               <span className="muted small">{list.length}</span>
             </div>
@@ -149,9 +142,7 @@ export default function PriceBook() {
                 <PriceRow
                   key={item.id}
                   item={item}
-                  comment={priceComments[item.id]}
                   observations={obsByItem.get(item.id) ?? []}
-                  onSetComment={setComment}
                   onUpdate={update}
                   onRemove={remove}
                   onClearObs={clearItem}
@@ -166,42 +157,25 @@ export default function PriceBook() {
 }
 
 // ---------------------------------------------------------------------------
-// 单行物品：展示价格，支持备注（所有条目）与编辑/删除（仅自定义）
+// 单行物品：密集展示「名字 · 价格」，行内编辑 / 删除；有观测时可看趋势
 // ---------------------------------------------------------------------------
 
 interface PriceRowProps {
   item: PriceItem
-  comment?: PriceComment
   observations: PriceObservation[]
-  onSetComment: (id: string, text: string) => void
   onUpdate: (id: string, patch: Partial<Omit<PriceItem, 'id' | 'preset'>>) => void
   onRemove: (id: string) => void
   onClearObs: (itemId: string) => void
 }
 
-function PriceRow({
-  item,
-  comment,
-  observations,
-  onSetComment,
-  onUpdate,
-  onRemove,
-  onClearObs,
-}: PriceRowProps) {
-  const [commenting, setCommenting] = useState(false)
-  const [draft, setDraft] = useState(comment?.text ?? '')
+function PriceRow({ item, observations, onUpdate, onRemove, onClearObs }: PriceRowProps) {
   const [editing, setEditing] = useState(false)
   const [showTrend, setShowTrend] = useState(false)
 
   const stats = useMemo(() => statsFor(observations), [observations])
 
-  function saveComment() {
-    onSetComment(item.id, draft)
-    setCommenting(false)
-  }
-
   async function del() {
-    if (await appConfirm(`删除自定义物品「${item.name}」？`)) onRemove(item.id)
+    if (await appConfirm(`删除物品「${item.name}」？`)) onRemove(item.id)
   }
 
   async function clearObs() {
@@ -213,7 +187,7 @@ function PriceRow({
 
   if (editing) {
     return (
-      <li className="price-item">
+      <li className="price-item price-item-editing">
         <EditPriceForm
           item={item}
           onSave={(patch) => {
@@ -229,30 +203,35 @@ function PriceRow({
   return (
     <li className="price-item">
       <div className="price-row-main">
-        <div className="price-item-info">
-          <div className="price-item-name">
-            {item.name}
-            {!item.preset && <span className="badge badge-outline price-custom-badge">自定义</span>}
-          </div>
-          {item.desc && <div className="muted small price-item-desc">{item.desc}</div>}
-        </div>
-        <div className="price-item-value">{item.price || '—'}</div>
+        <span className="price-item-name" title={item.name}>
+          {item.name}
+        </span>
+        <span className="price-item-value">{item.price || '—'}</span>
+        <span className="price-row-actions">
+          {stats.count > 0 && (
+            <button
+              className="btn btn-ghost btn-icon-xs"
+              title="价格趋势"
+              onClick={() => setShowTrend((v) => !v)}
+            >
+              <Icon name={showTrend ? 'chevron-down' : 'trending-up'} size={14} />
+            </button>
+          )}
+          <button className="btn btn-ghost btn-icon-xs" title="编辑" onClick={() => setEditing(true)}>
+            <Icon name="pencil" size={14} />
+          </button>
+          <button className="btn btn-ghost btn-icon-xs danger" title="删除" onClick={del}>
+            <Icon name="trash" size={14} />
+          </button>
+        </span>
       </div>
 
-      {stats.count > 0 && (
-        <div className="price-trend-bar">
+      {stats.count > 0 && !showTrend && (
+        <div className="price-trend-inline">
           <Sparkline obs={observations} />
-          <div className="price-trend-stats">
-            <span className="price-trend-latest">最新 {formatMoney(stats.latest)}</span>
-            <span className="muted small">
-              低 {formatMoney(stats.min)} · 高 {formatMoney(stats.max)} · {stats.count} 条
-            </span>
-          </div>
-          <span className="spacer" />
-          <button className="btn btn-ghost btn-xs" onClick={() => setShowTrend((v) => !v)}>
-            <Icon name={showTrend ? 'chevron-down' : 'chevron-right'} size={13} />
-            趋势
-          </button>
+          <span className="muted small">
+            最新 {formatMoney(stats.latest)} · 低 {formatMoney(stats.min)} · 高 {formatMoney(stats.max)} · {stats.count} 条
+          </span>
         </div>
       )}
 
@@ -265,165 +244,86 @@ function PriceRow({
           </button>
         </div>
       )}
-
-      <div className="price-row-actions">
-        <button
-          className="btn btn-ghost btn-xs"
-          onClick={() => {
-            setDraft(comment?.text ?? '')
-            setCommenting((v) => !v)
-          }}
-        >
-          <Icon name="note" size={13} />
-          {comment ? '编辑备注' : '备注'}
-        </button>
-        {!item.preset && (
-          <>
-            <button className="btn btn-ghost btn-xs" onClick={() => setEditing(true)}>
-              <Icon name="pencil" size={13} />
-              编辑
-            </button>
-            <button className="btn btn-ghost btn-xs danger" onClick={del}>
-              <Icon name="trash" size={13} />
-              删除
-            </button>
-          </>
-        )}
-      </div>
-
-      {comment && !commenting && (
-        <div className="price-comment">
-          <Icon name="note" size={13} className="price-comment-icon" />
-          <span>{comment.text}</span>
-        </div>
-      )}
-
-      {commenting && (
-        <div className="price-comment-edit">
-          <textarea
-            className="input price-comment-input"
-            rows={2}
-            maxLength={200}
-            autoFocus
-            placeholder="记录你的备注，例如：本区 130w 收 / 卖 160w"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-          <div className="row">
-            <button className="btn btn-primary btn-sm" onClick={saveComment}>
-              保存
-            </button>
-            <button className="btn btn-sm" onClick={() => setCommenting(false)}>
-              取消
-            </button>
-            {comment && (
-              <button
-                className="btn btn-sm danger"
-                onClick={() => {
-                  onSetComment(item.id, '')
-                  setCommenting(false)
-                }}
-              >
-                删除备注
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </li>
   )
 }
 
 // ---------------------------------------------------------------------------
-// 新增物品表单
+// 新增物品表单（分类 / 名字 / 价格）
 // ---------------------------------------------------------------------------
 
 function AddPriceForm({
   onAdd,
   onDone,
 }: {
-  onAdd: (input: { name: string; category?: string; price?: string; desc?: string }) => string
+  onAdd: (input: { name: string; category?: string; price?: string }) => string
   onDone: () => void
 }) {
   const [name, setName] = useState('')
   const [category, setCategory] = useState<string>(CATEGORY_OPTIONS[0])
   const [price, setPrice] = useState('')
-  const [desc, setDesc] = useState('')
 
   function submit() {
     const trimmed = name.trim()
     if (!trimmed) return
-    onAdd({ name: trimmed, category, price: price.trim() || undefined, desc: desc.trim() || undefined })
+    onAdd({ name: trimmed, category, price: price.trim() || undefined })
     setName('')
     setPrice('')
-    setDesc('')
-    onDone()
+    // 连续录入：保留分类与展开状态，聚焦回名称由 autoFocus 保证
   }
 
   return (
     <div className="card price-add-card">
-      <div className="card-head">
-        <h3>新增物品</h3>
-      </div>
-      <div className="stack">
-        <div className="row row-wrap">
-          <div className="field" style={{ flex: '2 1 180px' }}>
-            <label>物品名称</label>
-            <input
-              className="input"
-              value={name}
-              maxLength={40}
-              autoFocus
-              placeholder="例如：高级魔兽要诀·法术连击"
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && submit()}
-            />
-          </div>
-          <div className="field" style={{ flex: '1 1 110px' }}>
-            <label>分类</label>
-            <select className="select" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {CATEGORY_OPTIONS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field" style={{ flex: '1 1 130px' }}>
-            <label>参考价（可选）</label>
-            <input
-              className="input"
-              value={price}
-              maxLength={40}
-              placeholder="例如：约 80 万"
-              onChange={(e) => setPrice(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && submit()}
-            />
-          </div>
+      <div className="row row-wrap price-add-row">
+        <div className="field" style={{ flex: '1 1 120px' }}>
+          <label>分类</label>
+          <select className="select" value={category} onChange={(e) => setCategory(e.target.value)}>
+            {CATEGORY_OPTIONS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="field">
-          <label>说明（可选）</label>
+        <div className="field" style={{ flex: '2 1 180px' }}>
+          <label>名字</label>
           <input
             className="input"
-            value={desc}
-            maxLength={80}
-            placeholder="产出来源 / 用途等"
-            onChange={(e) => setDesc(e.target.value)}
+            value={name}
+            maxLength={40}
+            autoFocus
+            placeholder="例如：高级魔兽要诀·法术连击"
+            onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()}
           />
         </div>
-        <div className="row">
-          <button className="btn btn-primary" onClick={submit} disabled={!name.trim()}>
-            添加物品
-          </button>
+        <div className="field" style={{ flex: '1 1 130px' }}>
+          <label>价格</label>
+          <input
+            className="input"
+            value={price}
+            maxLength={40}
+            placeholder="自定义，如 80w / 约135万"
+            onChange={(e) => setPrice(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submit()}
+          />
         </div>
+      </div>
+      <div className="row">
+        <button className="btn btn-primary btn-sm" onClick={submit} disabled={!name.trim()}>
+          添加
+        </button>
+        <button className="btn btn-sm" onClick={onDone}>
+          完成
+        </button>
+        <span className="muted small">回车快速连续添加</span>
       </div>
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// 编辑（自定义物品）表单
+// 编辑物品表单（分类 / 名字 / 价格）
 // ---------------------------------------------------------------------------
 
 function EditPriceForm({
@@ -438,26 +338,16 @@ function EditPriceForm({
   const [name, setName] = useState(item.name)
   const [category, setCategory] = useState<string>(item.category || CATEGORY_OPTIONS[0])
   const [price, setPrice] = useState(item.price ?? '')
-  const [desc, setDesc] = useState(item.desc ?? '')
 
   function save() {
     if (!name.trim()) return
-    onSave({
-      name: name.trim(),
-      category,
-      price: price.trim() || undefined,
-      desc: desc.trim() || undefined,
-    })
+    onSave({ name: name.trim(), category, price: price.trim() || undefined })
   }
 
   return (
     <div className="stack price-edit">
-      <div className="row row-wrap">
-        <div className="field" style={{ flex: '2 1 180px' }}>
-          <label>物品名称</label>
-          <input className="input" value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
-        </div>
-        <div className="field" style={{ flex: '1 1 110px' }}>
+      <div className="row row-wrap price-add-row">
+        <div className="field" style={{ flex: '1 1 120px' }}>
           <label>分类</label>
           <select className="select" value={category} onChange={(e) => setCategory(e.target.value)}>
             {CATEGORY_OPTIONS.map((c) => (
@@ -467,14 +357,26 @@ function EditPriceForm({
             ))}
           </select>
         </div>
-        <div className="field" style={{ flex: '1 1 130px' }}>
-          <label>参考价</label>
-          <input className="input" value={price} maxLength={40} onChange={(e) => setPrice(e.target.value)} />
+        <div className="field" style={{ flex: '2 1 180px' }}>
+          <label>名字</label>
+          <input
+            className="input"
+            value={name}
+            maxLength={40}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && save()}
+          />
         </div>
-      </div>
-      <div className="field">
-        <label>说明</label>
-        <input className="input" value={desc} maxLength={80} onChange={(e) => setDesc(e.target.value)} />
+        <div className="field" style={{ flex: '1 1 130px' }}>
+          <label>价格</label>
+          <input
+            className="input"
+            value={price}
+            maxLength={40}
+            onChange={(e) => setPrice(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && save()}
+          />
+        </div>
       </div>
       <div className="row">
         <button className="btn btn-primary btn-sm" onClick={save} disabled={!name.trim()}>

@@ -77,6 +77,58 @@
   object-fit: contain;
 }
 
+/* ---------- 选窗口截图取字 ---------- */
+
+.ocr-cap-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ocr-cap-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ocr-cap-title .icon {
+  color: var(--accent);
+}
+.ocr-cap-hint {
+  margin: 0;
+  line-height: 1.7;
+}
+
+/* 视频下方的框选状态条 */
+.ocr-cap-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.ocr-cap-bar .icon {
+  flex: none;
+  color: var(--accent);
+}
+.ocr-cap-clear {
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ocr-cap-clear:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
 /* ---------- 进度 ---------- */
 
 .ocr-progress {

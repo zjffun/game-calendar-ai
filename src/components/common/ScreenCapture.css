@@ -1,0 +1,64 @@
+/* ==========================================================================
+   屏幕捕获复用件——视频预览容器 + 框选层。签到答题与取字共用。
+   ========================================================================== */
+
+/* ---------- 视频预览 ---------- */
+
+.sc-video-wrap {
+  position: relative;
+  background: #000;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+}
+.sc-video {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  background: #000;
+}
+.sc-video-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 12px;
+}
+
+/* ---------- 框选区域 ---------- */
+
+/* 覆盖在视频上的拖拽层；touch-action:none 让移动端拖拽不触发页面滚动 */
+.sc-region-layer {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+/* 选框：内描边 + 超大 box-shadow 把框外区域压暗（被 wrap 的 overflow:hidden 裁掉） */
+.sc-region-box {
+  position: absolute;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.sc-region-tip {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+}

@@ -11,7 +11,6 @@
 // ============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { RefObject, PointerEvent as ReactPointerEvent } from 'react'
 import { ocrImage, type OcrProgress } from '../../utils/ocr'
 import { searchQuiz, matchOcr, QUIZ_COUNT, type QuizMatch } from '../../utils/quiz'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
@@ -23,6 +22,7 @@ import {
   deleteMySubmission,
 } from '../../store/quizStore'
 import { appConfirm } from '../common/ConfirmDialog'
+import { RegionSelector, captureFrame, type Region } from '../common/ScreenCapture'
 import Icon from '../common/Icon'
 import './Quiz.css'
 
@@ -30,40 +30,6 @@ import './Quiz.css'
 const AUTO_INTERVAL = 3000
 /** OCR 命中率达到此值才当作「有把握」的答案 */
 const CONFIDENT = 0.5
-
-/**
- * 框选的识别区域，用相对视频帧的 0–1 比例存储，
- * 这样换分辨率/窗口大小仍然有效，也便于持久化记忆。
- */
-interface Region {
-  x: number
-  y: number
-  w: number
-  h: number
-}
-
-/** 视频元素内「实际画面」的矩形（object-fit:contain 会留黑边）。单位为元素像素。 */
-interface ContentRect {
-  left: number
-  top: number
-  width: number
-  height: number
-}
-
-const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v)
-
-/** 计算 object-fit:contain 下视频画面在元素内的实际显示矩形。 */
-function getContentRect(video: HTMLVideoElement): ContentRect | null {
-  const elW = video.clientWidth
-  const elH = video.clientHeight
-  const vW = video.videoWidth
-  const vH = video.videoHeight
-  if (!elW || !elH || !vW || !vH) return null
-  const scale = Math.min(elW / vW, elH / vH)
-  const dispW = vW * scale
-  const dispH = vH * scale
-  return { left: (elW - dispW) / 2, top: (elH - dispH) / 2, width: dispW, height: dispH }
-}
 
 export default function QuizBook() {
   const { approved } = useQuizCloud()
@@ -140,9 +106,12 @@ function CapturePanel() {
     }
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: 5 },
+        // displaySurface: 'window' 让 Chrome 选择器默认停在「窗口」而不是「标签页」，
+        // 方便直接选游戏窗口；selfBrowserSurface: 'exclude' 顺手隐藏本站自己的标签页。
+        video: { frameRate: 5, displaySurface: 'window' },
         audio: false,
-      })
+        selfBrowserSurface: 'exclude',
+      } as DisplayMediaStreamOptions)
       streamRef.current = stream
       // 用户在浏览器原生条上点「停止共享」时同步收起
       stream.getVideoTracks()[0]?.addEventListener('ended', stop)
@@ -161,9 +130,7 @@ function CapturePanel() {
   const recognize = useCallback(async () => {
     const video = videoRef.current
     if (!video || busyRef.current) return
-    const w = video.videoWidth
-    const h = video.videoHeight
-    if (!w || !h) return
+    if (!video.videoWidth || !video.videoHeight) return
 
     busyRef.current = true
     setBusy(true)
@@ -171,25 +138,7 @@ function CapturePanel() {
     setProgress(null)
     try {
       // 若框选了识别区域，仅截取该区域（相对比例 → 帧像素），OCR 更快更准
-      const r = regionRef.current
-      let sx = 0
-      let sy = 0
-      let sw = w
-      let sh = h
-      if (r && r.w > 0 && r.h > 0) {
-        sx = clamp(Math.round(r.x * w), 0, w - 1)
-        sy = clamp(Math.round(r.y * h), 0, h - 1)
-        sw = clamp(Math.round(r.w * w), 1, w - sx)
-        sh = clamp(Math.round(r.h * h), 1, h - sy)
-      }
-      const canvas = document.createElement('canvas')
-      canvas.width = sw
-      canvas.height = sh
-      const ctx = canvas.getContext('2d')
-      if (!ctx) throw new Error('无法创建画布')
-      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh)
-      const blob: Blob | null = await new Promise((res) => canvas.toBlob(res, 'image/png'))
-      if (!blob) throw new Error('截图失败')
+      const blob = await captureFrame(video, regionRef.current)
 
       // 用默认预处理（灰度+对比度增强）：整帧一般已宽于 1200px 不会再放大，
       // 但灰度化对游戏里的彩色小字识别帮助明显，耗时几乎不变
@@ -254,16 +203,20 @@ function CapturePanel() {
         <p className="muted small quiz-cap-hint">
           点「选择游戏窗口」后，在弹窗里选中梦幻西游的窗口即可。可在画面上拖拽框选题目区域（会被记住），
           出现签到答题时点「识别当前画面」，或勾选「自动识别」由它每隔几秒自动找答案。
-          需通过 https 或 localhost 访问才能截屏。
         </p>
       ) : (
         <>
-          <div className="quiz-video-wrap">
+          <div className="sc-video-wrap">
             {/* muted 是自动播放前提；playsInline 防止移动端全屏 */}
-            <video ref={videoRef} className="quiz-video" muted playsInline />
-            <RegionSelector videoRef={videoRef} region={region} onChange={setRegion} />
+            <video ref={videoRef} className="sc-video" muted playsInline />
+            <RegionSelector
+              videoRef={videoRef}
+              region={region}
+              onChange={setRegion}
+              tip="拖拽框选题目区域"
+            />
             {busy && (
-              <div className="quiz-video-badge">
+              <div className="sc-video-badge">
                 <Icon name="scan-text" size={13} />
                 {progress?.status === 'recognizing text' ? `识别中 ${pct}%` : '识别中…'}
               </div>
@@ -336,133 +289,6 @@ function CapturePanel() {
 }
 
 // ---------------------------------------------------------------------------
-// 框选识别区域：在视频上拖拽画框，映射为相对比例交回上层记忆
-// ---------------------------------------------------------------------------
-
-function RegionSelector({
-  videoRef,
-  region,
-  onChange,
-}: {
-  videoRef: RefObject<HTMLVideoElement | null>
-  region: Region | null
-  onChange: (r: Region | null) => void
-}) {
-  const layerRef = useRef<HTMLDivElement>(null)
-  const [rect, setRect] = useState<ContentRect | null>(null)
-  const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null)
-
-  // 视频/元素尺寸变化时重算画面显示矩形，用于把记住的比例框精确画回去
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-    const update = () => setRect(getContentRect(video))
-    update()
-    const raf = requestAnimationFrame(update)
-    const ro = new ResizeObserver(update)
-    ro.observe(video)
-    video.addEventListener('loadedmetadata', update)
-    video.addEventListener('resize', update)
-    video.addEventListener('playing', update)
-    window.addEventListener('resize', update)
-    return () => {
-      cancelAnimationFrame(raf)
-      ro.disconnect()
-      video.removeEventListener('loadedmetadata', update)
-      video.removeEventListener('resize', update)
-      video.removeEventListener('playing', update)
-      window.removeEventListener('resize', update)
-    }
-  }, [videoRef])
-
-  // 指针坐标 → 元素内像素，并夹到画面显示矩形内（避开黑边）
-  const pointAt = (e: ReactPointerEvent, cr: ContentRect) => {
-    const box = layerRef.current!.getBoundingClientRect()
-    return {
-      x: clamp(e.clientX - box.left, cr.left, cr.left + cr.width),
-      y: clamp(e.clientY - box.top, cr.top, cr.top + cr.height),
-    }
-  }
-
-  const onDown = (e: ReactPointerEvent) => {
-    const video = videoRef.current
-    const cr = video && getContentRect(video)
-    if (!cr) return
-    const p = pointAt(e, cr)
-    layerRef.current?.setPointerCapture(e.pointerId)
-    setDrag({ x0: p.x, y0: p.y, x1: p.x, y1: p.y })
-  }
-
-  const onMove = (e: ReactPointerEvent) => {
-    if (!drag) return
-    const video = videoRef.current
-    const cr = video && getContentRect(video)
-    if (!cr) return
-    const p = pointAt(e, cr)
-    setDrag((d) => (d ? { ...d, x1: p.x, y1: p.y } : d))
-  }
-
-  const onUp = () => {
-    const video = videoRef.current
-    const cr = video && getContentRect(video)
-    if (!drag || !cr) {
-      setDrag(null)
-      return
-    }
-    const left = Math.min(drag.x0, drag.x1)
-    const top = Math.min(drag.y0, drag.y1)
-    const w = Math.abs(drag.x1 - drag.x0)
-    const h = Math.abs(drag.y1 - drag.y0)
-    setDrag(null)
-    // 拖动太小视为误触，保留原有框选，避免误清空
-    if (w < 10 || h < 10) return
-    onChange({
-      x: (left - cr.left) / cr.width,
-      y: (top - cr.top) / cr.height,
-      w: w / cr.width,
-      h: h / cr.height,
-    })
-  }
-
-  // 优先画拖动中的框，否则画记住的比例框
-  let box: { left: number; top: number; width: number; height: number } | null = null
-  if (drag) {
-    box = {
-      left: Math.min(drag.x0, drag.x1),
-      top: Math.min(drag.y0, drag.y1),
-      width: Math.abs(drag.x1 - drag.x0),
-      height: Math.abs(drag.y1 - drag.y0),
-    }
-  } else if (region && rect) {
-    box = {
-      left: rect.left + region.x * rect.width,
-      top: rect.top + region.y * rect.height,
-      width: region.w * rect.width,
-      height: region.h * rect.height,
-    }
-  }
-
-  return (
-    <div
-      ref={layerRef}
-      className="quiz-region-layer"
-      onPointerDown={onDown}
-      onPointerMove={onMove}
-      onPointerUp={onUp}
-      onPointerCancel={onUp}
-    >
-      {box && (
-        <div
-          className="quiz-region-box"
-          style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
-        />
-      )}
-      {!box && <span className="quiz-region-tip">拖拽框选题目区域</span>}
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
 // 关键词搜索
 // ---------------------------------------------------------------------------
 
@@ -479,7 +305,7 @@ function SearchPanel() {
         <Icon name="search" size={14} className="quiz-search-icon" />
         <input
           className="input quiz-search"
-          placeholder="输入题目里的几个字，如「四大才女」「洞冥草」…"
+          placeholder="输入题目里的几个字"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

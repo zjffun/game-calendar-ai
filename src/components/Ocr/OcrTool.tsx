@@ -1,17 +1,23 @@
 // ============================================================================
-// 取字（OCR）：粘贴 / 拖入 / 选择一张图片 → 本机识别出文字 → 落到可编辑文本框。
+// 取字（OCR）：粘贴 / 拖入 / 选择一张图片，或「选窗口截图」→ 本机识别出文字
+// → 落到可编辑文本框。
 // - 复用 utils/ocr 的 ocrImage()（含放大+灰度+对比度预处理），图片全程在本机处理、不上传。
 // - Ctrl/⌘ + V 可在页面任意位置粘贴截图；每次识别覆盖文本框内容（清掉上一张的输出）。
+// - 「选窗口截图」用 getDisplayMedia 选任意窗口 → 在画面上框选一块区域 → 只识别框内，
+//   复用 common/ScreenCapture 的框选层与截帧（与签到答题同一套）。
 // - tesseract 识别中文时常在字与字之间塞空格，这里在本页做一次清理（不改公共 ocr.ts，
 //   以免影响物价 OCR 依赖空格切分「物品名 + 价格」）。
 // ============================================================================
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ocrImage, type OcrProgress } from '../../utils/ocr'
+import { RegionSelector, captureFrame, type Region } from '../common/ScreenCapture'
 import Icon from '../common/Icon'
 import './Ocr.css'
 
 type Phase = 'idle' | 'running' | 'done' | 'error'
+/** 窗口捕获：idle=未共享；sharing=正在共享，可框选后取字 */
+type CapPhase = 'idle' | 'sharing'
 
 /** 汉字/全角字符范围（用于判断空格是否夹在中文里）。 */
 const CJK = '\\u4e00-\\u9fff\\u3400-\\u4dbf\\uff00-\\uffef'
@@ -55,7 +61,13 @@ export default function OcrTool() {
   const [copied, setCopied] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
+  // 选窗口截图：共享阶段 + 框选区域（相对比例，仅本次会话，不持久化）
+  const [capPhase, setCapPhase] = useState<CapPhase>('idle')
+  const [region, setRegion] = useState<Region | null>(null)
+
   const fileRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   // 串行识别：正在识别时忽略新的图片，避免共享 Worker 被并发调用
   const busyRef = useRef(false)
 
@@ -98,6 +110,66 @@ export default function OcrTool() {
       busyRef.current = false
     }
   }, [])
+
+  // ---- 选窗口截图 ----
+
+  const stopCapture = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
+    if (videoRef.current) videoRef.current.srcObject = null
+    setCapPhase('idle')
+  }, [])
+
+  // 卸载时释放窗口共享
+  useEffect(() => () => stopCapture(), [stopCapture])
+
+  // 进入 sharing 后 <video> 才挂载，这里把已获取的流接上并播放
+  useEffect(() => {
+    if (capPhase !== 'sharing') return
+    const video = videoRef.current
+    const stream = streamRef.current
+    if (!video || !stream) return
+    if (video.srcObject !== stream) video.srcObject = stream
+    video.play().catch(() => {})
+  }, [capPhase])
+
+  const startCapture = useCallback(async () => {
+    setError(null)
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      setError('当前浏览器不支持屏幕捕获，请用较新的 Chrome / Edge，并通过 https 或 localhost 访问。')
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        // displaySurface: 'window' 让 Chrome 选择器默认停在「窗口」，方便直接选游戏窗口；
+        // selfBrowserSurface: 'exclude' 顺手隐藏本站自己的标签页。
+        video: { frameRate: 5, displaySurface: 'window' },
+        audio: false,
+        selfBrowserSurface: 'exclude',
+      } as DisplayMediaStreamOptions)
+      streamRef.current = stream
+      // 用户在浏览器原生条上点「停止共享」时同步收起
+      stream.getVideoTracks()[0]?.addEventListener('ended', stopCapture)
+      setRegion(null) // 新窗口重新框选，避免沿用上个窗口的旧框
+      setCapPhase('sharing') // <video> 此刻才挂载，接流交给上面的 effect
+    } catch (err) {
+      // 用户取消选择不算错误
+      if (err instanceof DOMException && err.name === 'NotAllowedError') return
+      setError('无法开始窗口共享：' + (err instanceof Error ? err.message : String(err)))
+    }
+  }, [stopCapture])
+
+  /** 截当前帧（若框选了则只截框内）→ 走既有 OCR 管线 */
+  const grabFrame = useCallback(async () => {
+    const video = videoRef.current
+    if (!video || busyRef.current) return
+    try {
+      const blob = await captureFrame(video, region)
+      runOcr(blob)
+    } catch (err) {
+      setError('截图失败：' + (err instanceof Error ? err.message : String(err)))
+    }
+  }, [region, runOcr])
 
   // 页面任意处 Ctrl/⌘+V：只在剪贴板含图片时接管，否则放行（如往文本框粘贴文字）
   useEffect(() => {
@@ -162,7 +234,7 @@ export default function OcrTool() {
       <div>
         <h2 className="section-title">取字（OCR）</h2>
         <p className="muted small">
-          粘贴、拖入或选择一张图片，本机识别出文字后落到下方文本框，可直接编辑、复制。图片只在本机处理，不上传。
+          粘贴、拖入、选择图片，或「选窗口截图」框选一块区域，本机识别出文字后落到下方文本框，可直接编辑、复制。图片只在本机处理，不上传。
         </p>
       </div>
 
@@ -197,6 +269,66 @@ export default function OcrTool() {
           </div>
         )}
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPick} />
+      </div>
+
+      {/* 选窗口截图：选任意窗口 → 框选一块区域 → 取字 */}
+      <div className="card ocr-cap">
+        <div className="ocr-cap-head">
+          <span className="ocr-cap-title">
+            <Icon name="monitor" size={16} />
+            选窗口截图取字
+          </span>
+          <span className="spacer" />
+          {capPhase === 'idle' ? (
+            <button className="btn btn-sm" onClick={startCapture}>
+              <Icon name="monitor" size={14} />
+              选择窗口
+            </button>
+          ) : (
+            <>
+              <button className="btn btn-primary btn-sm" onClick={grabFrame} disabled={running}>
+                <Icon name={running ? 'rotate' : 'scan-text'} size={14} className={running ? 'spin' : undefined} />
+                {running ? '识别中…' : region ? '取字（框内）' : '取字（整屏）'}
+              </button>
+              <button className="btn btn-sm" onClick={stopCapture}>
+                <Icon name="x" size={14} />
+                停止
+              </button>
+            </>
+          )}
+        </div>
+
+        {capPhase === 'idle' ? (
+          <p className="muted small ocr-cap-hint">
+            点「选择窗口」后，在弹窗里选中要取字的窗口。可在画面上拖拽框选一块区域，只识别框内、更快更准。需通过 https 或 localhost 访问才能截屏。
+          </p>
+        ) : (
+          <>
+            <div className="sc-video-wrap">
+              {/* muted 是自动播放前提；playsInline 防止移动端全屏 */}
+              <video ref={videoRef} className="sc-video" muted playsInline />
+              <RegionSelector
+                videoRef={videoRef}
+                region={region}
+                onChange={setRegion}
+                tip="拖拽框选取字区域"
+              />
+            </div>
+            <div className="ocr-cap-bar">
+              <Icon name="crop" size={14} />
+              {region ? (
+                <>
+                  <span>已框选区域，仅识别框内 · 在画面上拖拽可重新框选</span>
+                  <button className="ocr-cap-clear" onClick={() => setRegion(null)}>
+                    清除（识别整屏）
+                  </button>
+                </>
+              ) : (
+                <span>在画面上拖拽即可框选取字区域，识别更快更准</span>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {running && (

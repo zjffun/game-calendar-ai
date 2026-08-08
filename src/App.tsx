@@ -3,6 +3,7 @@ import { useNow } from './hooks/useNow'
 import { formatClock, formatCountdown, getNextReset, WEEKDAY_LABELS } from './utils/time'
 import { useSettings } from './store/useAppStore'
 import { initAuth, useAuth } from './store/authStore'
+import { syncQuizForUser, useQuizCloud } from './store/quizStore'
 import OverviewDashboard from './components/Overview/OverviewDashboard'
 import TodoSection from './components/Todo/TodoSection'
 import CourtyardTimers from './components/Courtyard/CourtyardTimers'
@@ -13,6 +14,7 @@ import PriceBook from './components/Price/PriceBook'
 import SynthCalculator from './components/Synth/SynthCalculator'
 import OcrTool from './components/Ocr/OcrTool'
 import QuizBook from './components/Quiz/QuizBook'
+import AdminPanel from './components/Admin/AdminPanel'
 import SettingsPanel from './components/Settings/SettingsPanel'
 import ConfirmHost from './components/common/ConfirmDialog'
 import ImageLightbox from './components/common/ImageLightbox'
@@ -73,7 +75,15 @@ export default function App() {
   useEffect(() => {
     initAuth()
   }, [])
-  const { status: authStatus } = useAuth()
+  const { status: authStatus, user } = useAuth()
+  const { isAdmin } = useQuizCloud()
+
+  // 登录态变化 → 驱动云端题库/管理状态加载（登出/未配置时清空）
+  const userId = user?.id ?? null
+  useEffect(() => {
+    if (authStatus === 'loading') return
+    void syncQuizForUser(authStatus === 'signedIn' ? userId : null)
+  }, [authStatus, userId])
 
   // 带 ?guide= 参数刷新时直接落到攻略页（GuideBook 再据此恢复选中的攻略）
   const [tab, setTab] = useState<TabId>(() => {
@@ -92,6 +102,11 @@ export default function App() {
       window.history.replaceState(null, '', url)
     }
   }, [tab])
+
+  // 失去管理员权限（或登出）后仍停留在管理页 → 退回概览
+  useEffect(() => {
+    if (!isAdmin && tab === 'admin') setTab('overview')
+  }, [isAdmin, tab])
 
   const sub = SUB_PAGES[tab]
   // 子页归属概览：主导航高亮「概览」
@@ -134,6 +149,16 @@ export default function App() {
         <div className="side-foot">
           <SideClock />
           <nav className="side-nav" aria-label="设置">
+            {isAdmin && (
+              <button
+                className={`side-item${tab === 'admin' ? ' active' : ''}`}
+                aria-current={tab === 'admin' ? 'page' : undefined}
+                onClick={() => setTab('admin')}
+              >
+                <Icon name="shield" size={17} />
+                管理后台
+              </button>
+            )}
             <button
               className={`side-item${tab === 'settings' ? ' active' : ''}`}
               aria-current={tab === 'settings' ? 'page' : undefined}
@@ -163,6 +188,15 @@ export default function App() {
             </div>
           </div>
           <MobileClock />
+          {isAdmin && (
+            <button
+              className={`mobile-settings-btn${tab === 'admin' ? ' active' : ''}`}
+              aria-label="管理后台"
+              onClick={() => setTab('admin')}
+            >
+              <Icon name="shield" size={17} />
+            </button>
+          )}
           <button
             className={`mobile-settings-btn${tab === 'settings' ? ' active' : ''}`}
             aria-label="设置"
@@ -192,6 +226,7 @@ export default function App() {
             {tab === 'synth' && <SynthCalculator />}
             {tab === 'ocr' && <OcrTool />}
             {tab === 'quiz' && <QuizBook />}
+            {tab === 'admin' && <AdminPanel />}
             {tab === 'settings' && <SettingsPanel />}
           </div>
         </main>

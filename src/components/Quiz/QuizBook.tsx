@@ -15,7 +15,14 @@ import type { RefObject, PointerEvent as ReactPointerEvent } from 'react'
 import { ocrImage, type OcrProgress } from '../../utils/ocr'
 import { searchQuiz, matchOcr, QUIZ_COUNT, type QuizMatch } from '../../utils/quiz'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
-import { STORAGE_KEYS } from '../../types'
+import { STORAGE_KEYS, type QuizStatus } from '../../types'
+import { useAuth } from '../../store/authStore'
+import {
+  useQuizCloud,
+  submitQuestion,
+  deleteMySubmission,
+} from '../../store/quizStore'
+import { appConfirm } from '../common/ConfirmDialog'
 import Icon from '../common/Icon'
 import './Quiz.css'
 
@@ -59,18 +66,21 @@ function getContentRect(video: HTMLVideoElement): ContentRect | null {
 }
 
 export default function QuizBook() {
+  const { approved } = useQuizCloud()
   return (
     <section className="stack quiz-page">
       <div>
         <h2 className="section-title">签到答题</h2>
         <p className="muted small">
-          内置 {QUIZ_COUNT} 道每日签到答题（游戏系统 / 常识题）。选游戏窗口自动识别（可框选题目区域，框选会被记住），
+          内置 {QUIZ_COUNT} 道每日签到答题（游戏系统 / 常识题）
+          {approved.length > 0 && `，另含 ${approved.length} 道云端共享题`}。选游戏窗口自动识别（可框选题目区域，框选会被记住），
           或手动搜关键词。识别全程在本机完成、不上传。
         </p>
       </div>
 
       <CapturePanel />
       <SearchPanel />
+      <SubmitPanel />
     </section>
   )
 }
@@ -458,7 +468,9 @@ function RegionSelector({
 
 function SearchPanel() {
   const [query, setQuery] = useState('')
-  const results = useMemo(() => searchQuiz(query, 30), [query])
+  // approved 变化（云端题拉取/审核变动）时重算，让新通过的题即时可搜
+  const { approved } = useQuizCloud()
+  const results = useMemo(() => searchQuiz(query, 30), [query, approved])
   const trimmed = query.trim()
 
   return (
@@ -494,6 +506,158 @@ function SearchPanel() {
             </li>
           ))}
         </ul>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 补充题目（登录用户提交 → 管理员审核通过后全员可搜）
+// ---------------------------------------------------------------------------
+
+const SUBMIT_STATUS: Record<QuizStatus, { label: string; cls: string }> = {
+  pending: { label: '待审核', cls: 'badge-warn' },
+  approved: { label: '已通过', cls: 'badge-ok' },
+  rejected: { label: '已驳回', cls: 'badge-danger' },
+}
+
+function SubmitPanel() {
+  const { status, isCloudConfigured } = useAuth()
+  const { mine } = useQuizCloud()
+  const [q, setQ] = useState('')
+  const [a, setA] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [toast, setToast] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null)
+  const timerRef = useRef<number | null>(null)
+
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    },
+    [],
+  )
+  function flash(text: string, kind: 'ok' | 'err') {
+    setToast({ text, kind })
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current)
+    timerRef.current = window.setTimeout(() => setToast(null), 4000)
+  }
+
+  // 未配置云端时，补充题目功能不可用，直接不渲染（保持纯本地形态）
+  if (!isCloudConfigured) return null
+
+  if (status !== 'signedIn') {
+    return (
+      <div className="card quiz-submit">
+        <div className="quiz-cap-head">
+          <span className="quiz-cap-title">
+            <Icon name="plus" size={16} />
+            补充题目
+          </span>
+        </div>
+        <p className="muted small" style={{ margin: 0 }}>
+          登录后可提交你遇到的新题，管理员审核通过后所有人都能搜到。请到「设置 → 账号与云同步」登录。
+        </p>
+      </div>
+    )
+  }
+
+  const canSubmit = q.trim() && a.trim() && !busy
+
+  async function submit() {
+    if (!canSubmit) return
+    setBusy(true)
+    try {
+      const res = await submitQuestion(q, a)
+      if (res.ok) {
+        setQ('')
+        setA('')
+        flash(res.message ?? '已提交。', 'ok')
+      } else {
+        flash(res.message ?? '提交失败。', 'err')
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function removeMine(id: string, text: string) {
+    const ok = await appConfirm(`删除这条提交吗？\n「${text}」`)
+    if (!ok) return
+    const res = await deleteMySubmission(id)
+    if (!res.ok) flash(res.message ?? '删除失败。', 'err')
+  }
+
+  return (
+    <div className="card quiz-submit">
+      <div className="quiz-cap-head">
+        <span className="quiz-cap-title">
+          <Icon name="plus" size={16} />
+          补充题目
+        </span>
+      </div>
+      <p className="muted small quiz-submit-hint">
+        遇到题库里没有的题？填在这里提交，管理员审核通过后会并入搜索，所有人受益。
+      </p>
+
+      <div className="field">
+        <label htmlFor="quiz-submit-q">题目</label>
+        <textarea
+          id="quiz-submit-q"
+          className="textarea"
+          rows={2}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="题目原文（尽量完整，便于以后匹配）"
+        />
+      </div>
+      <div className="field" style={{ marginTop: 10 }}>
+        <label htmlFor="quiz-submit-a">答案</label>
+        <input
+          id="quiz-submit-a"
+          className="input"
+          value={a}
+          onChange={(e) => setA(e.target.value)}
+          placeholder="正确答案"
+        />
+      </div>
+      <div className="row row-wrap" style={{ marginTop: 12 }}>
+        <button className="btn btn-primary btn-sm" onClick={() => void submit()} disabled={!canSubmit}>
+          提交审核
+        </button>
+        {toast && <span className={`settings-toast pop-in is-${toast.kind}`}>{toast.text}</span>}
+      </div>
+
+      {mine.length > 0 && (
+        <div className="quiz-mine">
+          <div className="quiz-mine-title">我的提交（{mine.length}）</div>
+          <ul className="quiz-mine-list">
+            {mine.map((m) => {
+              const meta = SUBMIT_STATUS[m.status]
+              return (
+                <li className="quiz-mine-item" key={m.id}>
+                  <div className="quiz-mine-head">
+                    <span className={`badge ${meta.cls}`}>{meta.label}</span>
+                    {m.status === 'pending' && (
+                      <button
+                        className="btn btn-ghost btn-sm quiz-mine-del"
+                        onClick={() => void removeMine(m.id, m.q)}
+                      >
+                        <Icon name="trash" size={13} />
+                        撤回
+                      </button>
+                    )}
+                  </div>
+                  <div className="quiz-mine-q">{m.q}</div>
+                  <div className="quiz-mine-a">
+                    <Icon name="check" size={13} />
+                    {m.a}
+                  </div>
+                  {m.note && <div className="quiz-mine-note">管理员备注：{m.note}</div>}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       )}
     </div>
   )

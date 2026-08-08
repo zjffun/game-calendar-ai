@@ -1,0 +1,152 @@
+/* ==========================================================================
+   管理后台——题库审核 + 用户管理。复用全局 .card / .btn / .chip / .badge / .field。
+   ========================================================================== */
+
+.admin-page {
+  max-width: 760px;
+}
+
+/* 顶部两个大分区切换 */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 状态筛选 / 工具条 */
+.admin-filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 2px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.chip.active .admin-count {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent-ink);
+}
+
+/* 列表 */
+.admin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 题目条目 */
+.admin-item {
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.admin-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.admin-item-time {
+  color: var(--ink-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.admin-item-q {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.admin-item-a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ok);
+}
+.admin-item-a .icon {
+  flex: none;
+}
+.admin-item-note {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.admin-item-actions {
+  margin-top: 12px;
+}
+
+/* 新增题目 */
+.admin-add-toggle {
+  align-self: flex-start;
+}
+.admin-add {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+}
+.admin-check input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+}
+
+/* 用户条目 */
+.admin-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.admin-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.admin-user-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink);
+  word-break: break-all;
+}
+.admin-user-tag {
+  flex: none;
+}
+.admin-user-id {
+  font-size: 12px;
+  color: var(--ink-3);
+}

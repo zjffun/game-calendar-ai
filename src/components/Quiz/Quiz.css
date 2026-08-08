@@ -314,6 +314,70 @@
   flex: none;
 }
 
+/* ---------- 补充题目（登录用户提交） ---------- */
+
+.quiz-submit-hint {
+  margin: 0 0 14px;
+  line-height: 1.7;
+}
+.quiz-mine {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.quiz-mine-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-bottom: 10px;
+}
+.quiz-mine-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quiz-mine-item {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.quiz-mine-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.quiz-mine-del {
+  margin-left: auto;
+  color: var(--ink-3);
+}
+.quiz-mine-q {
+  font-size: 13.5px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.quiz-mine-a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ok);
+}
+.quiz-mine-a .icon {
+  flex: none;
+}
+.quiz-mine-note {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
 /* ---------- 识别中图标转动 ---------- */
 
 .icon.spin {

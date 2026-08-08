@@ -383,6 +383,42 @@ export interface AppSettings {
 }
 
 // ----------------------------------------------------------------------------
+// 管理后台 + 签到答题「众包题库」（云端，需登录；数据在 Supabase，见 migrations/0002）
+// ----------------------------------------------------------------------------
+
+/** 众包题目的审核状态：待审核 / 已通过 / 已驳回。 */
+export type QuizStatus = 'pending' | 'approved' | 'rejected'
+
+/**
+ * 一条云端签到答题（用户提交 → 管理员审核）。
+ * 与内置只读题库（data/quizBank）分开：approved 的会并入答题页的搜索/识别。
+ */
+export interface QuizQuestion {
+  id: string
+  /** 题目 */
+  q: string
+  /** 正确答案 */
+  a: string
+  status: QuizStatus
+  /** 审核备注 / 驳回理由（可选） */
+  note?: string | null
+  /** 提交者用户 id（可能因账号注销而为 null） */
+  createdBy?: string | null
+  /** 提交时间（ISO 字符串） */
+  createdAt: string
+  /** 最近更新时间（ISO 字符串） */
+  updatedAt: string
+}
+
+/** 管理后台里展示的一个用户（含是否管理员）。 */
+export interface AdminUser {
+  id: string
+  email: string | null
+  isAdmin: boolean
+  createdAt: string
+}
+
+// ----------------------------------------------------------------------------
 // localStorage 存储 Key（集中管理，避免各模块写错）
 // ----------------------------------------------------------------------------
 

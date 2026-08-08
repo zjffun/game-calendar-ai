@@ -48,12 +48,24 @@ interface Indexed {
 
 let indexCache: Indexed[] | null = null
 
+/**
+ * 云端「审核通过」的众包题（见 store/quizStore）。登录后拉取并注入，
+ * 优先级介于「手动补充库」与「自动生成库」之间；变更时会清缓存以便重建索引。
+ */
+let cloudEntries: QuizEntry[] = []
+
+/** 注入/更新云端已通过的题目集合，并使搜索索引在下次取用时重建。 */
+export function setCloudQuizEntries(entries: QuizEntry[]): void {
+  cloudEntries = entries
+  indexCache = null
+}
+
 function getIndex(): Indexed[] {
   if (indexCache) return indexCache
-  // 补充库（手动维护的时效题）排在前面且同题优先，去重按归一化题目
+  // 优先级：手动补充库 > 云端已通过 > 自动生成库；去重按归一化题目（先到先得）。
   const seen = new Set<string>()
   const index: Indexed[] = []
-  for (const entry of [...QUIZ_EXTRA, ...QUIZ_BANK]) {
+  for (const entry of [...QUIZ_EXTRA, ...cloudEntries, ...QUIZ_BANK]) {
     const qNorm = normalize(entry.q)
     if (!qNorm || seen.has(qNorm)) continue
     seen.add(qNorm)

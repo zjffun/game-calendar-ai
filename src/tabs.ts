@@ -14,4 +14,5 @@ export type TabId =
   | 'synth'
   | 'ocr'
   | 'quiz'
+  | 'admin'
   | 'settings'

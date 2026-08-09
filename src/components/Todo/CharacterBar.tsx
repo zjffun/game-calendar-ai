@@ -44,6 +44,13 @@ export default function CharacterBar() {
     setEditName('')
   }
 
+  // 让原位编辑框贴合内容宽度：CJK 记 2，其余记 1，另留一位光标位。
+  function editWidthCh(text: string) {
+    let w = 0
+    for (const ch of text) w += /[⺀-￿]/.test(ch) ? 2 : 1
+    return Math.max(3, w + 1)
+  }
+
   return (
     <div className="card char-bar">
       <div className="card-head">
@@ -64,6 +71,7 @@ export default function CharacterBar() {
                 value={editName}
                 autoFocus
                 maxLength={12}
+                style={{ width: `${editWidthCh(editName)}ch` }}
                 onChange={(e) => setEditName(e.target.value)}
                 onBlur={commitEdit}
                 onKeyDown={(e) => {
@@ -113,7 +121,7 @@ export default function CharacterBar() {
               if (e.key === 'Enter') submitAdd()
             }}
           />
-          <button className="btn btn-tonal btn-sm" onClick={submitAdd} disabled={!newName.trim()}>
+          <button className="btn btn-tonal" onClick={submitAdd} disabled={!newName.trim()}>
             <Icon name="plus" size={13} />
             添加角色
           </button>

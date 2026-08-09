@@ -3,7 +3,7 @@
 // 说明：均按「用户本地时区」计算。游戏每日/每周重置点可在设置中调整。
 // ============================================================================
 
-import type { AppSettings, TodoCycle, DungeonCycle } from '../types'
+import type { AppSettings, TodoCycle } from '../types'
 
 export const MS_PER_MINUTE = 60_000
 export const MS_PER_HOUR = 3_600_000
@@ -100,7 +100,7 @@ export const ONCE_PERIOD_KEY = 'ONCE'
 
 /** 按周期类型取得当前周期 Key（TODO 与副本通用） */
 export function getPeriodKey(
-  cycle: TodoCycle | DungeonCycle,
+  cycle: TodoCycle,
   now: number,
   settings: AppSettings,
 ): string {
@@ -113,24 +113,9 @@ export function getPeriodKey(
       return getWeeklyPeriodKey(now, settings.weeklyResetWeekday, settings.dailyResetHour)
     case 'monthly':
       return getMonthlyPeriodKey(now, settings.dailyResetHour)
-    case 'every4days':
-      return getEvery4DaysPeriodKey(now, settings.every4DaysAnchor)
     default:
       return getDailyPeriodKey(now, settings.dailyResetHour)
   }
-}
-
-/** 每 4 天周期 Key，'4d' + 距起算点的周期序号 */
-export function getEvery4DaysPeriodKey(now: number, anchor: number): string {
-  const span = 4 * MS_PER_DAY
-  return '4d' + Math.floor((now - anchor) / span)
-}
-
-/** 下次「每 4 天」刷新时刻（epoch 毫秒） */
-export function getNextEvery4DaysReset(now: number, anchor: number): number {
-  const span = 4 * MS_PER_DAY
-  const k = Math.floor((now - anchor) / span)
-  return anchor + (k + 1) * span
 }
 
 // ----------------------------------------------------------------------------
@@ -170,7 +155,7 @@ export function getNextMonthlyReset(now: number, resetHour: number): number {
 
 /** 按周期类型取得下次重置时刻 */
 export function getNextReset(
-  cycle: TodoCycle | DungeonCycle,
+  cycle: TodoCycle,
   now: number,
   settings: AppSettings,
 ): number {
@@ -184,8 +169,6 @@ export function getNextReset(
       return getNextWeeklyReset(now, settings.weeklyResetWeekday, settings.dailyResetHour)
     case 'monthly':
       return getNextMonthlyReset(now, settings.dailyResetHour)
-    case 'every4days':
-      return getNextEvery4DaysReset(now, settings.every4DaysAnchor)
     default:
       return getNextDailyReset(now, settings.dailyResetHour)
   }

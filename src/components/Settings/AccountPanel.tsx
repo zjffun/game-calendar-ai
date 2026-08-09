@@ -129,7 +129,7 @@ export default function AccountPanel() {
         <h3>账号与云同步</h3>
       </div>
       <p className="muted small" style={{ margin: '0 0 12px' }}>
-        登录后，你的待办、种子、副本、房屋、攻略、物价与算价数据会同步到云端，换设备也能找回。
+        登录后，你的待办、副本、攻略、物价与算价数据会同步到云端，换设备也能找回。
       </p>
 
       <div className="grid settings-grid-2">

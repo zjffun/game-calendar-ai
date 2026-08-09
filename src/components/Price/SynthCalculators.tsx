@@ -1,5 +1,6 @@
 // ============================================================================
-// 合成算价页：宝石 / 星辉石 / 五色灵尘（各级材料成本）与九转金丹（各品质价格）。
+// 合成算价：宝石 / 星辉石 / 五色灵尘（各级材料成本）与九转金丹（各品质价格）。
+// 作为「物价」页的一个子视图（合成算价），由 PriceBook 直接嵌入，不再是独立页。
 // - 输入通过 store 的 synth 分片持久化，随其它数据一并云同步（换设备也能找回填过的价）。
 // - 价格用裸数值（不带万/亿单位）；宝石按「不同宝石」分别存价。
 // - 计算规则与置信度见 utils/synth.ts；价格为材料成本，不含合成手续费与失败损耗。
@@ -342,19 +343,17 @@ function PillCalculator() {
   )
 }
 
-export default function SynthCalculator() {
+/**
+ * 合成算价卡片组（宝石 / 星辉石 / 五色灵尘 / 九转金丹）。
+ * 不含页头标题——由物价页的分段切换统一提供，直接嵌在「合成算价」子视图下。
+ */
+export default function SynthCalculators() {
   return (
-    <section className="stack synth-page">
-      <div>
-        <h2 className="section-title">算价</h2>
-        <p className="muted small">
-          由 1 级材料 / 基准品质金丹的价格，推算更高等级 / 品质的参考价。价格随区服波动，仅供估算。
-        </p>
-      </div>
+    <div className="stack synth-cards">
       <GemCalculator />
       <StarCalculator />
       <DustCalculator />
       <PillCalculator />
-    </section>
+    </div>
   )
 }

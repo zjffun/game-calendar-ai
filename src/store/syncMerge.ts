@@ -2,10 +2,10 @@
 // 同步合并核心（纯函数，无副作用、可单测）。
 //
 // 把每个 storageKey 归到一种合并策略：
-//  · itemArray —— 值是「带 id 的对象数组」（待办/种子/副本/角色/攻略/物价/观测）：
+//  · itemArray —— 值是「带 id 的对象数组」（待办/副本/角色/攻略/物价/观测）：
 //    按 item id 合并，逐条 last-write-wins + 墓碑（删除也带时间戳，避免被旧数据复活）。
 //  · itemMap   —— 值是「id -> 对象」的 Record（攻略笔记/物价备注）：同上，按键 id 合并。
-//  · whole     —— 单例值（房屋/设置/算价/置顶序/答题区）：不拆条，整块 LWW（在 cloudSync 里
+//  · whole     —— 单例值（设置/算价/置顶序/答题区）：不拆条，整块 LWW（在 cloudSync 里
 //    以「本地是否有未同步改动」为准裁决，避免跨端时钟比较）。
 //
 // per-item 元数据 ItemMeta：{ [id]: { u:最近修改ms, d?:删除(墓碑)ms } }，
@@ -27,15 +27,13 @@ export const TOMBSTONE_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 const STRATEGY: Record<string, KeyStrategy> = {
   [STORAGE_KEYS.todos]: 'itemArray',
-  [STORAGE_KEYS.seeds]: 'itemArray',
-  [STORAGE_KEYS.dungeons]: 'itemArray',
   [STORAGE_KEYS.characters]: 'itemArray',
   [STORAGE_KEYS.guides]: 'itemArray',
   [STORAGE_KEYS.priceItems]: 'itemArray',
   [STORAGE_KEYS.priceObservations]: 'itemArray',
   [STORAGE_KEYS.guideNotes]: 'itemMap',
   [STORAGE_KEYS.priceComments]: 'itemMap',
-  // 其余（house/settings/synth/pinnedGuides/quizRegion）落到默认 'whole'
+  // 其余（settings/synth/pinnedGuides/quizRegion）落到默认 'whole'
 }
 
 export function strategyOf(key: string): KeyStrategy {

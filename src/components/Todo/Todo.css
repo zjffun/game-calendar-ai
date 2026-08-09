@@ -24,6 +24,31 @@
   margin-top: 10px;
 }
 
+/* 单次待办「已完成」折叠区：与上方未完成列表留一条分隔 */
+.todo-done-fold {
+  border-top: 1px solid var(--line);
+  margin-top: 2px;
+  padding-top: 4px;
+}
+.todo-done-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 2px;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.todo-done-toggle:hover {
+  color: var(--ink-2);
+}
+.todo-done-fold .todo-list {
+  padding-bottom: 2px;
+}
+
 /* 任务列表：分隔线式，不再逐条描边 */
 .todo-list {
   list-style: none;
@@ -219,7 +244,10 @@
   background: var(--surface);
 }
 .char-chip.editing {
-  padding: 0;
+  padding: 2px 4px;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px rgba(193, 95, 60, 0.16);
 }
 .char-chip-name {
   border: none;
@@ -248,12 +276,18 @@
   color: var(--danger);
 }
 .char-edit-input {
-  width: 96px;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  padding: 4px 10px;
+  min-width: 3ch;
+  border: none;
+  background: transparent;
+  color: var(--ink);
   font-size: 13px;
+  font-weight: 500;
+  padding: 4px 6px;
+  border-radius: 999px;
   outline: none;
+}
+.char-edit-input::selection {
+  background: rgba(193, 95, 60, 0.24);
 }
 .char-add {
   display: inline-flex;

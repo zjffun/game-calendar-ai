@@ -10,10 +10,10 @@
 //  online / 页面重新可见 / 定时器都会触发重试 → 「本地写不会因为断网而丢」。
 //
 // 合并（conflict）—— 按分片策略：
-//  · 集合类（待办/种子/副本/角色/攻略/物价/观测、攻略笔记/物价备注）：pull 与 Realtime 下行
+//  · 集合类（待办/副本/角色/攻略/物价/观测、攻略笔记/物价备注）：pull 与 Realtime 下行
 //    都走 item 级合并 + 墓碑（syncMerge.mergeItemKey），两端各改不同条目也不会互相清掉；
 //    同一条目的冲突按 per-item 时间戳 last-write-wins，删除也带时间戳、不会被旧数据复活。
-//  · 单例类（房屋/设置/算价/置顶序）：整块 LWW——本地有未同步改动则本地胜，否则云端胜。
+//  · 单例类（设置/算价/置顶序）：整块 LWW——本地有未同步改动则本地胜，否则云端胜。
 //
 // 已知取舍（阶段三再解）：per-item 时间戳用客户端时钟，多设备时钟偏差可能选错赢家。
 // 图片（IndexedDB）走独立的轻量队列：只把 id+op 入队，dataUrl 用时再从本地读，避免撑爆
@@ -57,9 +57,6 @@ const RETRY_MS = 15000
 /** 参与同步的分片（与 useAppStore.readAllSlices / applyExternalUpdate 覆盖一致；不含 quizRegion）。 */
 const SYNCED_KEYS: readonly string[] = [
   STORAGE_KEYS.todos,
-  STORAGE_KEYS.seeds,
-  STORAGE_KEYS.dungeons,
-  STORAGE_KEYS.house,
   STORAGE_KEYS.settings,
   STORAGE_KEYS.characters,
   STORAGE_KEYS.guides,

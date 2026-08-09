@@ -15,7 +15,7 @@ import { effectiveCharacterIds, isTaskAllDone } from '../../utils/todo'
 import TodoItem from './TodoItem'
 import PresetPicker from './PresetPicker'
 import AddTodoForm from './AddTodoForm'
-import AddOnceTodo from './AddOnceTodo'
+import OnceTodoGroup from './OnceTodoGroup'
 import CharacterBar from './CharacterBar'
 import './Todo.css'
 
@@ -60,9 +60,15 @@ export default function TodoSection() {
       {/* 角色管理：增加角色后按角色分别勾选 */}
       <CharacterBar />
 
-      {/* 三类周期分组 */}
+      {/* 四类周期分组：单次待办有自己的折叠逻辑，单独渲染 */}
       {CYCLES.map((meta) => {
         const list = grouped[meta.cycle]
+
+        // 单次待办：未完成置顶、已完成折叠到后面 + 就地添加
+        if (meta.cycle === 'once') {
+          return <OnceTodoGroup key="once" tasks={list} />
+        }
+
         const periodKey = getPeriodKey(meta.cycle, now, settings)
         // 一条任务「全部角色完成」才算完成
         const doneCount = list.filter((t) => isTaskAllDone(t, charIds, periodKey)).length
@@ -71,36 +77,26 @@ export default function TodoSection() {
         const remaining = getNextReset(meta.cycle, now, settings) - now
         const allDone = total > 0 && doneCount === total
 
-        const isOnce = meta.cycle === 'once'
-
         return (
           <div className="card" key={meta.cycle}>
             <div className="card-head todo-group-head">
-              <h3>{isOnce ? '单次待办' : `${meta.label}任务`}</h3>
+              <h3>{`${meta.label}任务`}</h3>
               {total > 0 && (
                 <span className="todo-group-progress">
                   {doneCount}/{total} 已完成
                 </span>
               )}
               <span className="spacer" />
-              {isOnce ? (
-                <span className="muted small">做完即止，不会自动重置</span>
-              ) : (
-                <>
-                  <span className="muted small">距刷新</span>
-                  <span className={`countdown small${allDone ? ' ready' : ''}`}>
-                    {formatCountdown(remaining)}
-                  </span>
-                </>
-              )}
+              <span className="muted small">距刷新</span>
+              <span className={`countdown small${allDone ? ' ready' : ''}`}>
+                {formatCountdown(remaining)}
+              </span>
             </div>
 
             {total === 0 ? (
-              isOnce ? null : (
-                <div className="empty">
-                  暂无{meta.label}任务，可从下方「常用任务」一键添加，或自定义新增。
-                </div>
-              )
+              <div className="empty">
+                暂无{meta.label}任务，可从下方「常用任务」一键添加，或自定义新增。
+              </div>
             ) : (
               <ul className="todo-list">
                 {list.map((task) => (
@@ -108,9 +104,6 @@ export default function TodoSection() {
                 ))}
               </ul>
             )}
-
-            {/* 单次待办：就地添加（不走底部「自定义添加」） */}
-            {isOnce && <AddOnceTodo />}
           </div>
         )
       })}

@@ -3,17 +3,87 @@
    ========================================================================== */
 
 .price-book {
-  max-width: 860px;
+  max-width: 720px;
 }
 
 .price-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 12px 16px;
+  flex-wrap: wrap;
 }
 .price-head .section-title {
   margin-bottom: 2px;
+}
+
+/* 顶部分段切换：物价本 / 合成算价 */
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.seg-btn:hover {
+  color: var(--ink);
+}
+.seg-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(43, 42, 38, 0.08);
+}
+.seg-btn .icon {
+  color: currentColor;
+}
+
+/* 物价本操作条：计数 + OCR/新增 */
+.price-book-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 分类筛选 chip 行：横向可滚动，避免换行占太多高度 */
+.price-cats {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.price-cats::-webkit-scrollbar {
+  display: none;
+}
+.price-cats .chip {
+  flex: 0 0 auto;
+  padding: 4px 11px;
+  font-size: 12.5px;
+}
+.price-cat-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.price-cats .chip.active .price-cat-count {
+  color: inherit;
+  opacity: 0.75;
 }
 
 /* 搜索框 */
@@ -28,85 +98,248 @@
   color: var(--ink-3);
   pointer-events: none;
 }
-.price-search {
+/* 提高特异性，避免被全局 .input 的 padding 简写覆盖导致图标与文字重叠 */
+.price-search-wrap .price-search {
   padding-left: 34px;
 }
 
-/* 分类卡片：更紧凑，让一屏容纳更多 */
-.price-cat {
-  padding: 10px 12px;
+/* 分组卡片 */
+.price-group {
+  padding: 12px 14px;
 }
-.price-cat-head {
+/* 分组标题：名字 + 计数 + 重命名（hover 才明显） */
+.price-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.price-group-head h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.price-group-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.price-group-rename {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.price-group-head:hover .price-group-rename,
+.price-group-rename:focus-visible {
+  opacity: 0.6;
+}
+.price-group-rename:hover {
+  opacity: 1;
+}
+.price-group-input {
+  flex: 1 1 auto;
+  padding: 4px 8px;
+}
+/* 分组重命名是紧凑行内编辑：输入框与保存/取消按钮统一为紧凑高度并对齐
+   （只作用于该行的 .btn-xs，不影响非编辑态的图标铅笔 .btn-icon-xs） */
+.price-group-input {
+  min-height: var(--control-h-sm);
+}
+.price-group-head .btn-xs {
+  min-height: var(--control-h-sm);
+}
+@media (hover: none) {
+  .price-group-rename {
+    opacity: 0.6;
+  }
 }
 
-/* 列表：宽屏自动多列铺满，尽量多展示 */
+/* 列表：小卡片密集网格，一屏尽量多展示 */
 .price-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  column-gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: 8px;
 }
 .price-item {
-  padding: 5px 2px;
-  border-top: 1px solid var(--line);
+  position: relative;
   min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
-/* 顶部一排的项去掉上边框（每列首行） */
-.price-item:first-child {
-  border-top: none;
+.price-item:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
 }
-/* 编辑中的行占满整行宽度，避免挤在一列里 */
-.price-item-editing {
+/* 展开（编辑 / 趋势）时占满整行，给表单与图表足够宽度 */
+.price-item-editing,
+.price-item-expanded {
   grid-column: 1 / -1;
-  padding: 8px 2px;
+}
+.price-item-editing {
+  padding: 10px;
 }
 
-.price-row-main {
+/* 卡片顶部：名字/价格块 + 悬浮操作 */
+.price-item-top {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+
+/* 名字/价格块：默认两行（名字上、价格下），展开态回到一行 */
+.price-row-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.price-item-expanded .price-row-main {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
 }
 .price-item-name {
-  flex: 1 1 auto;
   min-width: 0;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 550;
   color: var(--ink);
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* 悬浮时右上角浮出操作按钮，给它留出空间避免遮字 */
+  padding-right: 2px;
+}
+.price-item-expanded .price-item-name {
+  flex: 1 1 auto;
 }
 .price-item-value {
-  flex: 0 0 auto;
+  min-width: 0;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   color: var(--accent-ink, var(--accent));
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.price-item-expanded .price-item-value {
+  flex: 0 0 auto;
 }
 
-/* 行内图标操作：默认淡出，hover/focus 时清晰，保持行紧凑 */
+/* 价格：整行可点、点按就地改。展示态是「看起来像文字」的按钮，占满卡片下沿一行，
+   点击区域更大；hover 时整行浅底提示可点。 */
+button.price-item-value {
+  display: block;
+  align-self: stretch;
+  width: auto;
+  margin: 3px -7px 0;
+  padding: 4px 7px;
+  cursor: pointer;
+  text-align: left;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+button.price-item-value:hover {
+  background: var(--accent-soft);
+  color: var(--accent-ink, var(--accent));
+}
+button.price-item-value:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* 空价格：更弱并带「＋ 价格」引导，整行仍可点 */
+.price-item-value.is-empty {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+/* 展开（趋势）态：价格回到行内，宽度自适应、不再整行 */
+.price-item-expanded button.price-item-value {
+  display: inline-block;
+  align-self: center;
+  width: auto;
+  margin: 0;
+}
+
+/* 就地改价输入框：占满整行，够大好点 */
+.price-quick-input.input {
+  align-self: stretch;
+  width: auto;
+  margin: 3px 0 0;
+  min-height: var(--control-h-sm);
+  height: var(--control-h-sm);
+  padding: 3px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.price-item-expanded .price-quick-input.input {
+  align-self: center;
+  width: auto;
+  max-width: 132px;
+}
+
+/* 卡片操作：右上角悬浮小工具条，hover/focus 才出现，保持卡片干净 */
 .price-row-actions {
-  flex: 0 0 auto;
+  position: absolute;
+  top: 2px;
+  right: 2px;
   display: flex;
-  gap: 1px;
-  opacity: 0.5;
+  gap: 0;
+  padding: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  opacity: 0;
   transition: opacity 0.12s ease;
+}
+/* 悬浮工具条的图标按钮：强制正方形小按钮（压掉全局 .btn 的 min-height），
+   否则会被撑成 19×36 这种怪比例。13px 图标 + 4px 内边距 ≈ 21×21。 */
+.price-row-actions .btn-icon-xs {
+  min-height: 0;
+  width: 21px;
+  height: 21px;
+  padding: 0;
 }
 .price-item:hover .price-row-actions,
 .price-row-actions:focus-within {
   opacity: 1;
 }
+/* 展开态：操作回到行内右侧，不再悬浮 */
+.price-item-expanded .price-row-actions {
+  position: static;
+  flex: 0 0 auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  opacity: 1;
+}
 .btn-icon-xs {
   padding: 3px;
+  min-height: 0;
   border-radius: var(--radius-sm);
   line-height: 0;
 }
-/* 触屏无 hover：始终显示操作 */
+/* 触屏无 hover：操作常驻在卡片内、不悬浮遮字 */
 @media (hover: none) {
   .price-row-actions {
+    position: static;
+    margin-top: 4px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
     opacity: 1;
   }
 }
@@ -119,26 +352,127 @@
   gap: 10px;
 }
 
-/* 紧凑内联趋势（有观测时，折叠态） */
-.price-trend-inline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 2px 0 2px 2px;
-  font-size: 11.5px;
+/* 趋势按钮激活态（面板展开时） */
+.btn-icon-xs.active {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
 }
 
 /* 新增 / 编辑表单 */
 .price-add-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   border-color: var(--accent-soft, var(--line-strong));
 }
 .price-edit {
   width: 100%;
 }
+/* 字段行：适当留白，行内换行时上下也有间距 */
+.price-add-row {
+  gap: 12px 14px;
+  align-items: flex-end;
+}
+/* 操作行：按钮 + 提示，提示与按钮拉开距离、可换行不挤压 */
+.price-add-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.price-add-hint {
+  color: var(--ink-3);
+  font-size: 12px;
+  line-height: 1.4;
+}
 
-/* 超小按钮（行内操作用） */
+/* 分组组合框：输入 + 右侧展开按钮 + 自绘下拉，取代原生 datalist */
+.price-group-field {
+  position: relative;
+}
+.price-group-combo {
+  position: relative;
+}
+/* 给右侧展开按钮留出空间，避免箭头压住文字 */
+.price-group-combo .price-group-input-field {
+  padding-right: 34px;
+}
+.price-group-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  transition: color 0.12s ease, transform 0.15s ease;
+}
+.price-group-toggle:hover {
+  color: var(--ink-2);
+}
+.price-group-toggle.open {
+  transform: rotate(180deg);
+}
+/* 下拉菜单：浮层置于输入下方，绝对定位避免撑开表单 */
+.price-group-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 224px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+.price-group-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 9px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: 13px;
+  text-align: left;
+}
+.price-group-opt-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.price-group-opt.hl {
+  background: var(--surface-2);
+}
+.price-group-opt.active {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.price-group-opt.active .icon {
+  color: var(--accent-ink);
+  margin-left: auto;
+}
+.price-group-create {
+  color: var(--accent-ink);
+}
+
+/* 超小按钮（行内操作用）：自成一档高度，不跟随统一控件高度 */
 .btn-xs {
   padding: 3px 9px;
+  min-height: 0;
   font-size: 12px;
   gap: 4px;
   border-radius: var(--radius-sm);
@@ -165,11 +499,85 @@
 .spark-down {
   color: var(--ok);
 }
+/* 展开的趋势面板：折线 + 历史价格点 */
 .price-trend-detail {
-  margin-top: 8px;
+  margin: 4px 0 6px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.price-trend-stats {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 历史价格点：按天记录，单点可删 */
+.price-points-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.price-point-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.price-point {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 2px;
+  border-top: 1px dashed var(--line);
+  font-size: 12.5px;
+}
+.price-point:first-child {
+  border-top: none;
+}
+.price-point-date {
+  flex: 0 0 auto;
+  min-width: 40px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.price-point-val {
+  flex: 0 0 auto;
+  min-width: 64px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  font-variant-numeric: tabular-nums;
+}
+.price-point-raw {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.price-point-src {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 11px;
+}
+.price-point-del {
+  flex: 0 0 auto;
+  opacity: 0.5;
+}
+.price-point:hover .price-point-del {
+  opacity: 1;
+}
+@media (hover: none) {
+  .price-point-del {
+    opacity: 1;
+  }
 }
 .trend-chart {
   border: 1px solid var(--line);

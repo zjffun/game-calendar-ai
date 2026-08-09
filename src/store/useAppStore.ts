@@ -10,11 +10,6 @@ import {
   STORAGE_KEYS,
   type TodoTask,
   type TodoCycle,
-  type SeedTimer,
-  type SeedMode,
-  type Dungeon,
-  type DungeonCycle,
-  type HouseState,
   type AppSettings,
   type Character,
   type GuideEntry,
@@ -27,10 +22,9 @@ import {
   type SynthInputs,
   SOLO_CHARACTER_ID,
 } from '../types'
-import { DEFAULT_SETTINGS, createDefaultHouse, SERVANT_ROOM_TIERS } from '../data/gameData'
+import { DEFAULT_SETTINGS } from '../data/gameData'
 import { DEFAULT_PRICE_ITEMS } from '../data/prices'
 import { DEFAULT_SYNTH_INPUTS } from '../utils/synth'
-import { currentCleanliness, currentDurability, clamp } from '../utils/house'
 import { uid } from '../utils/id'
 import { getAllImages, putImages, clearImages } from './imageStore'
 
@@ -40,9 +34,6 @@ import { getAllImages, putImages, clearImages } from './imageStore'
 
 interface AppState {
   todos: TodoTask[]
-  seeds: SeedTimer[]
-  dungeons: Dungeon[]
-  house: HouseState
   settings: AppSettings
   characters: Character[]
   /** 用户自定义攻略（内置攻略来自 data，不在此） */
@@ -72,22 +63,43 @@ function load<T>(key: string, fallback: T): T {
 }
 
 /**
- * 物价条目加载：仅在「本浏览器从未写过该 key」（真·首次进入）时，植入一份可删除的
- * 默认清单（常见任务产出道具，价格留空自填）。用户删空后 key 已存在，不会再补回。
- * 已有数据（含空数组）的老用户保持原样，避免打扰。
+ * 内置默认清单版本号：当 DEFAULT_PRICE_ITEMS 有新增、且希望「老用户也补齐缺失内置项」时 +1。
+ * 用一个独立的 seed 标记 key 做闸门，保证同一版本只补一次——用户删掉后不会每次加载又被补回。
+ */
+const PRICE_SEED_VERSION = '2'
+const PRICE_SEED_KEY = 'mhxy.priceItems.seed'
+
+/**
+ * 物价条目加载：
+ *  · 真·首次进入（key 从未写过）→ 整份植入默认清单；
+ *  · 已有数据但内置版本落后 → 一次性「补齐缺失的默认 id」（只追加、不删除、不覆盖用户改过的条目），
+ *    让新版内置清单在老浏览器/老数据上也能出现。删掉的内置项在同版本内不会再补回。
+ * 默认清单价格留空自填，可编辑 / 可删除。
  */
 function loadPriceItems(): PriceItem[] {
   const raw = localStorage.getItem(STORAGE_KEYS.priceItems)
   if (raw == null) {
     const seeded = DEFAULT_PRICE_ITEMS.map((it) => ({ ...it }))
     save(STORAGE_KEYS.priceItems, seeded)
+    localStorage.setItem(PRICE_SEED_KEY, PRICE_SEED_VERSION)
     return seeded
   }
+  let items: PriceItem[]
   try {
-    return JSON.parse(raw) as PriceItem[]
+    items = JSON.parse(raw) as PriceItem[]
   } catch {
-    return []
+    items = []
   }
+  if (localStorage.getItem(PRICE_SEED_KEY) !== PRICE_SEED_VERSION) {
+    const have = new Set(items.map((it) => it.id))
+    const missing = DEFAULT_PRICE_ITEMS.filter((d) => !have.has(d.id)).map((it) => ({ ...it }))
+    if (missing.length > 0) {
+      items = [...items, ...missing]
+      save(STORAGE_KEYS.priceItems, items)
+    }
+    localStorage.setItem(PRICE_SEED_KEY, PRICE_SEED_VERSION)
+  }
+  return items
 }
 
 /**
@@ -119,16 +131,27 @@ function save(key: string, value: unknown) {
   }
 }
 
+/**
+ * 归一化设置：以默认值为底，只保留 AppSettings 的已知字段——借此物理丢弃历史遗留键
+ * （如已移除「副本每 4 天刷新」功能残留的 every4DaysAnchor），避免它们一直滞留在
+ * localStorage / 云端并出现在「同步详情」里。新增设置项自动纳入（取自 DEFAULT_SETTINGS）。
+ */
+function normalizeSettings(raw: Partial<AppSettings> | null | undefined): AppSettings {
+  const src = (raw ?? {}) as Record<string, unknown>
+  const clean = { ...DEFAULT_SETTINGS }
+  for (const k of Object.keys(clean) as (keyof AppSettings)[]) {
+    if (k in src && src[k] !== undefined) clean[k] = src[k] as AppSettings[typeof k]
+  }
+  return clean
+}
+
 const rawTodos = load<TodoTask[]>(STORAGE_KEYS.todos, [])
 const migratedTodos = migrateTodos(rawTodos)
+const rawSettings = load<Partial<AppSettings>>(STORAGE_KEYS.settings, {})
 
 let state: AppState = {
   todos: migratedTodos,
-  seeds: load<SeedTimer[]>(STORAGE_KEYS.seeds, []),
-  dungeons: load<Dungeon[]>(STORAGE_KEYS.dungeons, []),
-  // 合并默认值，确保旧数据也带上新字段（如 servantRoomLevel）
-  house: { ...createDefaultHouse(Date.now()), ...load<Partial<HouseState>>(STORAGE_KEYS.house, {}) },
-  settings: { ...DEFAULT_SETTINGS, ...load<Partial<AppSettings>>(STORAGE_KEYS.settings, {}) },
+  settings: normalizeSettings(rawSettings),
   characters: load<Character[]>(STORAGE_KEYS.characters, []),
   guides: load<GuideEntry[]>(STORAGE_KEYS.guides, []),
   guideNotes: load<Record<string, GuideNote>>(STORAGE_KEYS.guideNotes, {}),
@@ -143,6 +166,11 @@ let state: AppState = {
 // 让 localStorage 立刻变为新格式，避免旧格式长期滞留。
 if (migratedTodos.some((t, i) => t !== rawTodos[i])) {
   save(STORAGE_KEYS.todos, migratedTodos)
+}
+// 同理：若设置里带了历史遗留字段（归一化时被裁掉），立即回写清理后的值，
+// 让 localStorage 不再滞留脏键（云端会在下次设置变更时被覆盖）。
+if (Object.keys(rawSettings).some((k) => !(k in DEFAULT_SETTINGS))) {
+  save(STORAGE_KEYS.settings, state.settings)
 }
 
 const listeners = new Set<() => void>()
@@ -195,21 +223,9 @@ export function applyExternalUpdate(storageKey: string, parsed: unknown): boolea
       sliceKey = 'todos'
       value = migrateTodos(parsed as TodoTask[])
       break
-    case STORAGE_KEYS.seeds:
-      sliceKey = 'seeds'
-      value = parsed as SeedTimer[]
-      break
-    case STORAGE_KEYS.dungeons:
-      sliceKey = 'dungeons'
-      value = parsed as Dungeon[]
-      break
-    case STORAGE_KEYS.house:
-      sliceKey = 'house'
-      value = { ...createDefaultHouse(Date.now()), ...(parsed as Partial<HouseState>) }
-      break
     case STORAGE_KEYS.settings:
       sliceKey = 'settings'
-      value = { ...DEFAULT_SETTINGS, ...(parsed as Partial<AppSettings>) }
+      value = normalizeSettings(parsed as Partial<AppSettings>)
       break
     case STORAGE_KEYS.characters:
       sliceKey = 'characters'
@@ -257,9 +273,6 @@ export function applyExternalUpdate(storageKey: string, parsed: unknown): boolea
 export function readAllSlices(): { key: string; value: unknown }[] {
   return [
     { key: STORAGE_KEYS.todos, value: state.todos },
-    { key: STORAGE_KEYS.seeds, value: state.seeds },
-    { key: STORAGE_KEYS.dungeons, value: state.dungeons },
-    { key: STORAGE_KEYS.house, value: state.house },
     { key: STORAGE_KEYS.settings, value: state.settings },
     { key: STORAGE_KEYS.characters, value: state.characters },
     { key: STORAGE_KEYS.guides, value: state.guides },
@@ -356,152 +369,6 @@ export const todoActions = {
       state.todos.map((t) => ({ ...t, order: orderMap.get(t.id) ?? t.order })),
       STORAGE_KEYS.todos,
     )
-  },
-}
-
-// ---- 种子 ----
-export const seedActions = {
-  add(input: {
-    seedName: string
-    level: number
-    plantedAt: number
-    /** timer 模式所需；cycle 模式可省略（不使用，存 0） */
-    durationMs?: number
-    /** 计时方式；缺省按 'timer' */
-    mode?: SeedMode
-    note?: string
-  }) {
-    const seed: SeedTimer = {
-      id: uid('seed_'),
-      seedName: input.seedName.trim() || '种子',
-      level: input.level,
-      plantedAt: input.plantedAt,
-      durationMs: input.durationMs ?? 0,
-      mode: input.mode,
-      note: input.note?.trim() || undefined,
-    }
-    setSlice('seeds', [...state.seeds, seed], STORAGE_KEYS.seeds)
-  },
-  update(id: string, patch: Partial<Omit<SeedTimer, 'id'>>) {
-    setSlice(
-      'seeds',
-      state.seeds.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-      STORAGE_KEYS.seeds,
-    )
-  },
-  /** 重新种植：把种植时间设为指定时刻，并清掉「今日养护」标记，重新开始周期 */
-  replant(id: string, plantedAt: number) {
-    seedActions.update(id, { plantedAt, lastCareDayKey: undefined })
-  },
-  /** cycle 模式：切换「今日已养护」（dayKey = 当前每日周期 Key，跨日自动失效） */
-  toggleCared(id: string, dayKey: string) {
-    setSlice(
-      'seeds',
-      state.seeds.map((s) =>
-        s.id === id
-          ? { ...s, lastCareDayKey: s.lastCareDayKey === dayKey ? undefined : dayKey }
-          : s,
-      ),
-      STORAGE_KEYS.seeds,
-    )
-  },
-  remove(id: string) {
-    setSlice('seeds', state.seeds.filter((s) => s.id !== id), STORAGE_KEYS.seeds)
-  },
-}
-
-// ---- 副本 ----
-export const dungeonActions = {
-  add(input: { name: string; resetCycle: DungeonCycle; required?: boolean; note?: string; preset?: boolean }) {
-    const d: Dungeon = {
-      id: uid('dgn_'),
-      name: input.name.trim(),
-      resetCycle: input.resetCycle,
-      required: input.required ?? true,
-      note: input.note?.trim() || undefined,
-      preset: input.preset,
-      order: nextOrder(state.dungeons),
-    }
-    setSlice('dungeons', [...state.dungeons, d], STORAGE_KEYS.dungeons)
-  },
-  update(id: string, patch: Partial<Omit<Dungeon, 'id'>>) {
-    setSlice(
-      'dungeons',
-      state.dungeons.map((d) => (d.id === id ? { ...d, ...patch } : d)),
-      STORAGE_KEYS.dungeons,
-    )
-  },
-  remove(id: string) {
-    setSlice('dungeons', state.dungeons.filter((d) => d.id !== id), STORAGE_KEYS.dungeons)
-  },
-  setRequired(id: string, required: boolean) {
-    dungeonActions.update(id, { required })
-  },
-  /** 切换「本周期已完成」 */
-  toggle(id: string, periodKey: string) {
-    setSlice(
-      'dungeons',
-      state.dungeons.map((d) =>
-        d.id === id
-          ? {
-              ...d,
-              lastCompletedPeriodKey:
-                d.lastCompletedPeriodKey === periodKey ? undefined : periodKey,
-            }
-          : d,
-      ),
-      STORAGE_KEYS.dungeons,
-    )
-  },
-}
-
-// ---- 房屋 ----
-/** 取佣人房等级对应的恢复档（越界回退到「无佣人房」） */
-function servantTier(level: number) {
-  return SERVANT_ROOM_TIERS[level] ?? SERVANT_ROOM_TIERS[0]
-}
-
-export const houseActions = {
-  update(patch: Partial<HouseState>) {
-    setSlice('house', { ...state.house, ...patch }, STORAGE_KEYS.house)
-  },
-  /** 打扫：按佣人房等级提升清洁度（封顶 100），同时把耐久结算到当前值，刷新时间戳 */
-  clean(now: number) {
-    const h = state.house
-    const gain = servantTier(h.servantRoomLevel).cleanGain
-    houseActions.update({
-      cleanlinessBase: clamp(currentCleanliness(h, now) + gain, 0, 100),
-      durabilityBase: currentDurability(h, now),
-      updatedAt: now,
-    })
-  },
-  /** 修理：按佣人房等级提升耐久度（封顶 100），同时把清洁结算到当前值，刷新时间戳 */
-  repair(now: number) {
-    const h = state.house
-    const gain = servantTier(h.servantRoomLevel).durabilityGain
-    houseActions.update({
-      durabilityBase: clamp(currentDurability(h, now) + gain, 0, 100),
-      cleanlinessBase: currentCleanliness(h, now),
-      updatedAt: now,
-    })
-  },
-  /** 一键补满清洁度到 100（耐久结算到当前值） */
-  fillClean(now: number) {
-    const h = state.house
-    houseActions.update({
-      cleanlinessBase: 100,
-      durabilityBase: currentDurability(h, now),
-      updatedAt: now,
-    })
-  },
-  /** 一键补满耐久度到 100（清洁结算到当前值） */
-  fillRepair(now: number) {
-    const h = state.house
-    houseActions.update({
-      durabilityBase: 100,
-      cleanlinessBase: currentCleanliness(h, now),
-      updatedAt: now,
-    })
   },
 }
 
@@ -662,6 +529,18 @@ export const priceActions = {
   remove(id: string) {
     setSlice('priceItems', state.priceItems.filter((it) => it.id !== id), STORAGE_KEYS.priceItems)
   },
+  /** 重命名一个分组：把所有属于 from 分组的条目改到 to 分组（用于自定义分组）。 */
+  renameGroup(from: string, to: string) {
+    const target = to.trim()
+    if (!target || target === from) return
+    setSlice(
+      'priceItems',
+      state.priceItems.map((it) =>
+        (it.category?.trim() || '其它') === from ? { ...it, category: target } : it,
+      ),
+      STORAGE_KEYS.priceItems,
+    )
+  },
 }
 
 // ---- 物价备注（可附加在内置或自定义条目上；物品id -> 备注） ----
@@ -693,6 +572,45 @@ export const priceObservationActions = {
       STORAGE_KEYS.priceObservations,
     )
     return created
+  },
+  /**
+   * 手动改价 → 按天记录一条观测（source='manual'）。
+   * 同一物品同一天只保留一条：当天已有则原地更新，否则新增，
+   * 避免一天内多次改价堆出许多点。value 必须是已解析出的数值。
+   */
+  recordManual(input: { itemId: string; itemName: string; value: number; priceText?: string }) {
+    const now = Date.now()
+    const dayStart = new Date(now)
+    dayStart.setHours(0, 0, 0, 0)
+    const start = dayStart.getTime()
+    const end = start + 86_400_000
+    const idx = state.priceObservations.findIndex(
+      (o) =>
+        o.source === 'manual' &&
+        o.itemId === input.itemId &&
+        o.capturedAt >= start &&
+        o.capturedAt < end,
+    )
+    let next: PriceObservation[]
+    if (idx >= 0) {
+      next = state.priceObservations.map((o, i) =>
+        i === idx
+          ? { ...o, value: input.value, priceText: input.priceText, itemName: input.itemName, capturedAt: now }
+          : o,
+      )
+    } else {
+      const created: PriceObservation = {
+        id: uid('obs_'),
+        itemId: input.itemId,
+        itemName: input.itemName,
+        value: input.value,
+        priceText: input.priceText,
+        source: 'manual',
+        capturedAt: now,
+      }
+      next = [...state.priceObservations, created]
+    }
+    setSlice('priceObservations', next, STORAGE_KEYS.priceObservations)
   },
   remove(id: string) {
     setSlice(
@@ -736,11 +654,8 @@ export const dataActions = {
         images?: Record<string, string>
       }
       if (parsed.todos) setSlice('todos', migrateTodos(parsed.todos), STORAGE_KEYS.todos)
-      if (parsed.seeds) setSlice('seeds', parsed.seeds, STORAGE_KEYS.seeds)
-      if (parsed.dungeons) setSlice('dungeons', parsed.dungeons, STORAGE_KEYS.dungeons)
-      if (parsed.house) setSlice('house', parsed.house, STORAGE_KEYS.house)
       if (parsed.settings)
-        setSlice('settings', { ...DEFAULT_SETTINGS, ...parsed.settings }, STORAGE_KEYS.settings)
+        setSlice('settings', normalizeSettings(parsed.settings), STORAGE_KEYS.settings)
       if (parsed.characters) setSlice('characters', parsed.characters, STORAGE_KEYS.characters)
       if (parsed.guides) setSlice('guides', parsed.guides, STORAGE_KEYS.guides)
       if (parsed.guideNotes) setSlice('guideNotes', parsed.guideNotes, STORAGE_KEYS.guideNotes)
@@ -759,11 +674,8 @@ export const dataActions = {
       return false
     }
   },
-  async resetAll(now: number): Promise<void> {
+  async resetAll(): Promise<void> {
     setSlice('todos', [], STORAGE_KEYS.todos)
-    setSlice('seeds', [], STORAGE_KEYS.seeds)
-    setSlice('dungeons', [], STORAGE_KEYS.dungeons)
-    setSlice('house', createDefaultHouse(now), STORAGE_KEYS.house)
     setSlice('settings', { ...DEFAULT_SETTINGS }, STORAGE_KEYS.settings)
     setSlice('characters', [], STORAGE_KEYS.characters)
     setSlice('guides', [], STORAGE_KEYS.guides)
@@ -793,24 +705,6 @@ function useSelector<T>(selector: (s: AppState) => T): T {
 export function useTodos() {
   const todos = useSelector((s) => s.todos)
   return { todos, ...todoActions }
-}
-
-/** 种子分片 */
-export function useSeeds() {
-  const seeds = useSelector((s) => s.seeds)
-  return { seeds, ...seedActions }
-}
-
-/** 副本分片 */
-export function useDungeons() {
-  const dungeons = useSelector((s) => s.dungeons)
-  return { dungeons, ...dungeonActions }
-}
-
-/** 房屋分片 */
-export function useHouse() {
-  const house = useSelector((s) => s.house)
-  return { house, ...houseActions }
 }
 
 /** 设置分片 */

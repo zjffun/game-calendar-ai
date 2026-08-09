@@ -30,7 +30,7 @@ export default function AddOnceTodo() {
           if (e.key === 'Enter') submit()
         }}
       />
-      <button className="btn btn-primary btn-sm" onClick={submit} disabled={!name.trim()}>
+      <button className="btn btn-primary" onClick={submit} disabled={!name.trim()}>
         添加
       </button>
     </div>

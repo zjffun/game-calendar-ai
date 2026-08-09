@@ -36,7 +36,7 @@ export function collapseCjkSpaces(s: string): string {
   return s.replace(CJK_SPACE_RE, '$1')
 }
 
-/** 把价格文本归一化为梦幻币数值；无法解析返回 undefined。 */
+/** 把价格文本归一化为梦幻币数值；无法解析返回 undefined。保留两位小数。 */
 export function normalizePrice(text: string): number | undefined {
   const m = text.match(PRICE_RE)
   if (!m) return undefined
@@ -48,18 +48,43 @@ export function normalizePrice(text: string): number | undefined {
   else if (unit === '千万' || unit === 'kw') mult = 1e7
   else if (unit === '万' || unit === 'w') mult = 1e4
   else if (unit === 'k') mult = 1e3
-  return Math.round(n * mult)
+  // *100/100 既消掉浮点噪声，又保留两位小数（纯数字价如 80.25 不再被取整）
+  return Math.round(n * mult * 100) / 100
 }
 
-/** 把梦幻币数值格式化为易读文本（亿/万）。 */
+/** 把梦幻币数值格式化为易读文本（亿/万），保留至多两位小数。 */
 export function formatMoney(v: number | undefined): string {
   if (v == null || !isFinite(v)) return '—'
   if (v >= 1e8) return `${trimZero(v / 1e8)} 亿`
   if (v >= 1e4) return `${trimZero(v / 1e4)} 万`
-  return String(Math.round(v))
+  return trimZero(v)
 }
 function trimZero(n: number): string {
   return (Math.round(n * 100) / 100).toString()
+}
+
+/**
+ * 清洗价格录入：仅保留数字与一个小数点，小数最多两位（用于「纯数字价格」录入）。
+ * 允许中间态（如 "80." "0."），提交收尾交给 finalizePriceInput。
+ */
+export function sanitizeNumericInput(raw: string): string {
+  const s = raw.replace(/[^\d.]/g, '')
+  const dot = s.indexOf('.')
+  if (dot < 0) return s
+  return s.slice(0, dot + 1) + s.slice(dot + 1).replace(/\./g, '').slice(0, 2)
+}
+
+/**
+ * 提交时收尾：先清成纯数字（≤2 位小数），再去掉末尾小数点与无意义前导零；空串返回空串。
+ * 先 sanitize 保证即便传入历史自由文本（如 "80w"）也会归一为数字。
+ */
+export function finalizePriceInput(raw: string): string {
+  let v = sanitizeNumericInput(raw)
+  if (v.endsWith('.')) v = v.slice(0, -1)
+  if (!v || v === '.') return ''
+  const [int, dec] = v.split('.')
+  const cleanInt = int.replace(/^0+(?=\d)/, '') || '0'
+  return dec != null ? `${cleanInt}.${dec}` : cleanInt
 }
 
 const SIDE_BUY = /(收购|求购|长期收|高收|收|求)/

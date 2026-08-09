@@ -6,12 +6,8 @@ import { initAuth, useAuth } from './store/authStore'
 import { syncQuizForUser, useQuizCloud } from './store/quizStore'
 import OverviewDashboard from './components/Overview/OverviewDashboard'
 import TodoSection from './components/Todo/TodoSection'
-import CourtyardTimers from './components/Courtyard/CourtyardTimers'
-import DungeonTracker from './components/Dungeon/DungeonTracker'
-import HouseCleaning from './components/House/HouseCleaning'
 import GuideBook from './components/Guide/GuideBook'
 import PriceBook from './components/Price/PriceBook'
-import SynthCalculator from './components/Synth/SynthCalculator'
 import OcrTool from './components/Ocr/OcrTool'
 import QuizBook from './components/Quiz/QuizBook'
 import AdminPanel from './components/Admin/AdminPanel'
@@ -28,17 +24,9 @@ const NAV: { id: TabId; label: string; icon: IconName }[] = [
   { id: 'todo', label: '待办', icon: 'todo' },
   { id: 'guide', label: '攻略', icon: 'guide' },
   { id: 'price', label: '物价', icon: 'coin' },
-  { id: 'synth', label: '算价', icon: 'gem' },
   { id: 'ocr', label: '取字', icon: 'scan-text' },
   { id: 'quiz', label: '答题', icon: 'quiz' },
 ]
-
-/** 子页（从概览进入，不出现在主导航）：显示为概览下的当前位置 */
-const SUB_PAGES: Partial<Record<TabId, { label: string; icon: IconName }>> = {
-  courtyard: { label: '庭院种子', icon: 'sprout' },
-  dungeon: { label: '副本进度', icon: 'shield' },
-  house: { label: '房屋状态', icon: 'home' },
-}
 
 /** 侧边栏时钟：独立组件，避免秒级刷新牵动整棵组件树 */
 function SideClock() {
@@ -108,10 +96,6 @@ export default function App() {
     if (!isAdmin && tab === 'admin') setTab('overview')
   }, [isAdmin, tab])
 
-  const sub = SUB_PAGES[tab]
-  // 子页归属概览：主导航高亮「概览」
-  const navActive: TabId = sub ? 'overview' : tab
-
   return (
     <div className="app">
       {/* 桌面侧边栏 */}
@@ -130,20 +114,14 @@ export default function App() {
           {NAV.map((t) => (
             <button
               key={t.id}
-              className={`side-item${navActive === t.id ? ' active' : ''}`}
-              aria-current={navActive === t.id ? 'page' : undefined}
+              className={`side-item${tab === t.id ? ' active' : ''}`}
+              aria-current={tab === t.id ? 'page' : undefined}
               onClick={() => setTab(t.id)}
             >
               <Icon name={t.icon} size={17} />
               {t.label}
             </button>
           ))}
-          {sub && (
-            <span className="side-subitem" aria-current="page">
-              <Icon name={sub.icon} size={14} />
-              {sub.label}
-            </span>
-          )}
         </nav>
 
         <div className="side-foot">
@@ -208,22 +186,10 @@ export default function App() {
 
         <main className="content">
           <div className="content-inner">
-            {sub && (
-              <div className="subpage-bar">
-                <button className="back-btn" onClick={() => setTab('overview')}>
-                  <Icon name="arrow-left" size={15} />
-                  返回概览
-                </button>
-              </div>
-            )}
             {tab === 'overview' && <OverviewDashboard onNavigate={setTab} />}
             {tab === 'todo' && <TodoSection />}
-            {tab === 'courtyard' && <CourtyardTimers />}
-            {tab === 'dungeon' && <DungeonTracker />}
-            {tab === 'house' && <HouseCleaning />}
             {tab === 'guide' && <GuideBook />}
             {tab === 'price' && <PriceBook />}
-            {tab === 'synth' && <SynthCalculator />}
             {tab === 'ocr' && <OcrTool />}
             {tab === 'quiz' && <QuizBook />}
             {tab === 'admin' && <AdminPanel />}
@@ -237,8 +203,8 @@ export default function App() {
         {NAV.map((t) => (
           <button
             key={t.id}
-            className={`mobile-nav-item${navActive === t.id ? ' active' : ''}`}
-            aria-current={navActive === t.id ? 'page' : undefined}
+            className={`mobile-nav-item${tab === t.id ? ' active' : ''}`}
+            aria-current={tab === t.id ? 'page' : undefined}
             onClick={() => setTab(t.id)}
           >
             <Icon name={t.icon} size={19} />

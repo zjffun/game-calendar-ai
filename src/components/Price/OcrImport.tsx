@@ -293,7 +293,7 @@ export default function OcrImport({ onClose }: { onClose: () => void }) {
             <button className="btn btn-primary" onClick={save} disabled={keepCount === 0}>
               保存 {keepCount} 条观测
             </button>
-            <button className="btn btn-sm" onClick={() => setRows([])}>
+            <button className="btn" onClick={() => setRows([])}>
               清空
             </button>
           </div>

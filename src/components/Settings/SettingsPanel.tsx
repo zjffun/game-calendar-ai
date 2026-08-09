@@ -19,6 +19,7 @@ import { formatBytes } from '../../utils/image'
 import { activeWebVersion, type ActiveWebVersion } from '../../utils/webUpdate'
 import Icon from '../common/Icon'
 import AccountPanel from './AccountPanel'
+import SyncDetailsPanel from './SyncDetailsPanel'
 import './Settings.css'
 
 /** 存储用量快照：文本（localStorage）+ 图片库（IndexedDB）+ 浏览器配额 */
@@ -207,6 +208,9 @@ export default function SettingsPanel() {
 
       {/* —— 账号与云同步 —— */}
       <AccountPanel />
+
+      {/* —— 同步详情（登录后显示）—— */}
+      <SyncDetailsPanel />
 
       {/* —— 周期重置点 —— */}
       <div className="card pad-lg">

@@ -11,7 +11,9 @@ export interface ActiveWebVersion {
 
 export async function activeWebVersion(): Promise<ActiveWebVersion | null> {
   try {
-    const res = await fetch('/version.json', { cache: 'no-store' })
+    // 用部署基路径（GitHub Pages 子路径 /game-calendar-ai/ 亦适用）。
+    // 绝对 '/version.json' 在子路径部署下会 404。
+    const res = await fetch(`${import.meta.env.BASE_URL}version.json`, { cache: 'no-store' })
     if (!res.ok) return null
     const data = (await res.json()) as { version?: unknown; builtAt?: unknown }
     if (typeof data.version !== 'string') return null

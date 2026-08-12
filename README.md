@@ -69,6 +69,20 @@ pnpm preview       # 预览生产构建
 推送到 `main` 会触发 [GitHub Actions](.github/workflows/deploy.yml) 自动构建并部署到
 **GitHub Pages**：<https://zjffun.github.io/game-calendar-ai/>
 
+## 📱 安装 / 离线（PWA）
+
+站点是 PWA，可「添加到主屏幕」当作 App 用：Chrome / Edge 在地址栏点安装图标，
+iOS Safari 用「分享 → 添加到主屏幕」。
+
+- **离线可用**：首次联网访问后，应用外壳（页面 + JS/CSS + 图标）由 Service Worker
+  预缓存，浏览过的攻略图片按需缓存，之后断网也能打开。
+- **自动更新**：每次部署内容有变 → `sw.js` 版本随之变化 → 下次访问自动拉取新版并清理旧缓存。
+- 云同步、OCR 语言模型仍需联网。
+
+Service Worker（`public/sw.js`，无 Workbox 依赖）与图标、`manifest.webmanifest` 都在
+`public/`；版本与预缓存清单在 `pnpm build` 末尾由 `scripts/gen-web-manifest.mjs` 注入。
+开发模式（`pnpm dev`）不注册 SW，避免干扰热更新。
+
 ## 📝 说明
 
 - 种子生长时长、副本刷新周期、房屋衰减速率等**数值均为合理默认值，可在界面中调整**，

@@ -32,6 +32,7 @@ const KEY_LABELS: { key: string; label: string }[] = [
   { key: STORAGE_KEYS.characters, label: '角色' },
   { key: STORAGE_KEYS.guides, label: '自定义攻略' },
   { key: STORAGE_KEYS.guideNotes, label: '攻略笔记' },
+  { key: STORAGE_KEYS.guideTags, label: '攻略标签' },
   { key: STORAGE_KEYS.pinnedGuides, label: '置顶攻略' },
   { key: STORAGE_KEYS.priceItems, label: '物价条目' },
   { key: STORAGE_KEYS.priceComments, label: '物价备注' },
@@ -120,6 +121,7 @@ export default function SyncDetailsPanel() {
     [STORAGE_KEYS.characters]: state.characters,
     [STORAGE_KEYS.guides]: state.guides,
     [STORAGE_KEYS.guideNotes]: state.guideNotes,
+    [STORAGE_KEYS.guideTags]: state.guideTags,
     [STORAGE_KEYS.pinnedGuides]: state.pinnedGuides,
     [STORAGE_KEYS.priceItems]: state.priceItems,
     [STORAGE_KEYS.priceComments]: state.priceComments,
@@ -128,7 +130,7 @@ export default function SyncDetailsPanel() {
     [STORAGE_KEYS.synth]: state.synth,
   }
 
-  // 攻略笔记 / 物价备注按 id 存储，名字要从攻略/物价条目里回查
+  // 攻略笔记 / 攻略标签 / 物价备注按 id 存储，名字要从攻略/物价条目里回查
   const guideTitle = new Map<string, string>()
   for (const g of [...GUIDE_PRESETS, ...state.guides]) guideTitle.set(g.id, g.title)
   const priceName = new Map<string, string>()
@@ -147,6 +149,8 @@ export default function SyncDetailsPanel() {
         return (rec?.itemName as string) || id
       case STORAGE_KEYS.guideNotes:
         return guideTitle.get(id) ?? '（笔记）'
+      case STORAGE_KEYS.guideTags:
+        return guideTitle.get(id) ?? '（标签）'
       case STORAGE_KEYS.priceComments:
         return priceName.get(id) ?? '（备注）'
       default:

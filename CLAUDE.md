@@ -67,3 +67,8 @@
 
 **约定：** `SYNCED_KEYS` 必须与 `readAllSlices` / `applyExternalUpdate` 覆盖一致（该数组上方注释即此意）；
 新增 / 改动同步分片后，对着这 4 处逐条核一遍。
+
+此外若要它在「设置 → 同步详情」面板里现身，还需在 `SyncDetailsPanel.tsx` 的
+`KEY_LABELS`（行的标签，兼日志友好名）/ `valueByKey`（条目计数与展开）/ `itemName`
+（逐条名字回查）三处补上。纯展示，漏了不影响同步本身，只是面板不列该分片、日志里显原始
+storageKey（`guideTags` 就漏过这三处）。

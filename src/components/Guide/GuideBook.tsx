@@ -2,7 +2,7 @@
 // 攻略大全 模块（入口）
 // - 左侧边栏：按分类（副本 / 神器 / 奇遇 / 看戏 / 自定义）分组列出所有攻略；
 //   内置攻略只读，用户自定义攻略可编辑/删除，二者一并展示在侧边；
-// - 顶部搜索：仅按标题匹配，支持拼音（全拼 / 首字母）；
+// - 顶部搜索：按标题或标签匹配，支持拼音（全拼 / 首字母）；命中的标签在列表中高亮；
 // - 右侧主区：展示选中攻略的正文，或新增/编辑表单；
 // - 「＋ 新增攻略」让用户把自己的内容加入侧边；
 // - 内置攻略正文只读，但可在详情下方「我的补充」追加自定义 Markdown 内容。
@@ -10,12 +10,13 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { GuideEntry } from '../../types'
-import { useGuides, useGuideNotes, usePinnedGuides } from '../../store/useAppStore'
+import { useGuides, useGuideNotes, useGuideTags, usePinnedGuides } from '../../store/useAppStore'
 import { GUIDE_PRESETS, GUIDE_CATEGORY_META } from '../../data/guides'
-import { guideMatches, ensurePinyinLoaded } from '../../utils/guide'
+import { guideMatches, guideTagMatches, ensurePinyinLoaded } from '../../utils/guide'
 import GuideContentView from './GuideContentView'
 import GuideEditor, { type GuideDraft } from './GuideEditor'
 import GuideNotes from './GuideNotes'
+import GuideTagEditor from './GuideTagEditor'
 import { appConfirm } from '../common/ConfirmDialog'
 import { openImageLightbox } from '../common/ImageLightbox'
 import Icon from '../common/Icon'
@@ -49,6 +50,7 @@ function byOrder(a: GuideEntry, b: GuideEntry): number {
 export default function GuideBook() {
   const { guides: customGuides, add, update, remove } = useGuides()
   const { guideNotes } = useGuideNotes()
+  const { guideTags } = useGuideTags()
   const { pinnedGuides, togglePin } = usePinnedGuides()
   const [query, setQuery] = useState('')
   // 拼音字典是否就绪；就绪后重算分组，让拼音匹配生效
@@ -85,20 +87,23 @@ export default function GuideBook() {
     const byId = new Map(allEntries.map((e) => [e.id, e]))
     return pinnedGuides
       .map((id) => byId.get(id))
-      .filter((e): e is GuideEntry => !!e && guideMatches(e, query))
-  }, [pinnedGuides, allEntries, query, pinyinReady])
+      .filter((e): e is GuideEntry => !!e && guideMatches(e, query, guideTags[e.id]))
+  }, [pinnedGuides, allEntries, query, pinyinReady, guideTags])
 
-  // 按分类分组并按搜索过滤（仅按标题匹配，支持拼音）；置顶项移到顶部分组，故这里排除
+  // 按分类分组并按搜索过滤（按标题或标签匹配，支持拼音）；置顶项移到顶部分组，故这里排除
   // pinyinReady 入依赖：字典加载完成后重算，纳入拼音匹配结果
   const groups = useMemo(() => {
     return GUIDE_CATEGORY_META.map((meta) => {
       const list = allEntries.filter(
-        (e) => e.category === meta.category && !pinnedSet.has(e.id) && guideMatches(e, query),
+        (e) =>
+          e.category === meta.category &&
+          !pinnedSet.has(e.id) &&
+          guideMatches(e, query, guideTags[e.id]),
       )
       return { meta, list }
     }).filter((g) => g.list.length > 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allEntries, query, pinyinReady, pinnedSet])
+  }, [allEntries, query, pinyinReady, pinnedSet, guideTags])
 
   // 过滤后的扁平列表（置顶在前，用于默认选中第一条）
   const visibleFlat = useMemo(
@@ -143,20 +148,37 @@ export default function GuideBook() {
     setMode('view')
   }
 
-  // 侧边一条攻略项（置顶分组与各分类分组共用）：标题按钮
+  // 侧边一条攻略项（置顶分组与各分类分组共用）：标题按钮 + 标签行
   function renderNavItem(entry: GuideEntry) {
     const active = activeEntry?.id === entry.id && mode === 'view'
+    const tags = guideTags[entry.id]
     return (
       <li key={entry.id}>
         <button
           className={`guide-nav-item${active ? ' active' : ''}`}
           onClick={() => select(entry.id)}
         >
-          <span className="guide-nav-title">{entry.title}</span>
-          {entry.preset && guideNotes[entry.id] && (
-            <span className="guide-nav-note" title="已补充自定义内容" aria-hidden />
+          <span className="guide-nav-main">
+            <span className="guide-nav-title">{entry.title}</span>
+            {entry.preset && guideNotes[entry.id] && (
+              <span className="guide-nav-note" title="已补充自定义内容" aria-hidden />
+            )}
+            {!entry.preset && <span className="guide-nav-tag">自定义</span>}
+          </span>
+          {tags && tags.length > 0 && (
+            <span className="guide-nav-tags">
+              {tags.map((t) => (
+                <span
+                  className={`guide-nav-chip${
+                    guideTagMatches(t, query) ? ' matched' : ''
+                  }`}
+                  key={t}
+                >
+                  {t}
+                </span>
+              ))}
+            </span>
           )}
-          {!entry.preset && <span className="guide-nav-tag">自定义</span>}
         </button>
       </li>
     )
@@ -193,7 +215,7 @@ export default function GuideBook() {
                 className="input guide-search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="搜索攻略…"
+                placeholder="搜索标题 / 标签…"
               />
             </div>
             <button
@@ -292,15 +314,9 @@ export default function GuideBook() {
                 </div>
               </header>
 
-              {activeEntry.tags && activeEntry.tags.length > 0 && (
-                <div className="row row-wrap guide-detail-tags">
-                  {activeEntry.tags.map((t) => (
-                    <span className="chip guide-tag" key={t}>
-                      #{t}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <div className="guide-detail-tags">
+                <GuideTagEditor key={activeEntry.id} guideId={activeEntry.id} />
+              </div>
 
               {/* 内置攻略：把「我的补充」自定义内容置顶，正文之前 */}
               {activeEntry.preset && (

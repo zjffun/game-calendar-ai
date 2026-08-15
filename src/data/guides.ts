@@ -1999,9 +1999,8 @@ const ARTIFACT_TASK_GUIDES: GuideEntry[] = ARTIFACT_TASKS.map((task, index) => {
   return {
     id: `artifact-${meta.id}-${String(index + 1).padStart(2, '0')}`,
     category: `神器·${task.kind}` as GuideCategory,
-    title: `神器任务·${task.kind}：${task.name}`,
+    title: `${task.kind}·${task.name}`,
     summary: `${task.difficulty} ${task.prepare}`,
-    tags: ['神器攻略', `神器任务·${task.kind}`, task.name, task.kind],
     sections: [
       {
         // 「备战准备」精简为置顶的「需要提交的物品」：只保留需上交给 NPC 的物品
@@ -2038,13 +2037,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "天命副本·系统总览（天命之路）",
     "summary": "2024寒假资料片「天命之路」起的副本新体系：副本每4天刷新一次进度、轮换出一批高收益「天命副本」，配套五行之力积分与天命小队加成。",
-    "tags": [
-      "天命之路",
-      "天命副本",
-      "五行之力",
-      "天命小队",
-      "4天刷新"
-    ],
     "sections": [
       {
         "heading": "玩法定位与解锁",
@@ -2095,13 +2087,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "乌鸡国",
     "summary": "≥50级5人即可开的入门级普通副本，前几环几分钟速通、效率队约30分钟全本，天命周期里收益高难度低的首选。",
-    "tags": [
-      "普通副本",
-      "50级",
-      "5人",
-      "真假国王",
-      "速刷"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2135,13 +2120,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "水陆大会（侠）",
     "summary": "≥50级的侠士5人副本，单人任务多但不复杂、Boss概率给珍珠，效率队约30分钟，天命周期里稳定的珍珠来源。",
-    "tags": [
-      "侠士副本",
-      "50级",
-      "珍珠",
-      "李建成李元吉",
-      "多环"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2175,14 +2153,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "车迟斗法（侠士副本）",
     "summary": "70级以上、长寿村慧觉和尚处进入的多人剧情副本，融答题建道观、求雨/坐禅/猜物与变身，怪物偏弱、专属宝箱奖励可观，适合新手与五开。",
-    "tags": [
-      "普通副本",
-      "70级",
-      "答题",
-      "三大仙",
-      "虎力大仙",
-      "侠士副本"
-    ],
     "sections": [
       {
         "heading": "定位与参与条件",
@@ -2225,13 +2195,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "红孩儿",
     "summary": "≥80级5人侠士副本，多阶段约180分钟，核心是奇偶回合切换打法躲三昧真火、隐藏泡泡阶段白捡经验，效率队约20分钟、耗时少收益高。",
-    "tags": [
-      "侠士副本",
-      "80级",
-      "三昧真火",
-      "五行车",
-      "泡泡经验"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2265,13 +2228,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "黑风山（侠）",
     "summary": "≥60级5人侠士副本，单人前置任务多、要操作多号守路口，核心是按主怪「号令」顺序杀怪破黑熊精，效率队约40分钟。",
-    "tags": [
-      "侠士副本",
-      "60级",
-      "黑熊精",
-      "号令杀序",
-      "莲花驱鬼"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2305,13 +2261,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "通天河",
     "summary": "≥80级侠士级团队副本，答题+变身童男童女+多环合作流程，整体不难、效率队约40分钟；天命之路后奖励不再含附魔宝珠。",
-    "tags": [
-      "侠士副本",
-      "80级",
-      "灵感大王",
-      "童男童女",
-      "答题"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2345,13 +2294,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "金兜洞兕大王",
     "summary": "≥80级、至少10人(两队)开启的多阶段普通副本，独角兕大王金刚镯+多段「求助神仙」限时环节，收益堪比侠士本但中途有较长等待。",
-    "tags": [
-      "普通副本",
-      "80级",
-      "独角兕大王",
-      "金刚镯",
-      "限时答题"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2385,14 +2327,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "秘境降妖（多层闯塔类侠士副本；端游并无「镇妖塔」此名）",
     "summary": "电脑版真正的多层闯塔副本：约60级起、5—12人、共11层逐层向上推进，每层产蜃气妖散落与随机宝箱；「镇妖塔」并非端游副本名。",
-    "tags": [
-      "英雄副本",
-      "60级",
-      "爬塔",
-      "熊山君",
-      "高收益",
-      "侠士副本"
-    ],
     "sections": [
       {
         "heading": "命名澄清",
@@ -2435,13 +2369,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "灵猴出世",
     "summary": "天命之路五集副本之一，从五行山「水行裂隙」进入，约5阶段、含数个单人任务，难度低、奖励不错，适合走量。",
-    "tags": [
-      "天命之路",
-      "新副本",
-      "五行山裂隙",
-      "单人任务",
-      "走量"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2473,13 +2400,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "东海寻珍",
     "summary": "天命之路体系副本，≥50级5人，从五行山「土行裂隙」进入，含单人任务+听声辨位+数字解密珍宝库，硬件过关即可轻松通关。",
-    "tags": [
-      "普通副本",
-      "50级",
-      "五行山裂隙",
-      "解密",
-      "小白龙"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2513,13 +2433,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "青丘迷雾",
     "summary": "≥50级5人副本，本服需先通关「决战·热血盛唐」最终BOSS有苏鸩，提供侠士与英雄双难度，以高难度高翻车著称，后新增「竞速模式」。",
-    "tags": [
-      "侠士英雄",
-      "50级",
-      "高难度",
-      "竞速模式",
-      "青丘"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2553,13 +2466,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "七绝山",
     "summary": "≥80级普通副本，经典走流程本、经验奖励超高，核心是清蛇妖喽啰后辨认4只红鳞蛇妖中的真身。",
-    "tags": [
-      "普通副本",
-      "80级",
-      "红鳞蛇妖",
-      "树精",
-      "高经验"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2592,13 +2498,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "蟠桃宴（大闹蟠桃宴）",
     "summary": "天命之路资料片(2024)新增侠士副本，≥50级5人、约120分钟，含蟠桃树蓄力/打断机制与三阶段「浊念蟠桃树」吞噬西王母的Boss战。",
-    "tags": [
-      "侠士副本",
-      "50级",
-      "蟠桃树",
-      "蓄力打断",
-      "西王母"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2632,14 +2531,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "大闹天宫（侠士副本）",
     "summary": "100级以上、10人组队、限时约150分钟的高级剧情副本，重演齐天大圣大闹天宫，终战上古雷神，产80级附魔与符石宝石。",
-    "tags": [
-      "侠士副本",
-      "100级",
-      "10人",
-      "上古雷神",
-      "五行斗法",
-      "大闹天宫"
-    ],
     "sections": [
       {
         "heading": "定位与参与条件",
@@ -2682,13 +2573,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "泾河龙王2（龙宫主题团队副本）",
     "summary": "约70级开放的龙宫剧情团队副本，三环玩法、第三环必出九转金丹",
-    "tags": [
-      "泾河龙王",
-      "龙宫",
-      "团队副本",
-      "九转金丹",
-      "副本积分"
-    ],
     "sections": [
       {
         "heading": "进入方式与次数",
@@ -2723,13 +2607,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "电脑版副本系统总览",
     "summary": "梦幻西游电脑版副本按难度分普通/侠士两大档：普通副本每4天刷新进度且每周期最多完成6个，侠士副本每周一8点刷新，组队完成可得经验·储备·副本积分及材料，积分用于副本官员处兑换书铁等并提升宠物修炼上限。",
-    "tags": [
-      "副本入口",
-      "刷新周期",
-      "副本积分",
-      "组队",
-      "积分商店"
-    ],
     "sections": [
       {
         "heading": "副本分类与等级分段",
@@ -2780,13 +2657,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "副本提效与积分最大化要点",
     "summary": "用固伤+高爆发法系阵容快速清场、配好法宝与法宝宝，按4天/每周周期规划顺序、刷满每环积分以触发最终额外奖励，是端游副本搬砖提效的核心。",
-    "tags": [
-      "阵容",
-      "法宝",
-      "积分最大化",
-      "五开",
-      "新手误区"
-    ],
     "sections": [
       {
         "heading": "阵容与法宝",
@@ -2822,13 +2692,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "无底洞（侠士副本）",
     "summary": "≥90级、10人、7天刷新一次的经典高奖侠士副本，端游必刷之一。",
-    "tags": [
-      "侠士副本",
-      "90级",
-      "7天刷新",
-      "高奖励",
-      "连线小游戏"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2871,13 +2734,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "后羿陵墓（上）（下）",
     "summary": "高难度团队系列副本，分上下两部，下部为渡劫/化圣级难度并含隐藏BOSS后羿。",
-    "tags": [
-      "系列副本",
-      "高难度",
-      "隐藏BOSS",
-      "成就点",
-      "渡劫级"
-    ],
     "sections": [
       {
         "heading": "参与条件与前置",
@@ -2918,13 +2774,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "五庄观",
     "summary": "≥70级、5~10人、约4天刷新的一星普通副本，轻松休闲、耗时短、性价比高。",
-    "tags": [
-      "普通副本",
-      "70级",
-      "4天刷新",
-      "休闲",
-      "五行飞蝗石"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -2964,13 +2813,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "平顶山",
     "summary": "≥70级、10~12人的普通团队副本，核心是金角/银角大王守之星攻防机制战。",
-    "tags": [
-      "普通副本",
-      "70级",
-      "银角大王",
-      "守之星",
-      "团队"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -3010,13 +2852,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "前世今生2",
     "summary": "≥70级、10人、约4天刷新的二星普通副本，地狱救阿灯主题、收益较高。",
-    "tags": [
-      "普通副本",
-      "70级",
-      "4天刷新",
-      "地狱主题",
-      "黄风洞"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -3056,13 +2891,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "天火之殇（上）（下）",
     "summary": "≥50级、5人、约4天刷新的普通系列副本，火焰山主题，分上下两部、收益丰厚。",
-    "tags": [
-      "系列副本",
-      "50级",
-      "4天刷新",
-      "火焰山",
-      "召唤兽准备"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -3101,13 +2929,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "剑陵魔影",
     "summary": "≥69级、需组队的探索型侠士副本，无副本积分但经验与物品奖励极丰、含隐藏BOSS。",
-    "tags": [
-      "侠士副本",
-      "69级",
-      "探索随机",
-      "隐藏BOSS",
-      "无积分高物品"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -3146,13 +2967,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "四门绝阵",
     "summary": "≥50级、10~15人的多关卡普通团队副本，按玄武/朱雀/白虎/青龙四门闯关。",
-    "tags": [
-      "普通副本",
-      "50级",
-      "团队",
-      "答题闯关",
-      "四门"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -3192,13 +3006,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "胡姬琵琶行",
     "summary": "≥50级、5人、每周一刷新的全民休闲副本，无战斗即可参与、轻松出奖。",
-    "tags": [
-      "休闲副本",
-      "50级",
-      "每周刷新",
-      "混级参与",
-      "无战斗"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -3238,13 +3045,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "石猴授徒",
     "summary": "≥60级、5人、约4天刷新的一星半普通副本，含两条随机分支剧情、低难度短耗时。",
-    "tags": [
-      "普通副本",
-      "60级",
-      "4天刷新",
-      "随机分支",
-      "低难度"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -3284,13 +3084,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "上古秘宝",
     "summary": "≥50级的经典挖宝类普通副本，常以两队（约20人）协作开图刷宝箱。",
-    "tags": [
-      "普通副本",
-      "50级",
-      "挖宝",
-      "双队协作",
-      "迷宫钥匙"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -3329,13 +3122,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "五行斗法",
     "summary": "大闹天宫系列衍生的资格制小队副本，需先刷齐前置积分领任务后5人组队挑战。",
-    "tags": [
-      "资格制副本",
-      "5人",
-      "大闹天宫系列",
-      "前置积分",
-      "普陀山"
-    ],
     "sections": [
       {
         "heading": "参与条件与前置",
@@ -3374,13 +3160,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "四季（回流专属特殊副本）",
     "summary": "≥60级、5人的特殊副本，仅回流且获得「专属副本」服务的玩家可开启，串联多种玩法。",
-    "tags": [
-      "特殊副本",
-      "60级",
-      "回流专属",
-      "答题宝箱",
-      "多玩法"
-    ],
     "sections": [
       {
         "heading": "参与条件",
@@ -3421,13 +3200,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "地狱迷宫（练级场景，非结构化副本）",
     "summary": "地府题材的多层练级地图（约1—4层），是中低等级烧双练级与地府剧情（如无名鬼城）的舞台，并非有报名/限时的成型副本。",
-    "tags": [
-      "练级场景",
-      "地府",
-      "烧双",
-      "地府剧情",
-      "无名鬼城"
-    ],
     "sections": [
       {
         "heading": "性质澄清",
@@ -3462,13 +3234,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "新比武大会（PVE试炼 + 追逐战 + 巅峰对决）",
     "summary": "50级起、每月第四周末开放的全民PVP/PVE竞技活动，分六个等级组角逐武状元",
-    "tags": [
-      "比武大会",
-      "PVE试炼",
-      "追逐战",
-      "武状元",
-      "月度活动"
-    ],
     "sections": [
       {
         "heading": "参与条件与组别",
@@ -3511,13 +3276,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "节日限定副本（春节庙会单人副本 / 共建村落小副本）",
     "summary": "节日资料片期间限时开放的单人或小队任务副本，按生肖年主题轮换",
-    "tags": [
-      "节日副本",
-      "春节庙会",
-      "共建村",
-      "限时活动",
-      "环任务"
-    ],
     "sections": [
       {
         "heading": "参与条件与周期",
@@ -3552,13 +3310,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "副本",
     "title": "九黎危机 / 光武灵气熔铸（九黎城限时活动，注意与手游「九黎之墟」区分）",
     "summary": "2023上线的电脑版限时活动，用武器提炼清气、服务于九黎城突破109级上限",
-    "tags": [
-      "九黎危机",
-      "九黎城",
-      "熔铸巨斧",
-      "突破等级",
-      "限时活动"
-    ],
     "sections": [
       {
         "heading": "参与条件与定性",
@@ -3593,16 +3344,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "神器任务起/转/合速查（PC版）",
     "summary": "电脑版神器任务先做「神器任务·序章」开启系统；起/转为日常任务，8:00-24:00领取、次日1:00清空；合为轩辕处周常高阶任务，分剧情/正常/精英模式。",
-    "tags": [
-      "神器",
-      "神器任务·序章",
-      "神器任务·起",
-      "神器任务·转",
-      "神器任务·合",
-      "杨戬",
-      "传令天兵",
-      "轩辕"
-    ],
     "sections": [
       {
         "heading": "先做序章",
@@ -3666,15 +3407,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "神器任务清单与日常取舍（起·转·合）",
     "summary": "按最新可查攻略整理起、转、合任务名、未开放完整三段的新门派限制，以及五开/日常刷积分时的物资与避坑优先级。",
-    "tags": [
-      "神器任务清单",
-      "神器起",
-      "神器转",
-      "神器合",
-      "五开",
-      "紧急任务",
-      "备战"
-    ],
     "sections": [
       {
         "heading": "当前可查清单",
@@ -3729,12 +3461,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "轩辕剑（大唐官府）",
     "summary": "大唐官府专属神器，剑形，物理输出向，强化点杀与护盾续航",
-    "tags": [
-      "大唐官府",
-      "物理输出",
-      "藏锋敛锐",
-      "惊锋"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -3767,12 +3493,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "黄金甲（方寸山）",
     "summary": "方寸山专属神器，铠甲形，封系/辅助向，强化抗性与生存",
-    "tags": [
-      "方寸山",
-      "封系辅助",
-      "披坚执锐",
-      "金汤之固"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -3804,12 +3524,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "墨魂笔（化生寺）",
     "summary": "化生寺专属神器，笔形，治疗/辅助向，强化奶量与减伤",
-    "tags": [
-      "化生寺",
-      "治疗辅助",
-      "风起云墨",
-      "挥毫"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -3841,12 +3555,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "泪痕碗（女儿村）",
     "summary": "女儿村专属神器，碗形，封系/辅助向，强化封印与点杀配合",
-    "tags": [
-      "女儿村",
-      "封系辅助",
-      "盏中晴雪",
-      "泪光盈盈"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -3877,12 +3585,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "独弦琴（天宫）",
     "summary": "天宫专属神器，琴形，法系输出/封辅向，强化天宫法术与愤怒续航",
-    "tags": [
-      "天宫",
-      "法系输出",
-      "弦外之音",
-      "裂帛"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -3914,12 +3616,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "清泽谱（龙宫）",
     "summary": "龙宫专属神器，谱卷形，群法输出向，强化龙宫法术暴发与减暴",
-    "tags": [
-      "龙宫",
-      "群法输出",
-      "定风波",
-      "沧浪赋"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -3951,12 +3647,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "星斗盘（五庄观）",
     "summary": "五庄观专属神器，星盘形，法系/全能向，强化五庄综合输出",
-    "tags": [
-      "五庄观",
-      "法系全能",
-      "斗转参横",
-      "静笃"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -3988,12 +3678,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "华光玉（普陀山）",
     "summary": "普陀山专属神器，玉饰形，辅助/治疗向，强化普陀续航与法系克制",
-    "tags": [
-      "普陀山",
-      "辅助治疗",
-      "玉魄",
-      "璇华"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4025,12 +3709,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "四神鼎（阴曹地府）",
     "summary": "阴曹地府专属神器，鼎形，封系/输出向，流程简单的高性价比神器",
-    "tags": [
-      "阴曹地府",
-      "封系",
-      "亡灵泣语",
-      "魂魇"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4061,12 +3739,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "明火珠（魔王寨）",
     "summary": "魔王寨专属神器，火珠形，群法输出向，任务偏难但输出收益高",
-    "tags": [
-      "魔王寨",
-      "群法输出",
-      "业焰明光",
-      "流火"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4097,12 +3769,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "噬魂齿（狮驼岭）",
     "summary": "狮驼岭专属神器，獠牙形，物理输出向，流程简单适合五开",
-    "tags": [
-      "狮驼岭",
-      "物理输出",
-      "蛮血",
-      "狂战"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4134,12 +3800,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "昆仑镜（盘丝洞）",
     "summary": "盘丝洞专属神器，铜镜形，封系/控制向，任务含扔火把属中等难度",
-    "tags": [
-      "盘丝洞",
-      "封系控制",
-      "镜花水月",
-      "澄明"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4171,12 +3831,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "天罡印（凌波城）",
     "summary": "凌波城专属神器，印玺形，物理暴发向，流程简单的高性价比神器",
-    "tags": [
-      "凌波城",
-      "物理暴发",
-      "威服天下",
-      "酣战"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4208,12 +3862,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "玲珑结（无底洞）",
     "summary": "无底洞专属神器，绳结形，辅助/控制向，强化护盾与节奏加速",
-    "tags": [
-      "无底洞",
-      "辅助控制",
-      "情思悠悠",
-      "相思"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4245,12 +3893,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "月光草（神木林）",
     "summary": "神木林专属神器，灵草形，群法/降抗向，任务含多战斗场景属中等难度",
-    "tags": [
-      "神木林",
-      "群法输出",
-      "凭虚御风",
-      "钟灵"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4282,13 +3924,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "莫愁铃（女魃墓）",
     "summary": "女魃墓专属神器，铃铛形，召唤/诅咒法系输出向（较新门派神器）",
-    "tags": [
-      "女魃墓",
-      "新门派",
-      "莫愁铃",
-      "惊梦",
-      "泪雨零铃"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4320,13 +3955,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "千机锁（天机城）",
     "summary": "天机城专属神器，机关锁形，多流派（封印/物理/防御）向（较新门派神器）",
-    "tags": [
-      "天机城",
-      "新门派",
-      "千机锁",
-      "迭锁",
-      "千机巧变"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4358,13 +3986,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "魔息角（九黎城）",
     "summary": "九黎城专属神器，号角形，物理输出向，浮空/狂暴联动（较新门派神器）",
-    "tags": [
-      "九黎城",
-      "新门派",
-      "魔息角",
-      "鸣空",
-      "骇神"
-    ],
     "sections": [
       {
         "heading": "外观与定位",
@@ -4396,13 +4017,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "神器",
     "title": "鸿蒙石 / 海神鞭（花果山、东海渊）",
     "summary": "花果山（鸿蒙石）与东海渊（海神鞭）两个较新门派的专属神器合并说明",
-    "tags": [
-      "花果山",
-      "东海渊",
-      "鸿蒙石",
-      "海神鞭",
-      "新门派"
-    ],
     "sections": [
       {
         "heading": "门派与神器对应",
@@ -4435,13 +4049,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "奇遇",
     "title": "九色鹿（上）",
     "summary": "奇遇三部曲开篇，每天 8:00–24:00 可领、每天 1 次·每周 2 次；6 个结局由选项决定，作者以战斗最多的「2112 路线→魔源现身」（8 场）详解，通「斩妖除魔」指定结局可得 1 次摇奖。",
-    "tags": [
-      "奇遇三部曲",
-      "九色鹿上",
-      "6结局决策树",
-      "每周2次",
-      "2112路线摇奖"
-    ],
     "sections": [
       {
         "heading": "参与条件与刷新",
@@ -4504,13 +4111,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "奇遇",
     "title": "九色鹿（下）",
     "summary": "三部曲下篇，每周 1 次、限时 120 分钟，需先达成上篇对应结局才开对应下篇；四主室（入口/岔路/深处/尽头）探索，5 结局 + 8 成就，走满支线约 403W 经验。",
-    "tags": [
-      "奇遇三部曲",
-      "九色鹿下",
-      "5结局承接上篇",
-      "每周1次",
-      "四主室探索"
-    ],
     "sections": [
       {
         "heading": "参与条件与刷新",
@@ -4562,13 +4162,6 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
     "category": "奇遇",
     "title": "维摩诘经变",
     "summary": "奇遇三部曲收尾，每周 1 次·限时 120 分钟；六阶段剧情，A/B 起手分流→C/D/E/F 收束。核心是「佛缘盘」：把十方力士/五魔将/青狮/善思/灵芝设为出战·助战强化战力（队长可用探险值 +25 级修炼），凑 18 个不同友方出战解「十八罗汉」。",
-    "tags": [
-      "奇遇三部曲",
-      "维摩诘经变",
-      "佛缘盘出战助战",
-      "每周1次",
-      "十八罗汉成就"
-    ],
     "sections": [
       {
         "heading": "参与条件与刷新",
@@ -4620,15 +4213,8 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
   {
     "id": "opera-1",
     "category": "看戏",
-    "title": "看戏·一斛珠（如梦奇谭）",
+    "title": "一斛珠",
     "summary": "五阶段复仇悲剧本：男子负情、其兄潜伏二十年复仇；核心是各场点杀顺序与主怪伤害联动。",
-    "tags": [
-      "如梦奇谭",
-      "看戏",
-      "一斛珠",
-      "复仇悲剧",
-      "五阶段"
-    ],
     "sections": [
       {
         "heading": "开本与准备",
@@ -4688,15 +4274,8 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
   {
     "id": "opera-2",
     "category": "看戏",
-    "title": "看戏·双城记（如梦奇谭）",
+    "title": "双城记",
     "summary": "五阶段离乱双城本：战斗少、流程长，重点在第二阶段 5 个单人分支小游戏与算筹子数学题。",
-    "tags": [
-      "如梦奇谭",
-      "看戏",
-      "双城记",
-      "五阶段",
-      "单人小游戏"
-    ],
     "sections": [
       {
         "heading": "开本与第一阶段·此去一别",
@@ -4754,15 +4333,8 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
   {
     "id": "opera-3",
     "category": "看戏",
-    "title": "看戏·三生石（如梦奇谭）",
+    "title": "三生石",
     "summary": "三阶段三世情缘本：核心是鬼枫林按八卦顺序点「木头」机关寻路，终场老头子怪伤高。",
-    "tags": [
-      "如梦奇谭",
-      "看戏",
-      "三生石",
-      "三阶段",
-      "八卦寻路"
-    ],
     "sections": [
       {
         "heading": "开本与第一阶段·鬼使神差",
@@ -4801,15 +4373,8 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
   {
     "id": "opera-4",
     "category": "看戏",
-    "title": "看戏·四灵印（如梦奇谭）",
+    "title": "四灵印",
     "summary": "难度偏低本：玉石鉴定两个小游戏起手，山河迷卷定位四名目标逐场清，玉螭之灵收官。",
-    "tags": [
-      "如梦奇谭",
-      "看戏",
-      "四灵印",
-      "玉石鉴定",
-      "山河迷卷"
-    ],
     "sections": [
       {
         "heading": "开本与玉石鉴定小游戏",
@@ -4856,15 +4421,8 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
   {
     "id": "opera-5",
     "category": "看戏",
-    "title": "看戏·五更寒（如梦奇谭）",
+    "title": "五更寒",
     "summary": "四阶段本，公认看戏最难之一：采办货物长风航路 + 魔化村长（全场最难，抗性不足带变鲛人卡）。",
-    "tags": [
-      "如梦奇谭",
-      "看戏",
-      "五更寒",
-      "四阶段",
-      "魔化村长最难"
-    ],
     "sections": [
       {
         "heading": "开本与第一阶段·求签祈福",
@@ -4923,15 +4481,8 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
   {
     "id": "opera-6",
     "category": "看戏",
-    "title": "看戏·六棱雪（如梦奇谭）",
+    "title": "六棱雪",
     "summary": "雪隐寻药、守灵气主线 + 五连战 + 锦雀 BOSS；作者定级「整体难度略大」。看蟾蜍/炎蝶等特殊怪造型变打法，锦雀封≥3 触发玉清诀、特殊怪击飞后全场回满血。",
-    "tags": [
-      "如梦奇谭",
-      "看戏",
-      "六棱雪",
-      "雪隐寻药",
-      "特殊怪按造型变机制"
-    ],
     "sections": [
       {
         "heading": "开本与第一阶段·碧血蚕妖（黑衣人）",
@@ -4989,15 +4540,8 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
   {
     "id": "opera-7",
     "category": "看戏",
-    "title": "看戏·七星冢（如梦奇谭）",
+    "title": "七星冢",
     "summary": "六阶段本：寻药配药→界碑 5 场遇怪→探查香气→毁 8 香炉→护院→林白术 BOSS。作者定级「BOSS 难度较大、其余一般」；毁香炉要避护卫（碰到重跑），护卫场收宝宝、必败挂机。",
-    "tags": [
-      "如梦奇谭",
-      "看戏",
-      "七星冢",
-      "毁香炉避护卫",
-      "林白术BOSS"
-    ],
     "sections": [
       {
         "heading": "开本与第一阶段·寻药",
@@ -5055,15 +4599,8 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
   {
     "id": "opera-8",
     "category": "看戏",
-    "title": "看戏·八行书（如梦奇谭）",
+    "title": "八行书",
     "summary": "七阶段本、流程繁琐：4 个小游戏（写字 / 密瓜 / 书架连连看 / 排兵布阵）串联 3 类战斗。作者定级「整体难度略大、战斗较墨迹」——排兵布阵按兵种克制出兵，沙海鬼将 BOSS 双抗高、回合长，建议带蓝药。",
-    "tags": [
-      "如梦奇谭",
-      "看戏",
-      "八行书",
-      "排兵布阵克制",
-      "小游戏串联"
-    ],
     "sections": [
       {
         "heading": "开本与第一阶段·找回行李",
@@ -5130,15 +4667,8 @@ const LEGACY_GUIDE_PRESETS: GuideEntry[] = [
   {
     "id": "opera-9",
     "category": "看戏",
-    "title": "看戏·九重塔（如梦奇谭）",
+    "title": "九重塔",
     "summary": "五阶段本、作者定级「整体难度略大」：清扫莲台（含抄写小游戏）→ 超度无相 → 挣脱金饶封印 → 护送 5 名僧众 → 魇魔二连战。魇魔②主怪难封、『地狱之息』平砍高几率挂 5 回合『锢魂术』，给两套杀法。",
-    "tags": [
-      "如梦奇谭",
-      "看戏",
-      "九重塔",
-      "灵云寺魇魔",
-      "锢魂术两套杀法"
-    ],
     "sections": [
       {
         "heading": "开本与第一阶段·清扫莲台",
@@ -5204,7 +4734,6 @@ const SATURDAY_GUIDES: GuideEntry[] = [
     category: '周六活动',
     title: '降妖伏魔',
     summary: '每周六 15:00–17:00 的固定玩法：领「镇妖拘魂铃」组队降妖，练级与收益兼顾。',
-    tags: ['周六', '每周', '降妖伏魔', '拘魂铃', '组队'],
     sections: [
       {
         heading: '时间与条件',
@@ -5229,7 +4758,6 @@ const SATURDAY_GUIDES: GuideEntry[] = [
     category: '周六活动',
     title: '宝藏山',
     summary: '社区活动之一（周六上午），由社区管理者选定；到宝藏山挖宝，凭运气出货。',
-    tags: ['周六', '社区活动', '宝藏山', '挖宝'],
     sections: [
       {
         heading: '时间与条件',
@@ -5255,7 +4783,6 @@ const SATURDAY_GUIDES: GuideEntry[] = [
     category: '周六活动',
     title: '帮派竞赛',
     summary: '又称本服帮战：每月第2·3·4周的周末晚间帮派 PvP，需有帮派。',
-    tags: ['周六', '每月', '帮派竞赛', '本服帮战', 'PvP'],
     sections: [
       {
         heading: '时间与条件',
@@ -5277,7 +4804,6 @@ const SATURDAY_GUIDES: GuideEntry[] = [
     category: '周六活动',
     title: '双龙决战',
     summary: '官方「双龙之战·大决战」：每月一次的周末阵营 PvP，转盘可抽大五宝、高兽诀等。',
-    tags: ['周六', '每月', '双龙决战', '双龙之战', '大决战', 'PvP', '阵营'],
     sections: [
       {
         heading: '时间与条件',
@@ -5313,7 +4839,6 @@ const SUNDAY_GUIDES: GuideEntry[] = [
     category: '周日活动',
     title: '门派闯关',
     summary: '官方「十五门派闯关」，每月第1个周日：依次挑战各门派护法，积分可加宠物寿命、争称谓。',
-    tags: ['周日', '第1周', '门派闯关', '十五门派闯关'],
     sections: [
       {
         heading: '时间与条件',
@@ -5338,7 +4863,6 @@ const SUNDAY_GUIDES: GuideEntry[] = [
     category: '周日活动',
     title: '文韵墨香',
     summary: '科举系「文墨」玩法，每月第2个周日：普天盛会环任务 + 御前闯关答题 + 飞贼夺卷。',
-    tags: ['周日', '第2周', '文韵墨香', '文墨', '科举', '答题'],
     sections: [
       {
         heading: '时间与条件',
@@ -5369,7 +4893,6 @@ const SUNDAY_GUIDES: GuideEntry[] = [
     category: '周日活动',
     title: '彩虹争霸赛',
     summary: '每月第3周的红蓝阵营闯关对抗，≥40级找彩虹大使报名，胜方拾长安宝箱、争称谓。',
-    tags: ['周日', '第3周', '彩虹争霸赛', '阵营', 'PvP'],
     sections: [
       {
         heading: '时间与条件',
@@ -5394,7 +4917,6 @@ const SUNDAY_GUIDES: GuideEntry[] = [
     category: '周日活动',
     title: '比武大会',
     summary: '亦称英雄大会，每月第4个周日：≥50级按等级分组的 1v1 竞技，周五18:00起报名。',
-    tags: ['周日', '第4周', '比武大会', '英雄大会', '比武', 'PvP'],
     sections: [
       {
         heading: '时间与报名',
@@ -5423,7 +4945,6 @@ const SUNDAY_GUIDES: GuideEntry[] = [
     category: '周日活动',
     title: '长安保卫战',
     summary: '每月第5个周日（仅含第5周日的月份才开）：≥40级组队守卫大唐境外。',
-    tags: ['周日', '第5周', '长安保卫战', '组队'],
     sections: [
       {
         heading: '时间与条件',

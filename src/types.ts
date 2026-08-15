@@ -116,8 +116,6 @@ export interface GuideEntry {
   title: string
   /** 一句话定位：等级/周期/难度/核心收益 */
   summary?: string
-  /** 关键词标签（用于搜索与展示） */
-  tags?: string[]
   /** 正文小节 */
   sections: GuideSection[]
   /** 配图（内置攻略用；图片压缩后随应用打包） */
@@ -294,6 +292,8 @@ export const STORAGE_KEYS = {
   guides: 'mhxy.guides.v1',
   /** 内置攻略的用户补充内容（攻略id -> Markdown） */
   guideNotes: 'mhxy.guideNotes.v1',
+  /** 用户给攻略打的自定义标签（攻略id -> 标签数组；内置/自定义均可） */
+  guideTags: 'mhxy.guideTags.v1',
   /** 置顶的攻略 id 列表（内置/自定义均可，按置顶顺序，最新在前） */
   pinnedGuides: 'mhxy.pinnedGuides.v1',
   /** 用户自定义物价条目（内置参考条目来自代码，不入库） */

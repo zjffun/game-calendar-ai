@@ -26,6 +26,7 @@ import { DEFAULT_SETTINGS } from '../data/gameData'
 import { DEFAULT_PRICE_ITEMS } from '../data/prices'
 import { DEFAULT_SYNTH_INPUTS } from '../utils/synth'
 import { uid } from '../utils/id'
+import { parseTags } from '../utils/guide'
 import { getAllImages, putImages, clearImages } from './imageStore'
 
 // ---------------------------------------------------------------------------
@@ -40,6 +41,8 @@ interface AppState {
   guides: GuideEntry[]
   /** 内置攻略的用户补充内容：攻略id -> Markdown 笔记 */
   guideNotes: Record<string, GuideNote>
+  /** 用户给攻略打的自定义标签：攻略id -> 标签数组（内置/自定义均可） */
+  guideTags: Record<string, string[]>
   /** 置顶攻略 id 列表（内置/自定义均可，按置顶顺序，最新在前） */
   pinnedGuides: string[]
   /** 用户自定义物价条目（内置参考条目来自 data，不在此） */
@@ -155,6 +158,7 @@ let state: AppState = {
   characters: load<Character[]>(STORAGE_KEYS.characters, []),
   guides: load<GuideEntry[]>(STORAGE_KEYS.guides, []),
   guideNotes: load<Record<string, GuideNote>>(STORAGE_KEYS.guideNotes, {}),
+  guideTags: load<Record<string, string[]>>(STORAGE_KEYS.guideTags, {}),
   pinnedGuides: load<string[]>(STORAGE_KEYS.pinnedGuides, []),
   priceItems: loadPriceItems(),
   priceComments: load<Record<string, PriceComment>>(STORAGE_KEYS.priceComments, {}),
@@ -239,6 +243,10 @@ export function applyExternalUpdate(storageKey: string, parsed: unknown): boolea
       sliceKey = 'guideNotes'
       value = parsed as Record<string, GuideNote>
       break
+    case STORAGE_KEYS.guideTags:
+      sliceKey = 'guideTags'
+      value = parsed as Record<string, string[]>
+      break
     case STORAGE_KEYS.pinnedGuides:
       sliceKey = 'pinnedGuides'
       value = parsed as string[]
@@ -277,6 +285,7 @@ export function readAllSlices(): { key: string; value: unknown }[] {
     { key: STORAGE_KEYS.characters, value: state.characters },
     { key: STORAGE_KEYS.guides, value: state.guides },
     { key: STORAGE_KEYS.guideNotes, value: state.guideNotes },
+    { key: STORAGE_KEYS.guideTags, value: state.guideTags },
     { key: STORAGE_KEYS.pinnedGuides, value: state.pinnedGuides },
     { key: STORAGE_KEYS.priceItems, value: state.priceItems },
     { key: STORAGE_KEYS.priceComments, value: state.priceComments },
@@ -432,7 +441,6 @@ export const guideActions = {
     title: string
     category: GuideCategory
     summary?: string
-    tags?: string[]
     sections: GuideSection[]
   }): string {
     const now = Date.now()
@@ -441,7 +449,6 @@ export const guideActions = {
       title: input.title.trim() || '未命名攻略',
       category: input.category,
       summary: input.summary?.trim() || undefined,
-      tags: input.tags?.map((t) => t.trim()).filter(Boolean),
       sections: input.sections,
       preset: false,
       order: nextOrder(state.guides),
@@ -461,9 +468,14 @@ export const guideActions = {
   },
   remove(id: string) {
     setSlice('guides', state.guides.filter((g) => g.id !== id), STORAGE_KEYS.guides)
-    // 删除自定义攻略时一并清理置顶，避免留下失效 id
+    // 删除自定义攻略时一并清理置顶与标签，避免留下失效 id
     if (state.pinnedGuides.includes(id)) {
       setSlice('pinnedGuides', state.pinnedGuides.filter((x) => x !== id), STORAGE_KEYS.pinnedGuides)
+    }
+    if (id in state.guideTags) {
+      const next = { ...state.guideTags }
+      delete next[id]
+      setSlice('guideTags', next, STORAGE_KEYS.guideTags)
     }
   },
   reorder(orderedIds: string[]) {
@@ -491,6 +503,35 @@ export const guideNoteActions = {
     const next = { ...state.guideNotes }
     delete next[guideId]
     setSlice('guideNotes', next, STORAGE_KEYS.guideNotes)
+  },
+}
+
+// ---- 攻略标签（内置/自定义均可；攻略id -> 标签数组，去重、限 8 个） ----
+const MAX_GUIDE_TAGS = 8
+export const guideTagActions = {
+  /** 覆盖式设置某条攻略的标签（去空、去重、限 8 个）；为空则删除该键 */
+  setTags(guideId: string, tags: string[]) {
+    const clean: string[] = []
+    for (const raw of tags) {
+      const t = raw.trim()
+      if (t && !clean.includes(t)) clean.push(t)
+      if (clean.length >= MAX_GUIDE_TAGS) break
+    }
+    const next = { ...state.guideTags }
+    if (clean.length) next[guideId] = clean
+    else delete next[guideId]
+    setSlice('guideTags', next, STORAGE_KEYS.guideTags)
+  },
+  /** 追加一个/多个标签（raw 可含逗号/顿号/空格分隔），并入现有标签 */
+  addTags(guideId: string, raw: string) {
+    const cur = state.guideTags[guideId] ?? []
+    guideTagActions.setTags(guideId, [...cur, ...parseTags(raw)])
+  },
+  /** 移除某条攻略的一个标签 */
+  removeTag(guideId: string, tag: string) {
+    const cur = state.guideTags[guideId]
+    if (!cur) return
+    guideTagActions.setTags(guideId, cur.filter((t) => t !== tag))
   },
 }
 
@@ -659,6 +700,7 @@ export const dataActions = {
       if (parsed.characters) setSlice('characters', parsed.characters, STORAGE_KEYS.characters)
       if (parsed.guides) setSlice('guides', parsed.guides, STORAGE_KEYS.guides)
       if (parsed.guideNotes) setSlice('guideNotes', parsed.guideNotes, STORAGE_KEYS.guideNotes)
+      if (parsed.guideTags) setSlice('guideTags', parsed.guideTags, STORAGE_KEYS.guideTags)
       if (parsed.pinnedGuides)
         setSlice('pinnedGuides', parsed.pinnedGuides, STORAGE_KEYS.pinnedGuides)
       if (parsed.priceItems) setSlice('priceItems', parsed.priceItems, STORAGE_KEYS.priceItems)
@@ -680,6 +722,7 @@ export const dataActions = {
     setSlice('characters', [], STORAGE_KEYS.characters)
     setSlice('guides', [], STORAGE_KEYS.guides)
     setSlice('guideNotes', {}, STORAGE_KEYS.guideNotes)
+    setSlice('guideTags', {}, STORAGE_KEYS.guideTags)
     setSlice('pinnedGuides', [], STORAGE_KEYS.pinnedGuides)
     setSlice('priceItems', [], STORAGE_KEYS.priceItems)
     setSlice('priceComments', {}, STORAGE_KEYS.priceComments)
@@ -729,6 +772,12 @@ export function useGuides() {
 export function useGuideNotes() {
   const guideNotes = useSelector((s) => s.guideNotes)
   return { guideNotes, ...guideNoteActions }
+}
+
+/** 攻略标签分片：用户给攻略打的自定义标签（攻略id -> 标签数组）+ 操作 */
+export function useGuideTags() {
+  const guideTags = useSelector((s) => s.guideTags)
+  return { guideTags, ...guideTagActions }
 }
 
 /** 攻略置顶分片：置顶的攻略 id 列表 + 操作 */

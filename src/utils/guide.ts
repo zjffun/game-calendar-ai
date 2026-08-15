@@ -59,7 +59,7 @@ export function parseTags(text: string): string[] {
     .slice(0, 8)
 }
 
-// ── 标题拼音搜索 ────────────────────────────────────────────────────────
+// ── 标题 / 标签拼音搜索 ─────────────────────────────────────────────────
 // 拼音字典约 142KB gzip，按需动态加载：仅当用户输入含拉丁字母（拼音意图）时
 // 才拉取，纯中文搜索的用户不会下载它。见 ensurePinyinLoaded / usePinyinSearch。
 type PinyinFn = typeof import('pinyin-pro').pinyin
@@ -77,34 +77,52 @@ export function ensurePinyinLoaded(): Promise<void> {
   return pinyinLoad
 }
 
-/** 标题拼音缓存：{ full: 全拼, initials: 首字母 }，均为小写、无声调、无分隔 */
-const titlePinyinCache = new Map<string, { full: string; initials: string }>()
+/** 文本拼音缓存：{ full: 全拼, initials: 首字母 }，均为小写、无声调、无分隔 */
+const pinyinCache = new Map<string, { full: string; initials: string }>()
 
 /** 字典未就绪时返回 null（此时跳过拼音匹配，仅中文子串生效） */
-function titlePinyin(title: string): { full: string; initials: string } | null {
+function textPinyin(text: string): { full: string; initials: string } | null {
   if (!pinyinFn) return null
-  let cached = titlePinyinCache.get(title)
+  let cached = pinyinCache.get(text)
   if (!cached) {
-    const full = pinyinFn(title, { toneType: 'none', type: 'array' }).join('').toLowerCase()
-    const initials = pinyinFn(title, { pattern: 'first', toneType: 'none', type: 'array' })
+    const full = pinyinFn(text, { toneType: 'none', type: 'array' }).join('').toLowerCase()
+    const initials = pinyinFn(text, { pattern: 'first', toneType: 'none', type: 'array' })
       .join('')
       .toLowerCase()
     cached = { full, initials }
-    titlePinyinCache.set(title, cached)
+    pinyinCache.set(text, cached)
   }
   return cached
 }
 
+/** 一段文本是否命中查询：中文子串，或全拼 / 首字母子串（拼音字典未就绪时仅前者）。 */
+function textMatches(text: string, q: string): boolean {
+  if (text.toLowerCase().includes(q)) return true
+  const py = textPinyin(text)
+  return !!py && (py.full.includes(q) || py.initials.includes(q))
+}
+
 /**
- * 搜索匹配：仅按标题匹配（不区分大小写），并支持标题拼音——
+ * 单个标签是否命中查询（不区分大小写，支持拼音）。空查询返回 false，
+ * 供搜索列表高亮「因它而命中」的标签用（见 GuideBook 的 renderNavItem）。
+ */
+export function guideTagMatches(tag: string, query: string): boolean {
+  const q = query.trim().toLowerCase()
+  if (!q) return false
+  return textMatches(tag, q)
+}
+
+/**
+ * 搜索匹配：按标题、分类或任一标签匹配（不区分大小写），并支持拼音——
  * 全拼（如「秘境降妖」→ mijingjiangyao）或首字母（→ mjjy）任一子串命中即可。
  * 拼音字典按需加载，未就绪时仅做中文子串匹配（见 ensurePinyinLoaded）。
+ * 分类也纳入匹配：标题里不再冗余重复分类名（如看戏各条只留「一斛珠」），
+ * 搜「看戏」仍能命中整组。标签来自用户自定义标签库（guideTags），由调用方按 id 取出后传入。
  */
-export function guideMatches(entry: GuideEntry, query: string): boolean {
+export function guideMatches(entry: GuideEntry, query: string, tags?: string[]): boolean {
   const q = query.trim().toLowerCase()
   if (!q) return true
-  if (entry.title.toLowerCase().includes(q)) return true
-  const py = titlePinyin(entry.title)
-  if (!py) return false
-  return py.full.includes(q) || py.initials.includes(q)
+  if (textMatches(entry.title, q)) return true
+  if (textMatches(entry.category, q)) return true
+  return !!tags?.some((t) => textMatches(t, q))
 }

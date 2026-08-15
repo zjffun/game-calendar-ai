@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from 'react'
 import type { GuideCategory, GuideEntry, GuideSection } from '../../types'
-import { parseGuideContent, serializeGuideContent, parseTags } from '../../utils/guide'
+import { parseGuideContent, serializeGuideContent } from '../../utils/guide'
 import GuideContentView from './GuideContentView'
 
 const CATEGORIES: GuideCategory[] = ['天命副本', '周六活动', '周日活动', '神器·起', '神器·转', '神器·合', '奇遇', '看戏', '自定义']
@@ -15,7 +15,6 @@ export interface GuideDraft {
   title: string
   category: GuideCategory
   summary?: string
-  tags?: string[]
   sections: GuideSection[]
 }
 
@@ -38,7 +37,6 @@ export default function GuideEditor({ initial, onSave, onCancel }: Props) {
   const [title, setTitle] = useState(initial?.title ?? '')
   const [category, setCategory] = useState<GuideCategory>(initial?.category ?? '自定义')
   const [summary, setSummary] = useState(initial?.summary ?? '')
-  const [tagsText, setTagsText] = useState(initial?.tags?.join(' ') ?? '')
   const [content, setContent] = useState(
     initial ? serializeGuideContent(initial.sections) : '',
   )
@@ -53,7 +51,6 @@ export default function GuideEditor({ initial, onSave, onCancel }: Props) {
       title: title.trim(),
       category,
       summary: summary.trim() || undefined,
-      tags: parseTags(tagsText),
       sections: previewSections,
     })
   }
@@ -105,16 +102,7 @@ export default function GuideEditor({ initial, onSave, onCancel }: Props) {
           onChange={(e) => setSummary(e.target.value)}
           placeholder="一句话定位，显示在标题下方"
         />
-      </div>
-
-      <div className="field">
-        <label>标签（可选，空格 / 逗号分隔）</label>
-        <input
-          className="input"
-          value={tagsText}
-          onChange={(e) => setTagsText(e.target.value)}
-          placeholder="例如 五开 攻略 心得"
-        />
+        <span className="muted small">保存后可在攻略详情页添加标签。</span>
       </div>
 
       <div className="field">

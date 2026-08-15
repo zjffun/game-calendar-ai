@@ -4,7 +4,7 @@
 // 把每个 storageKey 归到一种合并策略：
 //  · itemArray —— 值是「带 id 的对象数组」（待办/副本/角色/攻略/物价/观测）：
 //    按 item id 合并，逐条 last-write-wins + 墓碑（删除也带时间戳，避免被旧数据复活）。
-//  · itemMap   —— 值是「id -> 对象」的 Record（攻略笔记/物价备注）：同上，按键 id 合并。
+//  · itemMap   —— 值是「id -> 对象」的 Record（攻略笔记/攻略标签/物价备注）：同上，按键 id 合并。
 //  · whole     —— 单例值（设置/算价/置顶序/答题区）：不拆条，整块 LWW（在 cloudSync 里
 //    以「本地是否有未同步改动」为准裁决，避免跨端时钟比较）。
 //
@@ -32,6 +32,7 @@ const STRATEGY: Record<string, KeyStrategy> = {
   [STORAGE_KEYS.priceItems]: 'itemArray',
   [STORAGE_KEYS.priceObservations]: 'itemArray',
   [STORAGE_KEYS.guideNotes]: 'itemMap',
+  [STORAGE_KEYS.guideTags]: 'itemMap',
   [STORAGE_KEYS.priceComments]: 'itemMap',
   // 其余（settings/synth/pinnedGuides/quizRegion）落到默认 'whole'
 }

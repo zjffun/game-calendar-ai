@@ -43,3 +43,27 @@
 线上部署在子路径 `/game-calendar-ai/`（GitHub Pages）。SW 注册、`version.json`
 拉取、manifest 的 `start_url`/`scope`/图标全用相对 `./` 或 `import.meta.env.BASE_URL`
 拼接；写死绝对 `/version.json`、`/sw.js` 会解析到站点根而 404（`webUpdate.ts` 曾踩此坑）。
+
+## 云同步（Supabase）
+
+数据按登录用户隔离：一个 storageKey 分片 ⇄ `user_data(user_id, key, value, meta, updated_at)`
+表里的一行（主键 `user_id,key`）。隔离由 **RLS** 保证（`0001_init.sql` 的
+`using/​with check (auth.uid() = user_id)`，且仅授权 `authenticated` 角色）——前端持 anon key
+也只能读写自己的行。未登录 = 纯本地（localStorage / IndexedDB），不上云。
+
+### 新增「参与同步的分片」要同时动 5 处，漏 `SYNCED_KEYS` 会静默不同步
+
+给一个 slice 开启云同步，除了 `src/types.ts` 里 `STORAGE_KEYS` 建键，还必须同步改：
+
+1. `useAppStore.ts` `readAllSlices()` —— 全量拉取合并时要能读到它
+2. `useAppStore.ts` `applyExternalUpdate()` —— 云端 / 它端改动要能落回这个 slice
+3. `syncMerge.ts` `STRATEGY` —— 归为 `itemArray` / `itemMap` / `whole`（决定合并粒度）
+4. `cloudSync.ts` `SYNCED_KEYS` —— **三条同步入口的总闸**：`handleLocalCommit`（上行 outbox）、
+   `pullAndMerge`（全量）、`handleRealtime`（实时下行）都先 `SYNCED_KEYS.includes(key)` 才放行
+
+**坑：** 漏第 4 步最阴 —— slice 照样 `setSlice` 落 localStorage，本地刷新还在、看着像「好了」，
+但三个方向全被闸掉，**永不上云也不下发，且无任何报错**。`guideTags`（攻略标签）就漏过这行、
+静默不同步。
+
+**约定：** `SYNCED_KEYS` 必须与 `readAllSlices` / `applyExternalUpdate` 覆盖一致（该数组上方注释即此意）；
+新增 / 改动同步分片后，对着这 4 处逐条核一遍。

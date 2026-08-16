@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNow } from './hooks/useNow'
-import { formatClock, formatCountdown, getNextReset, WEEKDAY_LABELS } from './utils/time'
+import {
+  formatClock,
+  formatCountdown,
+  formatMmSs,
+  getMhxyDayNight,
+  getNextReset,
+  WEEKDAY_LABELS,
+} from './utils/time'
 import { useSettings } from './store/useAppStore'
 import { initAuth, useAuth } from './store/authStore'
 import { syncQuizForUser, useQuizCloud } from './store/quizStore'
@@ -36,26 +43,47 @@ function SideClock() {
   const pad = (n: number) => (n < 10 ? `0${n}` : String(n))
   const weekday = WEEKDAY_LABELS[d.getDay() === 0 ? 7 : d.getDay()]
   const resetLeft = getNextReset('daily', now, settings) - now
+  const { phase, msToNext } = getMhxyDayNight(now)
+  const isDay = phase === 'day'
   return (
     <div className="side-clock">
-      <span className="side-clock-time">
-        {pad(d.getHours())}:{pad(d.getMinutes())}
-      </span>
+      <div className="side-clock-top">
+        <span className="side-clock-time">
+          {pad(d.getHours())}:{pad(d.getMinutes())}
+        </span>
+        <span className={`daynight-badge ${isDay ? 'is-day' : 'is-night'}`}>
+          <Icon name={isDay ? 'sun' : 'moon'} size={13} />
+          {isDay ? '白天' : '夜晚'}
+          <span className="daynight-count">{formatMmSs(msToNext)}</span>
+        </span>
+      </div>
       <span className="side-clock-date">
         {d.getMonth() + 1} 月 {d.getDate()} 日 · {weekday}
       </span>
-      <span className="side-clock-reset">
-        距每日刷新
-        <span className="countdown">{formatCountdown(resetLeft, '即将刷新')}</span>
-      </span>
+      <div className="side-clock-stats">
+        <div className="side-clock-stat">
+          <span>距每日刷新</span>
+          <span className="countdown">{formatCountdown(resetLeft, '即将刷新')}</span>
+        </div>
+      </div>
     </div>
   )
 }
 
-/** 移动端顶栏时钟（只显示 HH:MM） */
+/** 移动端顶栏时钟（HH:MM + 昼夜切换倒计时） */
 function MobileClock() {
   const now = useNow(1000)
-  return <span className="mobile-clock">{formatClock(now).slice(-5)}</span>
+  const { phase, msToNext } = getMhxyDayNight(now)
+  const isDay = phase === 'day'
+  return (
+    <span className="mobile-clock">
+      {formatClock(now).slice(-5)}
+      <span className={`mobile-daynight ${isDay ? 'is-day' : 'is-night'}`}>
+        <Icon name={isDay ? 'sun' : 'moon'} size={12} />
+        {formatMmSs(msToNext)}
+      </span>
+    </span>
+  )
 }
 
 export default function App() {

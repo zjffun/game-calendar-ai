@@ -132,7 +132,13 @@
   background: var(--surface);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+}
+.side-clock-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 .side-clock-time {
   font-size: 20px;
@@ -146,18 +152,50 @@
   font-size: 11.5px;
   color: var(--ink-3);
 }
-.side-clock-reset {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
+
+/* 昼夜徽标（时间旁）：图标 + 昼夜 + 切换倒计时，同处一枚胶囊 */
+.daynight-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
   font-size: 11.5px;
-  color: var(--ink-3);
-  margin-top: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.daynight-badge.is-day {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.daynight-badge.is-night {
+  color: var(--ink-2);
+  background: var(--surface-2);
+}
+.daynight-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+/* 倒计时行（昼夜切换 + 每日刷新） */
+.side-clock-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 5px;
   padding-top: 6px;
   border-top: 1px solid var(--line);
 }
-.side-clock-reset .countdown {
+.side-clock-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+.side-clock-stat .countdown {
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-2);
 }
 
@@ -230,10 +268,24 @@
   min-width: 0;
 }
 .mobile-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--ink-2);
+}
+.mobile-daynight {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+.mobile-daynight.is-day {
+  color: var(--warn);
 }
 .mobile-settings-btn {
   display: inline-flex;

@@ -212,6 +212,53 @@ export function formatCountdown(ms: number, fallback = '00:00:00'): string {
   return days > 0 ? `${days}天 ${hms}` : hms
 }
 
+/** 分:秒 倒计时，例如 '12:05'（用于 <1 小时的短倒计时，如昼夜切换） */
+export function formatMmSs(ms: number): string {
+  if (ms <= 0) return '00:00'
+  const { hours, minutes, seconds } = breakdownDuration(ms)
+  return `${pad2(hours * 60 + minutes)}:${pad2(seconds)}`
+}
+
+// ----------------------------------------------------------------------------
+// 梦幻西游（电脑版）昼夜循环
+// 游戏一天 = 现实 30 分钟，12 时辰各 2 分 30 秒，从现实整点起依「子丑寅卯辰巳午未申
+// 酉戌亥」排列并每半小时重复一轮。白天 = 辰巳午未申酉（第 4–9 个时辰），落在每个
+// 30 分钟周期的第 10–25 分钟；其余（戌亥子丑寅卯）为黑夜。
+// 即现实每小时 :10–:25、:40–:55 为白天，:25–:40、:55–:10 为黑夜。
+// ----------------------------------------------------------------------------
+
+export type DayPhase = 'day' | 'night'
+
+export interface DayNightState {
+  /** 当前处于白天还是黑夜 */
+  phase: DayPhase
+  /** 距离切换到「另一种」状态的剩余毫秒（总是 (0, 15 分钟]） */
+  msToNext: number
+}
+
+const DAYNIGHT_CYCLE = 30 * MS_PER_MINUTE
+const DAY_START = 10 * MS_PER_MINUTE // 辰时起：周期内第 10 分钟转白天
+const DAY_END = 25 * MS_PER_MINUTE // 酉时末：周期内第 25 分钟转黑夜
+
+/** 依现实时钟计算梦幻西游当前昼夜与距下次切换的剩余时间 */
+export function getMhxyDayNight(now: number): DayNightState {
+  const d = new Date(now)
+  // 当前时刻在 30 分钟周期内的偏移（现实整点、半点各为一轮起点）
+  const msInCycle =
+    ((d.getMinutes() % 30) * 60 + d.getSeconds()) * 1000 + d.getMilliseconds()
+  const isDay = msInCycle >= DAY_START && msInCycle < DAY_END
+  let msToNext: number
+  if (isDay) {
+    msToNext = DAY_END - msInCycle
+  } else if (msInCycle < DAY_START) {
+    msToNext = DAY_START - msInCycle
+  } else {
+    // 已过 DAY_END：跨到下一轮的白天起点
+    msToNext = DAYNIGHT_CYCLE - msInCycle + DAY_START
+  }
+  return { phase: isDay ? 'day' : 'night', msToNext }
+}
+
 /** 中文友好的剩余时间，例如 '2 天 3 小时'、'15 分钟'、'即将到来' */
 export function formatRemainingHuman(ms: number): string {
   if (ms <= 0) return '已到期'

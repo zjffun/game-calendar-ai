@@ -15,7 +15,7 @@
 import { useSyncExternalStore } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isCloudConfigured } from './supabase'
-import { startCloudSync, stopCloudSync, clearSyncMeta, type SyncStatus } from './cloudSync'
+import { startCloudSync, stopCloudSync, type SyncStatus } from './cloudSync'
 
 export type AuthStatus = 'unconfigured' | 'loading' | 'signedOut' | 'signedIn'
 export type OAuthProvider = 'github' | 'google'
@@ -157,7 +157,8 @@ export const authActions = {
     if (!supabase) return { ok: false, message: '未配置云同步。' }
     const { error } = await supabase.auth.signOut()
     if (error) return { ok: false, message: friendlyError(error.message) }
-    clearSyncMeta()
+    // 不清同步簿记：保留 itemMeta 的真实时间戳 + 未上行的 outbox，避免下次登录被 ensureBackfill
+    // 回填覆盖、以及丢掉离线改动。换账号的隔离由 startCloudSync 的 owner 判断负责。
     return { ok: true }
   },
 }

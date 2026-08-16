@@ -72,3 +72,22 @@
 `KEY_LABELS`（行的标签，兼日志友好名）/ `valueByKey`（条目计数与展开）/ `itemName`
 （逐条名字回查）三处补上。纯展示，漏了不影响同步本身，只是面板不列该分片、日志里显原始
 storageKey（`guideTags` 就漏过这三处）。
+
+### item 级回填基准 u 必须是 0，别用 now；登出别清 itemMeta
+
+集合类分片（itemArray / itemMap）用 per-item 时间戳 `{u,d}` 做 last-write-wins。当某分片本地
+**没有 itemMeta**（首次迁移 / 清站点数据 / 换 origin 如 localhost / 换设备 / 登出清过），
+`cloudSync.ts` 的 `ensureBackfill` 会给现存条目回填一个基准 `u`。
+
+**坑（真出过事，物价整片被冲空）：** 若基准用 `now`，「刚 seed 出来的空值 / 陈旧本地数据」
+就带上了比云端真实改价时刻还新的时间戳，pull 合并时**反杀云端**、把好数据整片覆盖，且**静默**
+（看着像同步成功）。取证：SQL 里 `user_data` 那行的 `meta` 会出现**大批条目共享同一秒的 `u`**
+（= 某次打开 App 的时刻）——批量同刻就是回填覆盖的指纹，正常改价是逐条不同刻。
+
+**约定：**
+- `ensureBackfill` 回填基准恒为 **`0`**（最古）：未打时间戳的本地条目一律认输于云端（`0 < 真实ms`），
+  但仍压过「云端压根没有」（`0 > 缺席的 -1`，本地独有数据照常上行、不丢）。真正的用户改动走
+  `diffMeta` 打 `u=now`，不受影响。给**远端**行回填仍用真实 `updated_at`（`pull`/`handleRealtime`），别动。
+- **登出（同账号）不清 itemMeta / outbox**：清了会丢每条真实时间戳、逼下次登录回填，还会丢离线改动。
+  换账号的隔离由 `startCloudSync` 的 `owner !== userId → resetSyncStore` 兜底，别靠登出清。
+- 改动合并 / 回填逻辑后跑 `pnpm test:sync`（`scripts/test-sync-merge.mjs`，含「基准 now 会复现覆盖」对照）。

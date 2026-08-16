@@ -51,6 +51,15 @@ grant select, insert, update, delete on public.user_images to authenticated;
 -- 说明：updated_at 由客户端在每次 upsert 时显式写入（用于「最后写入胜出」的合并
 -- 与 Realtime 回声过滤），故此处不加自动刷新触发器，以免覆盖客户端时间戳。
 
--- （可选）开启 Realtime 多设备实时下行：把文本表加入 supabase_realtime 发布。
--- 不执行也不影响使用；执行后其它设备的文本改动会实时同步过来（图片仍在登录/刷新时拉取）。
--- alter publication supabase_realtime add table public.user_data;
+-- ---- 开启 Realtime 多设备实时下行：把文本表加入 supabase_realtime 发布 ----
+-- 其它设备的文本改动会实时下行、逐条合并（图片仍在登录/刷新时拉取）。客户端订阅早已就绪
+-- （cloudSync.subscribeRealtime），未发布时静默不生效。幂等：已加入则跳过，可安全重复执行。
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'user_data'
+  ) then
+    alter publication supabase_realtime add table public.user_data;
+  end if;
+end $$;

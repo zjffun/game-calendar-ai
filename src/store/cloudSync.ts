@@ -148,9 +148,8 @@ export async function startCloudSync(userId: string, onStatus: StatusCb): Promis
   currentUserId = userId
   statusCb = onStatus
 
-  const now = Date.now()
   initLastSeen()
-  ensureBackfill(now)
+  ensureBackfill()
 
   setStatus('syncing')
   let ok = true
@@ -203,22 +202,31 @@ function teardown() {
   removeGlobalListeners()
 }
 
-/** 登出：清空同步簿记（含 outbox），业务数据仍留在本地，下次登录重新合并。 */
-export function clearSyncMeta(): void {
-  ss.resetSyncStore()
-}
+// 说明：登出【不再】清空同步簿记（itemMeta / outbox）。清空会丢掉每条的真实时间戳，逼下次
+// 登录用 ensureBackfill 回填——正是数据被覆盖的根因之一；且清 outbox 会丢未上行的离线改动。
+// 换账号的隔离由 startCloudSync 里的 owner 判断兜底（owner !== userId → resetSyncStore）。
 
 function initLastSeen() {
   lastSeen.clear()
   for (const { key, value } of readAllSlices()) lastSeen.set(key, value)
 }
 
-/** 首次启用新同步时，给已存在的本地 item 回填一个基准 u（避免被当成「远古数据」误判）。 */
-function ensureBackfill(now: number) {
+/**
+ * 首次启用同步 / itemMeta 被清空（换账号、清站点数据、换 origin 如 localhost）时，给已存在
+ * 的本地 item 回填 per-item 元数据——基准 u 必须取「最古」的 0，绝不能用 now。
+ *
+ * 曾经的数据丢失根因就在这：用 now 会让「刚 seed 出来的空值 / 陈旧本地数据」带上比云端真实
+ * 改价时刻还新的时间戳，pull 合并（mergeItemKey 的 per-item LWW）时反杀云端、把好数据整片
+ * 冲成空。基准取 0 后，本地未打过时间戳的条目一律认输：
+ *  · 云端存在该条目（带真实 u，或由 updated_at 回填）→ 0 < 真实ms → 云端胜（好数据不再被覆盖）；
+ *  · 云端没有该条目（缺席方 rTs=-1）→ 0 > -1 → 本地仍胜，本地独有数据照常上行、不丢。
+ * 真正的用户改价走 handleLocalCommit→diffMeta，会打上 u=now，不受此基准影响、正常胜出。
+ */
+function ensureBackfill() {
   for (const { key, value } of readAllSlices()) {
     if (!isItemKey(key)) continue
     if (Object.keys(ss.getItemMeta(key)).length > 0) continue
-    const bf = backfillMeta(key, value, now)
+    const bf = backfillMeta(key, value, 0)
     if (Object.keys(bf).length > 0) ss.setItemMeta(key, bf)
   }
 }
@@ -534,11 +542,30 @@ async function flushImages(): Promise<void> {
 // 触发器：online / 页面可见 / 定时重试
 // ---------------------------------------------------------------------------
 
+/**
+ * 重连类触发（online / 页面可见 / 定时重试）先 pull 再 flush（改法 1）：
+ * outbox 里可能是「陈旧 / 空」的整片数组，盲推会盖掉云端他端的并发改动。先 pull 会把 outbox
+ * 重建成「云端好数据 + 本地编辑」的合并值（见 pull 的 item 分支 outboxSet），再推就不会误盖。
+ * realtime 只推重连之后的变更、不补断线缺口，这个回补只能靠 pull。无待上行文本项时跳过 pull
+ * ——避免每次切回标签页都全量拉一次。
+ */
+async function reconcileAndFlush(): Promise<void> {
+  if (!navigator.onLine || currentUserId == null) return
+  if (ss.getSyncInfoSnapshot().pendingCount > 0) {
+    try {
+      await pull(currentUserId)
+    } catch (err) {
+      console.warn('[cloudSync] 重连前 pull 合并失败，仍尝试送出 outbox', err)
+    }
+  }
+  await flushOutbox()
+}
+
 function onOnline() {
-  void flushOutbox()
+  void reconcileAndFlush()
 }
 function onVisibility() {
-  if (document.visibilityState === 'visible') void flushOutbox()
+  if (document.visibilityState === 'visible') void reconcileAndFlush()
 }
 function installGlobalListeners() {
   window.addEventListener('online', onOnline)
@@ -552,7 +579,7 @@ function startRetryTimer() {
   stopRetryTimer()
   retryTimer = window.setInterval(() => {
     const snap = ss.getSyncInfoSnapshot()
-    if ((snap.pendingCount > 0 || snap.imagePending > 0) && navigator.onLine) void flushOutbox()
+    if ((snap.pendingCount > 0 || snap.imagePending > 0) && navigator.onLine) void reconcileAndFlush()
   }, RETRY_MS)
 }
 function stopRetryTimer() {

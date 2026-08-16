@@ -334,8 +334,12 @@
 .guide-figure img {
   display: block;
   cursor: zoom-in;
-  max-width: 100%;
-  max-height: 460px;
+  /* 按宽度封顶：不超过列宽、也不超过 600px，高度随宽等比自适应。用 max-width（配
+     min(100%,600px)）而非 max-height —— 按宽限制天生等比、不会压扁，也不像 max-height
+     那样受视口高度影响（手机横屏时 vh 会变很小而把图压窄）。故不再需要按视口高度的
+     媒体查询。需看大图可点开灯箱。 */
+  max-width: min(100%, 600px);
+  height: auto;
   /* 未加载时给出占位高度：否则 loading="lazy" 的图会塌成 2×2，
      浏览器判定其不在视口附近而永远不触发加载。 */
   min-height: 200px;
@@ -607,9 +611,13 @@
   color: var(--accent);
 }
 .md-img {
+  display: block;
   cursor: zoom-in;
-  max-width: 100%;
-  max-height: 480px;
+  /* 宽度封顶同 .guide-figure（min(100%,600px)、等比、不受视口高度影响）。「我的补充」
+     是用户手贴的任意尺寸图：用 max-width 让小图保持原尺寸不放大，大图/竖图缩到
+     列宽（或 600px）、按原比例出高。需看大图可点开灯箱。 */
+  max-width: min(100%, 600px);
+  height: auto;
   border-radius: var(--radius-sm);
   border: 1px solid var(--line);
 }
@@ -624,22 +632,13 @@
 
 /* ---------- 响应式 ---------- */
 
-/* 平板（721–860px）：仍是左右两栏，但上有 sticky 顶栏、下有固定 tab bar
-   （均见 App.css，≤860px 显示：.mobile-topbar 约 55px 高、.mobile-nav 约 62px 高）。
-   基础规则用 top:16px + max-height:calc(100vh - 32px)，两条都没算这两根栏 ——
-   sticky 侧栏 pin 后顶部钻到半透明顶栏之下（搜索框被盖），底部又伸到 tab bar 之后
-   （末尾条目被盖）。这里把 sticky 顶缘压到顶栏之下、并从可用高度里扣掉顶栏+底栏，
-   让侧栏干净地卡在两栏之间（两端各留约 12px 间距；栏高改动时同步这里的常量）。 */
-@media (min-width: 721px) and (max-width: 860px) {
-  .guide-sidebar {
-    top: 67px; /* 顶栏 55 + 间距 12 */
-    max-height: calc(100vh - 141px - env(safe-area-inset-bottom)); /* 顶 67 + 底栏 62 + 间距 12 */
-  }
-}
+/* ---------- 平板 / 窄屏改为上下布局 ---------- */
 
-/* ---------- 窄屏改为上下布局 ---------- */
-
-@media (max-width: 720px) {
+/* 断点对齐 App 自身的移动端断点（≤860px 切顶栏 + 底部 tab、隐藏桌面侧栏，见 App.css）。
+   否则 iPad 竖屏（768–834px）会卡在「248px 侧栏 + 主区」并排里，把正文/编辑器挤到约
+   440px（俗称「很窄」）。改上下布局后侧栏整条置顶、正文吃满整宽；且此时侧栏
+   position:static，不再被 sticky 顶栏 / tab bar 遮挡，无需原来的 721–860 微调。 */
+@media (max-width: 860px) {
   .guide-layout {
     flex-direction: column;
   }
@@ -648,6 +647,11 @@
     width: 100%;
     position: static;
     max-height: 320px;
+  }
+  /* 上下布局下 .guide-layout 仍是 align-items:flex-start，主区作为交叉轴 flex item
+     会缩到内容宽；显式撑满，否则正文/编辑器仍只占约 440px（就是「很窄」的直接元凶）。 */
+  .guide-main {
+    width: 100%;
   }
   .guide-editor-grid {
     grid-template-columns: 1fr;

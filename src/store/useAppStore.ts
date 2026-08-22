@@ -799,6 +799,12 @@ export const dataActions = {
     setSlice('priceComments', {}, STORAGE_KEYS.priceComments)
     setSlice('priceObservations', [], STORAGE_KEYS.priceObservations)
     setSlice('synth', { ...DEFAULT_SYNTH_INPUTS }, STORAGE_KEYS.synth)
+    // 「最近浏览的攻略」不是分片（纯本机阅读位置，不上云），清空时单独抹掉
+    try {
+      localStorage.removeItem(STORAGE_KEYS.lastGuide)
+    } catch {
+      /* 读不到 localStorage 时无所谓，留着一个失效 id 也会自愈 */
+    }
     await clearImages().catch(() => {})
   },
 }

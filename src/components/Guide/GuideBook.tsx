@@ -8,8 +8,8 @@
 // - 内置攻略正文只读，但可在详情下方「我的补充」追加自定义 Markdown 内容。
 // ============================================================================
 
-import { useEffect, useMemo, useState } from 'react'
-import type { GuideCategory, GuideEntry } from '../../types'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { STORAGE_KEYS, type GuideCategory, type GuideEntry } from '../../types'
 import {
   useGuides,
   useGuideNotes,
@@ -55,6 +55,27 @@ function writeGuideParam(id: string | null): void {
   window.history.replaceState(null, '', url)
 }
 
+/**
+ * 最近浏览的攻略 id 另存一份在本地：切到别的 tab 时 App 会清掉 ?guide= 参数
+ * （免得在其它页刷新又被拉回攻略页），回到攻略页就只能靠它复位。
+ * 刻意不上云——这是本机的阅读位置，同步过去只会让另一台设备莫名跳走。
+ */
+function readLastGuideId(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.lastGuide)
+  } catch {
+    return null
+  }
+}
+
+function writeLastGuideId(id: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.lastGuide, id)
+  } catch {
+    /* 隐私模式 / 配额满：记不住而已，不影响使用 */
+  }
+}
+
 /** 自定义攻略按 order 升序（无 order 排后） */
 function byOrder(a: GuideEntry, b: GuideEntry): number {
   return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
@@ -69,11 +90,18 @@ export default function GuideBook() {
   const [query, setQuery] = useState('')
   // 拼音字典是否就绪；就绪后重算分组，让拼音匹配生效
   const [pinyinReady, setPinyinReady] = useState(false)
-  // 初始选中优先取 URL 参数（刷新后恢复上次查看的攻略）
-  const [selectedId, setSelectedId] = useState<string | null>(() => readGuideParam())
+  // 初始选中：先看 URL 参数（带 ?guide= 刷新），没有则回到本地记的「最近浏览」
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () => readGuideParam() ?? readLastGuideId(),
+  )
   const [mode, setMode] = useState<Mode>('view')
-  // 窄屏：默认展开搜索+列表；选中攻略后把搜索区收成一个图标（桌面端此状态无视觉影响）
-  const [navCollapsed, setNavCollapsed] = useState(false)
+  // 窄屏：默认展开搜索+列表；选中攻略后把搜索区收成一个图标（桌面端此状态无视觉影响）。
+  // 已恢复出「最近浏览」时直接进收起态：窄屏一回来就落在正文上，而不是先看一遍列表
+  const [navCollapsed, setNavCollapsed] = useState(() => selectedId !== null)
+  // 侧栏滚动容器 / 吸顶搜索区 / 当前选中项——用于把选中项滚进可视区
+  const sidebarRef = useRef<HTMLElement | null>(null)
+  const toolsRef = useRef<HTMLDivElement | null>(null)
+  const activeItemRef = useRef<HTMLButtonElement | null>(null)
 
   // 全部攻略（内置在前、自定义在后）——用于按 id 查找
   const allEntries = useMemo<GuideEntry[]>(
@@ -129,10 +157,34 @@ export default function GuideBook() {
   const activeEntry =
     visibleFlat.find((e) => e.id === selectedId) ?? visibleFlat[0] ?? null
 
-  // 地址栏始终反映当前查看的攻略（含默认第一条 / URL 中失效 id 的自愈）
+  // 地址栏 + 本地记录始终反映当前查看的攻略（含默认第一条 / 失效 id 的自愈）
   useEffect(() => {
     writeGuideParam(activeEntry?.id ?? null)
-  }, [activeEntry?.id])
+    // 搜索把列表滤空时 activeEntry 为 null，此时保留上次记录，别把「最近浏览」抹掉
+    if (activeEntry) writeLastGuideId(activeEntry.id)
+  }, [activeEntry?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 侧边列表滚动到当前攻略：恢复选中后它常在首屏之外，不滚过去就「看不见选中在哪」。
+  // 只动侧栏自身的 scrollTop（不用 scrollIntoView，免得连带把整页滚走），
+  // 且要扣掉吸顶的搜索区高度，否则条目会被压在搜索框底下。
+  useLayoutEffect(() => {
+    const el = activeItemRef.current
+    const box = sidebarRef.current
+    if (!el || !box || box.clientHeight === 0) return // 窄屏收起态侧栏 display:none
+    const boxRect = box.getBoundingClientRect()
+    const elRect = el.getBoundingClientRect()
+    const headH = toolsRef.current?.getBoundingClientRect().height ?? 0
+    // 可视区取「侧栏 ∩ 视口」：页面在顶部时 sticky 侧栏比剩余视口还高，
+    // 只按侧栏自身算会把条目停在屏幕外（看着像没定位）
+    const viewTop = Math.max(boxRect.top + headH, 0)
+    const viewBottom = Math.min(boxRect.bottom, window.innerHeight)
+    const overTop = elRect.top - viewTop - 8
+    const overBottom = elRect.bottom - viewBottom + 8
+    if (overTop < 0) box.scrollTop += overTop
+    else if (overBottom > 0) box.scrollTop += overBottom
+    // 依赖里除了选中项，还带上 navCollapsed（窄屏点「攻略列表」重新展开）与 visibleFlat
+    // （搜索过滤 / 清空搜索让列表重排，选中项位置变了但 id 没变）——这两种情况同样要复位
+  }, [activeEntry?.id, mode, navCollapsed, visibleFlat])
 
   const presetCount = GUIDE_PRESETS.length
   const customCount = customGuides.length
@@ -169,6 +221,7 @@ export default function GuideBook() {
     return (
       <li key={entry.id}>
         <button
+          ref={active ? activeItemRef : undefined}
           className={`guide-nav-item${active ? ' active' : ''}`}
           onClick={() => select(entry.id)}
         >
@@ -226,8 +279,8 @@ export default function GuideBook() {
         </button>
 
         {/* 侧边栏：分类 + 攻略导航 */}
-        <aside className="guide-sidebar">
-          <div className="guide-side-tools">
+        <aside className="guide-sidebar" ref={sidebarRef}>
+          <div className="guide-side-tools" ref={toolsRef}>
             <div className="guide-search-wrap">
               <Icon name="search" size={14} className="guide-search-icon" />
               <input

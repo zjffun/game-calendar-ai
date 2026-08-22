@@ -328,6 +328,11 @@ export const STORAGE_KEYS = {
   guideRuns: 'mhxy.guideRuns.v1',
   /** 置顶的攻略 id 列表（内置/自定义均可，按置顶顺序，最新在前） */
   pinnedGuides: 'mhxy.pinnedGuides.v1',
+  /**
+   * 最近浏览的攻略 id（刷新 / 切走再回攻略页时复位到它）。
+   * 刻意「不」参与云同步：这是本机的阅读位置，同步过去只会让另一台设备莫名跳走。
+   */
+  lastGuide: 'mhxy.lastGuide.v1',
   /** 用户自定义物价条目（内置参考条目来自代码，不入库） */
   priceItems: 'mhxy.priceItems.v1',
   /** 物价条目的用户备注（物品id -> 备注） */

@@ -212,6 +212,17 @@ export function formatCountdown(ms: number, fallback = '00:00:00'): string {
   return days > 0 ? `${days}天 ${hms}` : hms
 }
 
+/**
+ * 正向计时/用时文本，例如 '07:42'（不足 1 小时）、'1:05:20'、'1天 2:03:04'。
+ * 与 formatCountdown 的区别：不补前导「00:」小时位，读秒更紧凑（攻略计时用）。
+ */
+export function formatElapsed(ms: number): string {
+  const { days, hours, minutes, seconds } = breakdownDuration(Math.max(0, ms))
+  const mmss = `${pad2(minutes)}:${pad2(seconds)}`
+  if (days > 0) return `${days}天 ${hours}:${mmss}`
+  return hours > 0 ? `${hours}:${mmss}` : mmss
+}
+
 /** 分:秒 倒计时，例如 '12:05'（用于 <1 小时的短倒计时，如昼夜切换） */
 export function formatMmSs(ms: number): string {
   if (ms <= 0) return '00:00'

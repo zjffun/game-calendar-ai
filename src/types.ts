@@ -68,6 +68,8 @@ export interface PresetTodo {
  * 攻略分类。内置类对应梦幻西游电脑版的副本、神器（按起/转/合分三组）、奇遇、看戏；
  * '自定义' 用于用户自行添加、展示在侧边的内容。
  * 神器拆成「神器·起 / 神器·转 / 神器·合」三组，让侧边导航更清晰。
+ * 看戏（如梦奇谭）同理拆成「看戏」= 如梦前尘 9 折（老看戏）与「新看戏」=
+ * 凤啸龙吟 6 折 + 终章无相菩提；两组开本方式一致，但难度与机制差别大，分开更好找。
  */
 export type GuideCategory =
   | '天命副本'
@@ -78,6 +80,7 @@ export type GuideCategory =
   | '神器·合'
   | '奇遇'
   | '看戏'
+  | '新看戏'
   | '自定义'
   /**
    * 旧版「神器」总分类，已按起/转/合拆分；「副本」总分类已更名为「天命副本」。
@@ -140,6 +143,33 @@ export interface GuideNote {
   markdown: string
   /** 最近更新时间（epoch 毫秒） */
   updatedAt: number
+}
+
+/**
+ * 一次「计时」记录：从点「开始」到点「结束」之间的真实用时。
+ * 周六/周日活动是固定开放时段的玩法，不计时，故这类攻略不展示计时器。
+ */
+export interface GuideRun {
+  id: string
+  /** 开始时刻（epoch 毫秒） */
+  startedAt: number
+  /** 结束时刻（epoch 毫秒） */
+  endedAt: number
+  /** 用时（毫秒）= endedAt - startedAt，冗余存一份便于统计 */
+  durationMs: number
+}
+
+/**
+ * 某条攻略的计时数据，以攻略 id 为键存储（Record<攻略id, GuideRunLog>）。
+ * - running 存「正在计时的开始时刻」而不是已走秒数：刷新页面、切换标签页、
+ *   甚至换设备（走云同步）后重新进来，都还能算出正确的已用时间；
+ * - runs 为历史记录，最新在前，超出上限的旧记录会被丢弃。
+ */
+export interface GuideRunLog {
+  /** 正在计时中的开始时刻（epoch 毫秒）；未在计时则省略 */
+  running?: number
+  /** 已完成的计时记录，最新在前 */
+  runs: GuideRun[]
 }
 
 // ----------------------------------------------------------------------------
@@ -294,6 +324,8 @@ export const STORAGE_KEYS = {
   guideNotes: 'mhxy.guideNotes.v1',
   /** 用户给攻略打的自定义标签（攻略id -> 标签数组；内置/自定义均可） */
   guideTags: 'mhxy.guideTags.v1',
+  /** 攻略计时记录（攻略id -> { 计时中开始时刻, 历史用时记录 }） */
+  guideRuns: 'mhxy.guideRuns.v1',
   /** 置顶的攻略 id 列表（内置/自定义均可，按置顶顺序，最新在前） */
   pinnedGuides: 'mhxy.pinnedGuides.v1',
   /** 用户自定义物价条目（内置参考条目来自代码，不入库） */

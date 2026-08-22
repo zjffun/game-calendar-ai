@@ -33,6 +33,7 @@ const KEY_LABELS: { key: string; label: string }[] = [
   { key: STORAGE_KEYS.guides, label: '自定义攻略' },
   { key: STORAGE_KEYS.guideNotes, label: '攻略笔记' },
   { key: STORAGE_KEYS.guideTags, label: '攻略标签' },
+  { key: STORAGE_KEYS.guideRuns, label: '攻略计时' },
   { key: STORAGE_KEYS.pinnedGuides, label: '置顶攻略' },
   { key: STORAGE_KEYS.priceItems, label: '物价条目' },
   { key: STORAGE_KEYS.priceComments, label: '物价备注' },
@@ -122,6 +123,7 @@ export default function SyncDetailsPanel() {
     [STORAGE_KEYS.guides]: state.guides,
     [STORAGE_KEYS.guideNotes]: state.guideNotes,
     [STORAGE_KEYS.guideTags]: state.guideTags,
+    [STORAGE_KEYS.guideRuns]: state.guideRuns,
     [STORAGE_KEYS.pinnedGuides]: state.pinnedGuides,
     [STORAGE_KEYS.priceItems]: state.priceItems,
     [STORAGE_KEYS.priceComments]: state.priceComments,
@@ -151,6 +153,8 @@ export default function SyncDetailsPanel() {
         return guideTitle.get(id) ?? '（笔记）'
       case STORAGE_KEYS.guideTags:
         return guideTitle.get(id) ?? '（标签）'
+      case STORAGE_KEYS.guideRuns:
+        return guideTitle.get(id) ?? '（计时）'
       case STORAGE_KEYS.priceComments:
         return priceName.get(id) ?? '（备注）'
       default:

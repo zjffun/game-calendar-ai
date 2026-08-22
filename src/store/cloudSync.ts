@@ -62,6 +62,7 @@ const SYNCED_KEYS: readonly string[] = [
   STORAGE_KEYS.guides,
   STORAGE_KEYS.guideNotes,
   STORAGE_KEYS.guideTags,
+  STORAGE_KEYS.guideRuns,
   STORAGE_KEYS.pinnedGuides,
   STORAGE_KEYS.priceItems,
   STORAGE_KEYS.priceComments,

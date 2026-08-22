@@ -9,13 +9,20 @@
 // ============================================================================
 
 import { useEffect, useMemo, useState } from 'react'
-import type { GuideEntry } from '../../types'
-import { useGuides, useGuideNotes, useGuideTags, usePinnedGuides } from '../../store/useAppStore'
+import type { GuideCategory, GuideEntry } from '../../types'
+import {
+  useGuides,
+  useGuideNotes,
+  useGuideTags,
+  usePinnedGuides,
+  useGuideRuns,
+} from '../../store/useAppStore'
 import { GUIDE_PRESETS, GUIDE_CATEGORY_META } from '../../data/guides'
 import { guideMatches, guideTagMatches, ensurePinyinLoaded } from '../../utils/guide'
 import GuideContentView from './GuideContentView'
 import GuideEditor, { type GuideDraft } from './GuideEditor'
 import GuideNotes from './GuideNotes'
+import GuideTimer from './GuideTimer'
 import GuideTagEditor from './GuideTagEditor'
 import { appConfirm } from '../common/ConfirmDialog'
 import { openImageLightbox } from '../common/ImageLightbox'
@@ -23,6 +30,12 @@ import Icon from '../common/Icon'
 import './Guide.css'
 
 type Mode = 'view' | 'add' | 'edit'
+
+/**
+ * 不展示计时器的分类：周六/周日活动是固定开放时段的玩法（按点开、按点结束），
+ * 记「自己用了多久」没有意义，故这两类攻略不出现「开始/结束」。
+ */
+const NO_TIMER_CATEGORIES: readonly GuideCategory[] = ['周六活动', '周日活动']
 
 /** 当前查看的攻略记录在 URL 查询参数里，刷新后可恢复（App 见到该参数会打开攻略页） */
 export const GUIDE_URL_PARAM = 'guide'
@@ -52,6 +65,7 @@ export default function GuideBook() {
   const { guideNotes } = useGuideNotes()
   const { guideTags } = useGuideTags()
   const { pinnedGuides, togglePin } = usePinnedGuides()
+  const { guideRuns } = useGuideRuns()
   const [query, setQuery] = useState('')
   // 拼音字典是否就绪；就绪后重算分组，让拼音匹配生效
   const [pinyinReady, setPinyinReady] = useState(false)
@@ -163,6 +177,11 @@ export default function GuideBook() {
             {entry.preset && guideNotes[entry.id] && (
               <span className="guide-nav-note" title="已补充自定义内容" aria-hidden />
             )}
+            {guideRuns[entry.id]?.running && (
+              <span className="guide-nav-timing" title="计时中">
+                <Icon name="clock" size={11} />
+              </span>
+            )}
             {!entry.preset && <span className="guide-nav-tag">自定义</span>}
           </span>
           {tags && tags.length > 0 && (
@@ -217,6 +236,16 @@ export default function GuideBook() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="搜索标题 / 标签…"
               />
+              {query && (
+                <button
+                  type="button"
+                  className="guide-search-clear"
+                  aria-label="清空"
+                  onClick={() => setQuery('')}
+                >
+                  <Icon name="x" size={14} />
+                </button>
+              )}
             </div>
             <button
               className="btn btn-tonal btn-sm guide-add-btn"
@@ -276,6 +305,8 @@ export default function GuideBook() {
                     )}
                   </div>
                   <h3 className="guide-detail-title">{activeEntry.title}</h3>
+                  {/* 摘要按纯文本直出（不过 Markdown）：这是一行定位语，
+                      渲染块级语法会撑坏头部布局。要富文本请写进正文 sections */}
                   {activeEntry.summary && (
                     <p className="muted guide-detail-summary">{activeEntry.summary}</p>
                   )}
@@ -317,6 +348,10 @@ export default function GuideBook() {
               <div className="guide-detail-tags">
                 <GuideTagEditor key={activeEntry.id} guideId={activeEntry.id} />
               </div>
+
+              {!NO_TIMER_CATEGORIES.includes(activeEntry.category) && (
+                <GuideTimer key={`timer-${activeEntry.id}`} guideId={activeEntry.id} />
+              )}
 
               {/* 内置攻略：把「我的补充」自定义内容置顶，正文之前 */}
               {activeEntry.preset && (

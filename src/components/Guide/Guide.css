@@ -62,6 +62,22 @@
 .guide-search-wrap .guide-search {
   width: 100%;
   padding-left: 32px;
+  padding-right: 32px;
+}
+.guide-search-clear {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  border-radius: 6px;
+}
+.guide-search-clear:hover {
+  color: var(--ink);
+  background: var(--surface-2);
 }
 .guide-add-btn {
   width: 100%;
@@ -423,6 +439,116 @@
 }
 .guide-editor-preview-label {
   margin-bottom: 8px;
+}
+
+/* ---------- 用时计时（开始/结束 + 历史记录） ---------- */
+
+.guide-timer {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.guide-timer-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.guide-timer-glyph {
+  color: var(--ink-3);
+}
+.guide-timer-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.guide-timer-stats {
+  min-width: 0;
+}
+/* 计时中的读秒：等宽数字，逐秒跳动时宽度不抖 */
+.guide-timer-live {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  padding: 1px 8px;
+}
+.guide-timer-history {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.guide-timer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.guide-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+}
+.guide-timer-row:hover {
+  background: var(--surface);
+}
+.guide-timer-index {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+}
+.guide-timer-when {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.guide-timer-dur {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.guide-timer-dur.best {
+  color: var(--ok);
+}
+.guide-timer-del {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-3);
+  background: transparent;
+  border: none;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+}
+.guide-timer-del:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.guide-timer-history-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* 侧边列表里的「计时中」小图标 */
+.guide-nav-timing {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  flex: 0 0 auto;
 }
 
 /* ---------- 我的补充（内置攻略的自定义 Markdown 内容） ---------- */

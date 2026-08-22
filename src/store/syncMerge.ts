@@ -33,6 +33,7 @@ const STRATEGY: Record<string, KeyStrategy> = {
   [STORAGE_KEYS.priceObservations]: 'itemArray',
   [STORAGE_KEYS.guideNotes]: 'itemMap',
   [STORAGE_KEYS.guideTags]: 'itemMap',
+  [STORAGE_KEYS.guideRuns]: 'itemMap',
   [STORAGE_KEYS.priceComments]: 'itemMap',
   // 其余（settings/synth/pinnedGuides/quizRegion）落到默认 'whole'
 }

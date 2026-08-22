@@ -16,6 +16,8 @@ import {
   type GuideCategory,
   type GuideSection,
   type GuideNote,
+  type GuideRun,
+  type GuideRunLog,
   type PriceItem,
   type PriceComment,
   type PriceObservation,
@@ -45,6 +47,8 @@ interface AppState {
   guideTags: Record<string, string[]>
   /** 置顶攻略 id 列表（内置/自定义均可，按置顶顺序，最新在前） */
   pinnedGuides: string[]
+  /** 攻略计时：攻略id -> { 计时中开始时刻, 历史用时记录 } */
+  guideRuns: Record<string, GuideRunLog>
   /** 用户自定义物价条目（内置参考条目来自 data，不在此） */
   priceItems: PriceItem[]
   /** 物价条目的用户备注：物品id -> 备注 */
@@ -160,6 +164,7 @@ let state: AppState = {
   guideNotes: load<Record<string, GuideNote>>(STORAGE_KEYS.guideNotes, {}),
   guideTags: load<Record<string, string[]>>(STORAGE_KEYS.guideTags, {}),
   pinnedGuides: load<string[]>(STORAGE_KEYS.pinnedGuides, []),
+  guideRuns: load<Record<string, GuideRunLog>>(STORAGE_KEYS.guideRuns, {}),
   priceItems: loadPriceItems(),
   priceComments: load<Record<string, PriceComment>>(STORAGE_KEYS.priceComments, {}),
   priceObservations: load<PriceObservation[]>(STORAGE_KEYS.priceObservations, []),
@@ -251,6 +256,10 @@ export function applyExternalUpdate(storageKey: string, parsed: unknown): boolea
       sliceKey = 'pinnedGuides'
       value = parsed as string[]
       break
+    case STORAGE_KEYS.guideRuns:
+      sliceKey = 'guideRuns'
+      value = parsed as Record<string, GuideRunLog>
+      break
     case STORAGE_KEYS.priceItems:
       sliceKey = 'priceItems'
       value = parsed as PriceItem[]
@@ -287,6 +296,7 @@ export function readAllSlices(): { key: string; value: unknown }[] {
     { key: STORAGE_KEYS.guideNotes, value: state.guideNotes },
     { key: STORAGE_KEYS.guideTags, value: state.guideTags },
     { key: STORAGE_KEYS.pinnedGuides, value: state.pinnedGuides },
+    { key: STORAGE_KEYS.guideRuns, value: state.guideRuns },
     { key: STORAGE_KEYS.priceItems, value: state.priceItems },
     { key: STORAGE_KEYS.priceComments, value: state.priceComments },
     { key: STORAGE_KEYS.priceObservations, value: state.priceObservations },
@@ -477,6 +487,11 @@ export const guideActions = {
       delete next[id]
       setSlice('guideTags', next, STORAGE_KEYS.guideTags)
     }
+    if (id in state.guideRuns) {
+      const next = { ...state.guideRuns }
+      delete next[id]
+      setSlice('guideRuns', next, STORAGE_KEYS.guideRuns)
+    }
   },
   reorder(orderedIds: string[]) {
     const orderMap = new Map(orderedIds.map((id, i) => [id, i]))
@@ -532,6 +547,60 @@ export const guideTagActions = {
     const cur = state.guideTags[guideId]
     if (!cur) return
     guideTagActions.setTags(guideId, cur.filter((t) => t !== tag))
+  },
+}
+
+// ---- 攻略计时（攻略id -> 计时中开始时刻 + 历史用时记录；最新在前） ----
+/** 单条攻略保留的历史记录条数上限，超出丢弃最旧的（避免分片无限膨胀）。 */
+const MAX_GUIDE_RUNS = 50
+/** 小于 1 秒的「误触即停」不记账，直接丢弃。 */
+const MIN_RUN_MS = 1000
+
+/** 以不可变方式改写某条攻略的计时数据；返回 undefined 表示删除该键。 */
+function setRunLog(guideId: string, log: GuideRunLog | undefined) {
+  const next = { ...state.guideRuns }
+  if (log && (log.running || log.runs.length > 0)) next[guideId] = log
+  else delete next[guideId]
+  setSlice('guideRuns', next, STORAGE_KEYS.guideRuns)
+}
+
+export const guideRunActions = {
+  /** 开始计时（已在计时则忽略，避免重复点击把开始时刻往后推） */
+  start(guideId: string) {
+    const cur = state.guideRuns[guideId]
+    if (cur?.running) return
+    setRunLog(guideId, { running: Date.now(), runs: cur?.runs ?? [] })
+  },
+  /** 结束计时并记账；不足 1 秒视为误触，只清计时不记账 */
+  finish(guideId: string) {
+    const cur = state.guideRuns[guideId]
+    if (!cur?.running) return
+    const endedAt = Date.now()
+    const durationMs = endedAt - cur.running
+    if (durationMs < MIN_RUN_MS) {
+      setRunLog(guideId, { runs: cur.runs })
+      return
+    }
+    const run: GuideRun = { id: uid('run_'), startedAt: cur.running, endedAt, durationMs }
+    setRunLog(guideId, { runs: [run, ...cur.runs].slice(0, MAX_GUIDE_RUNS) })
+  },
+  /** 放弃本次计时（不记账） */
+  cancel(guideId: string) {
+    const cur = state.guideRuns[guideId]
+    if (!cur?.running) return
+    setRunLog(guideId, { runs: cur.runs })
+  },
+  /** 删除一条历史记录 */
+  removeRun(guideId: string, runId: string) {
+    const cur = state.guideRuns[guideId]
+    if (!cur) return
+    setRunLog(guideId, { ...cur, runs: cur.runs.filter((r) => r.id !== runId) })
+  },
+  /** 清空某条攻略的全部历史记录（计时中的本次不受影响） */
+  clearRuns(guideId: string) {
+    const cur = state.guideRuns[guideId]
+    if (!cur) return
+    setRunLog(guideId, { ...cur, runs: [] })
   },
 }
 
@@ -703,6 +772,7 @@ export const dataActions = {
       if (parsed.guideTags) setSlice('guideTags', parsed.guideTags, STORAGE_KEYS.guideTags)
       if (parsed.pinnedGuides)
         setSlice('pinnedGuides', parsed.pinnedGuides, STORAGE_KEYS.pinnedGuides)
+      if (parsed.guideRuns) setSlice('guideRuns', parsed.guideRuns, STORAGE_KEYS.guideRuns)
       if (parsed.priceItems) setSlice('priceItems', parsed.priceItems, STORAGE_KEYS.priceItems)
       if (parsed.priceComments)
         setSlice('priceComments', parsed.priceComments, STORAGE_KEYS.priceComments)
@@ -724,6 +794,7 @@ export const dataActions = {
     setSlice('guideNotes', {}, STORAGE_KEYS.guideNotes)
     setSlice('guideTags', {}, STORAGE_KEYS.guideTags)
     setSlice('pinnedGuides', [], STORAGE_KEYS.pinnedGuides)
+    setSlice('guideRuns', {}, STORAGE_KEYS.guideRuns)
     setSlice('priceItems', [], STORAGE_KEYS.priceItems)
     setSlice('priceComments', {}, STORAGE_KEYS.priceComments)
     setSlice('priceObservations', [], STORAGE_KEYS.priceObservations)
@@ -778,6 +849,12 @@ export function useGuideNotes() {
 export function useGuideTags() {
   const guideTags = useSelector((s) => s.guideTags)
   return { guideTags, ...guideTagActions }
+}
+
+/** 攻略计时分片：攻略id -> 计时状态与历史用时记录 + 操作 */
+export function useGuideRuns() {
+  const guideRuns = useSelector((s) => s.guideRuns)
+  return { guideRuns, ...guideRunActions }
 }
 
 /** 攻略置顶分片：置顶的攻略 id 列表 + 操作 */
